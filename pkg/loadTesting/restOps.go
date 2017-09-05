@@ -11,6 +11,26 @@ import (
 	"time"
 )
 
+// FIXME?
+// When we start reporting errors, we've overloaded somebody
+// Eg for calvin this doesn't change the results up to 240, then fails
+// If you look at range below 250, you'll see it inflects around 100
+var httpClient *http.Client
+
+const (
+	MaxIdleConnections int = 100
+	RequestTimeout     int = 0
+)
+
+func init() {
+	httpClient = &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost: MaxIdleConnections,
+		},
+		Timeout: time.Duration(RequestTimeout) * time.Second,
+	}
+}
+
 // RestGet does a GET from an http target and times it
 func RestGet(baseURL, path string) {
 	req, err := http.NewRequest("GET", baseURL+"/"+path, nil)
@@ -33,7 +53,7 @@ func RestGet(baseURL, path string) {
 	}
 
 	initial := time.Now() // Response time starts
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	latency := time.Since(initial) // Latency ends
 	if err != nil {
 		//log.Fatalf("error getting http response, %v: halting.\n", err)
@@ -81,8 +101,7 @@ func RestGet(baseURL, path string) {
 // FIXME add err back as a return value
 func RestPut(baseURL, path string, size int64) {
 
-	log.Printf("putting %s\n", baseURL+"/"+path)
-	// make sure we have a dummy file
+	//log.Printf("putting %s\n", baseURL+"/"+path)
 	if size <= 0 {
 		fmt.Printf("%s 0 0 0 %d %s %d PUT\n",
 			time.Now().Format("2006-01-02 15:04:05.000"),
@@ -90,6 +109,7 @@ func RestPut(baseURL, path string, size int64) {
 		alive <- true
 		return
 	}
+	// make sure we have a dummy file
 	fp, err := os.Open(junkDataFile)
 	if err != nil {
 		log.Fatalf("Can't open %q\n", junkDataFile)
@@ -102,7 +122,7 @@ func RestPut(baseURL, path string, size int64) {
 	if err != nil {
 		log.Fatalf("error creating http request, %v: halting.\n", err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		// Timeouts and bad parameters will trigger this case. FIXME, continue?
 		log.Fatalf("error getting http response, %v: halting.\n", err)

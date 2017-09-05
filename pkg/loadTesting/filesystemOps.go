@@ -1,12 +1,12 @@
 package loadTesting
 
 import (
-	"time"
 	"fmt"
-	"path"
-	"os"
 	"io"
 	"log"
+	"os"
+	"path"
+	"time"
 )
 
 // TimedCreateFilesystemFile is for local (non-Protocol) file creation
@@ -27,7 +27,7 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 func MustCreateFilesystemFile(fullPath string, size int64) {
 	// fmt.Printf("in createFilesystemFile(%s, %s)\n", fullPath, size)
 	dir := path.Dir(fullPath)
-	err := os.MkdirAll(dir, os.ModePerm);
+	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		log.Fatalf("could not create directories of %q, %v", fullPath, err)
 	}
@@ -49,4 +49,3 @@ func MustCreateFilesystemFile(fullPath string, size int64) {
 		log.Fatalf("error closing %q, %v", fullPath, err)
 	}
 }
-

@@ -70,7 +70,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	tpsTarget, progressRate int, baseURL string, conf Config) {
 	var processed = 0
 
-	//fmt.Printf("Newer RunLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
+	//fmt.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
 	//	tpsTarget, progressRate, fromTime, forTime, baseURL)
 	// get settings from conf parameter
 	verbose = conf.Verbose
