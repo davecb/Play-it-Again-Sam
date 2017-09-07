@@ -57,7 +57,7 @@ var strip string
 // Timeout is the delay before shutting dowsn
 var timeout time.Duration
 
-// stepDurayion, typically 10 or 30
+// stepDuration, typically 10 or 30
 var stepDuration int
 
 var random = rand.New(rand.NewSource(42))
@@ -81,6 +81,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	protocol = conf.Protocol
 	strip = conf.Strip
 	timeout = conf.Timeout
+	stepDuration = conf.StepDuration
 
 	doPrepWork(baseURL)           // Named init(), creates junkDataFile
 	defer os.Remove(junkDataFile) // nolint
@@ -170,8 +171,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 			go worker(pipe, closed, urlPrefix)
 		}
 		// add to the workers until we have enough
-		// FIXME allow passed-in stepDuration
-		for range time.Tick(10 * time.Second) { // nolint
+		for range time.Tick(time.Duration(stepDuration) * time.Second) { // nolint
 			//start another progressRate of workers
 			rate += progressRate
 			if rate > tpsTarget {
