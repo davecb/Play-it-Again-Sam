@@ -24,8 +24,8 @@ const (
 )
 
 // These are the field names in the csv file
-const (               // nolint
-	dateField = iota  // nolint
+const ( // nolint
+	dateField = iota // nolint
 	timeField
 	latencyField      // nolint
 	transferTimeField // nolint
@@ -38,10 +38,11 @@ const (               // nolint
 
 // Config contains all the optional parameters.
 type Config struct {
-	Verbose  bool
-	Protocol int
-	Strip    string
-	Timeout  time.Duration
+	Verbose      bool
+	Protocol     int
+	Strip        string
+	Timeout      time.Duration
+	StepDuration int
 }
 
 // Verbose turns on extra information for understanding the test
@@ -55,6 +56,9 @@ var strip string
 
 // Timeout is the delay before shutting dowsn
 var timeout time.Duration
+
+// stepDurayion, typically 10 or 30
+var stepDuration int
 
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
@@ -70,7 +74,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	tpsTarget, progressRate int, baseURL string, conf Config) {
 	var processed = 0
 
-	//fmt.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
+	//log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
 	//	tpsTarget, progressRate, fromTime, forTime, baseURL)
 	// get settings from conf parameter
 	verbose = conf.Verbose
@@ -89,8 +93,8 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 			processed++
 
 		case <-time.After(time.Second * timeout):
-			fmt.Fprintf(os.Stdout, "%d records processed\n", processed)
-			fmt.Fprintf(os.Stderr, "No activity after %d seconds, halting normally.\n",
+			log.Printf("%d records processed\n", processed)
+			log.Printf("No activity after %d seconds, halting normally.\n",
 				timeout)
 			os.Exit(0)
 		}
@@ -101,7 +105,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 func workSelector(f io.Reader, filename string, startFrom, runFor int, strip string, pipe chan []string) {
 	var firstTime, thisSecond time.Time
 
-	// fmt.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
+	// log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
 	r := csv.NewReader(f)
 	r.Comma = ' '
 	r.Comment = '#'
@@ -166,6 +170,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 			go worker(pipe, closed, urlPrefix)
 		}
 		// add to the workers until we have enough
+		// FIXME allow passed-in stepDuration
 		for range time.Tick(10 * time.Second) { // nolint
 			//start another progressRate of workers
 			rate += progressRate
@@ -212,7 +217,7 @@ func worker(pipe chan []string, closed chan bool, urlPrefix string) {
 
 		switch {
 		case r == nil:
-			//fmt.Print("worker at EOF\n")
+			//log.Print("worker at EOF\n")
 			return
 		case len(r) != 9:
 			// bad input data, crash please.
@@ -249,7 +254,7 @@ func putJunkFile(baseURL, path string, size int64) {
 
 // get a url and do nothing with it.
 func getJunkFile(baseURL, path string) {
-	//fmt.Printf("in getJunkFile(%s, %s), Protocol=%v\n", baseURL, path, Protocol)
+	//log.Printf("in getJunkFile(%s, %s), Protocol=%v\n", baseURL, path, Protocol)
 
 	switch protocol {
 	case HTTPProtocol:

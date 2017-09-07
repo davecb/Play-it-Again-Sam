@@ -25,7 +25,7 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 // MustCreateFilesystemFile implements making the file in a filesystem relative to the current directory
 // It's used by both local and s3.
 func MustCreateFilesystemFile(fullPath string, size int64) {
-	// fmt.Printf("in createFilesystemFile(%s, %s)\n", fullPath, size)
+	// log.Printf("in createFilesystemFile(%s, %s)\n", fullPath, size)
 	dir := path.Dir(fullPath)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {

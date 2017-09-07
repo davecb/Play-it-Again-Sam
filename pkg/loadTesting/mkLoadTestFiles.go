@@ -61,7 +61,7 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 		// record-type logic:
 		if record[pathField] == "/" {
 			// not a valid file
-			fmt.Print("ignore a request to create the root dir, /\n")
+			log.Print("ignore a request to create the root dir, /\n")
 			continue
 		}
 		bytes := record[bytesField]
@@ -71,7 +71,7 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 		switch operatorValue {
 		case "PUT", "POST":
 			// Don't do files that will be created in the test
-			fmt.Printf("ignore %s operation on %s\n", operatorValue, path)
+			log.Printf("ignore %s operation on %s\n", operatorValue, path)
 			continue
 		case "DELETE", "DELE":
 			// Right now, create a 1-byte file to cause directory traversals.
@@ -85,10 +85,10 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 			}
 			shortDescr, create := codeDescr(rc)
 			if create {
-				fmt.Fprintf(os.Stderr, "%s, create file %s of %s bytes\n", shortDescr, path, bytes)
+				log.Printf("%s, create file %s of %s bytes\n", shortDescr, path, bytes)
 				mkFile(baseURL, filename, path, bytes)
 			} else {
-				fmt.Fprintf(os.Stderr, "%s, ignore %s\n", shortDescr, path)
+				log.Printf("%s, ignore %s\n", shortDescr, path)
 			}
 		}
 	}

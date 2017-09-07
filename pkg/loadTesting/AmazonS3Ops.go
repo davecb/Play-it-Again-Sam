@@ -65,7 +65,7 @@ func AmazonS3Get(baseURL, path string) {
 // error return is used only by mkLoadTestFiles
 func AmazonS3Put(baseURL, path string, size int64) error {
 
-	//fmt.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
+	//log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
 	file, err := os.Open(junkDataFile)
 	if err != nil {
 		return fmt.Errorf("Unable to open junk-data file %s, %v", junkDataFile, err)
@@ -95,7 +95,7 @@ func AmazonS3Put(baseURL, path string, size int64) error {
 	// This doesn't seem to do what one exoects: FIXME?
 	// reqerr, ok := err.(awserr.RequestFailure)
 	//if ok {
-	//	fmt.Printf("%s %f 0 0 %d %s %d GET\n",
+	//	log.Printf("%s %f 0 0 %d %s %d GET\n",
 	//		initial.Format("2006-01-02 15:04:05.000"),
 	//		responseTime.Seconds(), size, path, reqerr.StatusCode)
 	//	alive <- true

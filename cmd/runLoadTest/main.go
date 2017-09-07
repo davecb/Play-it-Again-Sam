@@ -23,7 +23,7 @@ func usage() {
 
 // main interprets the options and args.
 func main() {
-	var tpsTarget, progressRate int
+	var tpsTarget, progressRate, stepDuration int
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var verbose bool
@@ -33,6 +33,7 @@ func main() {
 	flag.IntVar(&runFor, "for", 0, "number of records to use, eg 1000 ")
 	flag.IntVar(&startFrom, "from", 0, "number of records to skip, eg 100")
 	flag.IntVar(&tpsTarget, "tps", 0, "TPS target")
+	flag.IntVar(&stepDuration, "duration", 10, "Duration of a step")
 	flag.IntVar(&progressRate, "progress", 0, "progress rate in TPS steps")
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
@@ -89,5 +90,6 @@ func main() {
 			Protocol: proto,
 			Strip:    strip,
 			Timeout:  terminationTimeout,
+			StepDuration: stepDuration,
 		})
 }

@@ -15,20 +15,16 @@ import (
 // When we start reporting errors, we've overloaded somebody
 // Eg for calvin this doesn't change the results up to 240, then fails
 // If you look at range below 250, you'll see it inflects around 100
-var httpClient *http.Client
-
 const (
 	MaxIdleConnections int = 100
 	RequestTimeout     int = 0
 )
 
-func init() {
-	httpClient = &http.Client{
-		Transport: &http.Transport{
-			MaxIdleConnsPerHost: MaxIdleConnections,
-		},
-		Timeout: time.Duration(RequestTimeout) * time.Second,
-	}
+var httpClient = &http.Client{
+	Transport: &http.Transport{
+		MaxIdleConnsPerHost: MaxIdleConnections,
+	},
+	Timeout: time.Duration(RequestTimeout) * time.Second,
 }
 
 // RestGet does a GET from an http target and times it
@@ -49,7 +45,7 @@ func RestGet(baseURL, path string) {
 		if err != nil {
 			log.Fatalf("error dumping http request, %v: halting.\n", err)
 		}
-		fmt.Printf("Request: %s\n", dump)
+		log.Printf("Request: %s\n", dump)
 	}
 
 	initial := time.Now() // Response time starts
@@ -88,7 +84,7 @@ func RestGet(baseURL, path string) {
 				log.Fatalf("error dumping http response, %v: halting.\n", err)
 			}
 		}
-		fmt.Printf("Response: %s\n", dump)
+		log.Printf("Response: %s\n", dump)
 	}
 
 	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
@@ -141,16 +137,16 @@ func RestPut(baseURL, path string, size int64) {
 		//if err != nil {
 		//	log.Fatalf("error dumping http response, %v: halting.\n", err)
 		//}
-		fmt.Print("Response:\n")
-		fmt.Printf("    Length: %d\n", len(string(contents)))
-		fmt.Printf("    Url: %q\n", baseURL+"/"+path)
+		log.Print("Response:\n")
+		log.Printf("    Length: %d\n", len(string(contents)))
+		log.Printf("    Url: %q\n", baseURL+"/"+path)
 		shortDescr, _ := codeDescr(resp.StatusCode)
-		fmt.Printf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
+		log.Printf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
 		hdr := resp.Header
 		for key, value := range hdr {
-			fmt.Println("   ", key, ":", value)
+			log.Println("   ", key, ":", value)
 		}
-		fmt.Printf("    Contents: %s\n", string(contents))
+		log.Printf("    Contents: %s\n", string(contents))
 	}
 
 	fmt.Printf("%s %f %f 0 %d %s %d PUT\n",
