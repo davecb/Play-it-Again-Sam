@@ -34,18 +34,15 @@ func RestGet(baseURL, path string) {
 		// try running right through this
 		// log.Fatalf("error creating http request, %v: halting.\n", err)
 		log.Printf("error creating http request, %v: continuing.\n", err)
+		dumpRequest(req)
 		fmt.Printf("%s 0 0 0 0 %s %d GET\n",
 			time.Now().Format("2006-01-02 15:04:05.000"), path, -1)
 		alive <- true
 		return
 	}
+	req.Header.Add("cache-control", "no-cache")
 	if verbose {
-		var dump []byte
-		dump, err = httputil.DumpRequestOut(req, true)
-		if err != nil {
-			log.Fatalf("error dumping http request, %v: halting.\n", err)
-		}
-		log.Printf("Request: %s\n", dump)
+		dumpRequest(req)
 	}
 
 	initial := time.Now() // Response time starts
@@ -55,6 +52,8 @@ func RestGet(baseURL, path string) {
 		//log.Fatalf("error getting http response, %v: halting.\n", err)
 		// try running right through this
 		log.Printf("error getting http response, %v: continuing.\n", err)
+		dumpRequest(req)
+		dumpResponse(resp)
 		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 			initial.Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), 0.0, 0, path, -2)
@@ -68,6 +67,8 @@ func RestGet(baseURL, path string) {
 		//log.Fatalf(`error reading http response, "%v": halting.\n`, err)
 		// try running right through this
 		log.Printf("error reading http response, %v: continuing.\n", err)
+		dumpRequest(req)
+		dumpResponse(resp)
 		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), transferTime.Seconds(), 0, path, -3)
@@ -75,16 +76,7 @@ func RestGet(baseURL, path string) {
 		return
 	}
 	if verbose {
-		dump, err := httputil.DumpResponse(resp, true)
-		if err != nil {
-			// Error dumping http response, trying without body.
-			// That avoids errors if length headers are wrong
-			dump, err = httputil.DumpResponse(resp, false)
-			if err != nil {
-				log.Fatalf("error dumping http response, %v: halting.\n", err)
-			}
-		}
-		log.Printf("Response: %s\n", dump)
+		dumpResponse(resp)
 	}
 
 	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
@@ -92,6 +84,7 @@ func RestGet(baseURL, path string) {
 		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
 	alive <- true
 }
+
 
 // RestPut does an ordinary (not ceph or s3) put operation.
 // FIXME add err back as a return value
@@ -116,11 +109,13 @@ func RestPut(baseURL, path string, size int64) {
 	// do put
 	req, err := http.NewRequest("PUT", baseURL+"/"+path, io.LimitReader(fp, size))
 	if err != nil {
+		dumpRequest(req)
 		log.Fatalf("error creating http request, %v: halting.\n", err)
 	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		// Timeouts and bad parameters will trigger this case. FIXME, continue?
+		dumpRequest(req)
 		log.Fatalf("error getting http response, %v: halting.\n", err)
 	}
 	latency := time.Since(initial) // Response time ends
@@ -129,28 +124,49 @@ func RestPut(baseURL, path string, size int64) {
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
 		// FIXME, continue?
+		dumpRequest(req)
+		dumpResponse(resp)
 		log.Fatalf(`error reading http response, "%v": halting.\n`, err)
 	}
 	if verbose {
-		//dump, err := httputil.DumpResponse(resp, true)
-		//contents, err := ioutil.ReadAll(response.Body)
-		//if err != nil {
-		//	log.Fatalf("error dumping http response, %v: halting.\n", err)
-		//}
-		log.Print("Response:\n")
-		log.Printf("    Length: %d\n", len(string(contents)))
-		log.Printf("    Url: %q\n", baseURL+"/"+path)
-		shortDescr, _ := codeDescr(resp.StatusCode)
-		log.Printf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
-		hdr := resp.Header
-		for key, value := range hdr {
-			log.Println("   ", key, ":", value)
-		}
-		log.Printf("    Contents: %s\n", string(contents))
+		dumpResponse(resp)
 	}
 
 	fmt.Printf("%s %f %f 0 %d %s %d PUT\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(contents), path, resp.StatusCode)
 	alive <- true
+}
+
+// dumpRequest provides extra information about an http request if it can
+func dumpRequest(req *http.Request) {
+	var dump []byte
+	var err error
+	dump, err = httputil.DumpRequestOut(req, true)
+	if err != nil {
+		log.Fatalf("fatal error dumping http request, %v: halting.\n", err)
+	}
+	log.Printf("Request: %s\n", dump)
+}
+
+// dumpResponse provides extra information about an http response
+func dumpResponse(resp *http.Response) {
+	contents, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		// Error dumping http response, trying without body.
+		// That avoids errors if length headers are wrong
+		contents, err = httputil.DumpResponse(resp, false)
+		if err != nil {
+			log.Fatalf("error dumping http response, %v: halting.\n", err)
+		}
+	}
+	log.Print("Response:\n")
+	log.Printf("    Length: %d\n", len(string(contents)))
+	shortDescr, _ := codeDescr(resp.StatusCode)
+	log.Printf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
+	hdr := resp.Header
+	for key, value := range hdr {
+		log.Println("   ", key, ":", value)
+	}
+	log.Printf("    Contents: %s\n", string(contents))
 }

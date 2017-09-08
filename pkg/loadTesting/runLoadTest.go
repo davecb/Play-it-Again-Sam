@@ -104,37 +104,27 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 
 // workSelector pipes a selection from a file to the workers
 func workSelector(f io.Reader, filename string, startFrom, runFor int, strip string, pipe chan []string) {
-	var firstTime, thisSecond time.Time
 
-	// log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
+	//log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
 	r := csv.NewReader(f)
 	r.Comma = ' '
 	r.Comment = '#'
 	r.FieldsPerRecord = -1 // ignore differences
 
-	// Skip forward to the staring point
-	for i := 0; i < startFrom; i++ {
-		rec, err := r.Read()
+	// Skip forward to the starting point
+	for i := 0; ; i++ {
+		_, err := r.Read()
 		if err == io.EOF {
+			log.Printf("EOF at line %d, test will be empty\n", i)
 			break
 		}
 		if err != nil {
 			log.Fatalf("Fatal error skipping forward in %s: %s\n", filename, err)
 		}
-		timeString := rec[timeField]
-		thisSecond, err = time.Parse("15:04:05", timeString)
-		if err != nil {
-			log.Fatalf("Fatal error parsing time field in %s: %s\n", rec, err)
-		}
-		if firstTime.IsZero() {
-			// initialize first Time on seeing the first record
-			firstTime = thisSecond.Add(time.Second * time.Duration(startFrom))
-		}
-		if !thisSecond.Before(firstTime) {
-			// it's not before the first second, AKA >= first second
+		if i >= startFrom {
+			log.Printf("Skipped over %d lines, about to start test\n", i)
 			break
 		}
-
 	}
 
 	// From there, copy to pipe
