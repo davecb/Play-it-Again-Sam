@@ -11,10 +11,11 @@ import (
 	"time"
 )
 
-// FIXME?
-// When we start reporting errors, we've overloaded somebody
-// Eg for calvin this doesn't change the results up to 240, then fails
-// If you look at range below 250, you'll see it inflects around 100
+// Tuning for large loads. With this, when we start reporting network
+// errors, then we've overloaded somebody. Previously we bottlenecked
+// on closed but not recycled sockets'
+// For calvin this doesn't change the results up to 240, but
+// then the former setup failed.
 const (
 	MaxIdleConnections int = 100
 	RequestTimeout     int = 0
@@ -85,7 +86,6 @@ func RestGet(baseURL, path string) {
 	alive <- true
 }
 
-
 // RestPut does an ordinary (not ceph or s3) put operation.
 // FIXME add err back as a return value
 func RestPut(baseURL, path string, size int64) {
@@ -142,6 +142,11 @@ func RestPut(baseURL, path string, size int64) {
 func dumpRequest(req *http.Request) {
 	var dump []byte
 	var err error
+
+	if req == nil {
+		log.Print("Request: <nil>\n")
+		return
+	}
 	dump, err = httputil.DumpRequestOut(req, true)
 	if err != nil {
 		log.Fatalf("fatal error dumping http request, %v: halting.\n", err)
@@ -151,6 +156,10 @@ func dumpRequest(req *http.Request) {
 
 // dumpResponse provides extra information about an http response
 func dumpResponse(resp *http.Response) {
+	if resp == nil {
+		log.Print("Response: <nil>\n")
+		return
+	}
 	contents, err := httputil.DumpResponse(resp, true)
 	if err != nil {
 		// Error dumping http response, trying without body.
