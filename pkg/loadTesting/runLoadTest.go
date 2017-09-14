@@ -170,7 +170,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 			rate += progressRate
 			if rate > tpsTarget {
 				// OK, we're past the range, quit.
-				log.Print("ok, reached macimum rate, we're done\n")
+				log.Print("completed maximum rate, starting %d sec cleanup timer\n", timeout)
 				break
 			}
 			for i := 0; i < progressRate; i++ {
