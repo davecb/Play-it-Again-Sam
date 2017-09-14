@@ -112,7 +112,7 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 	r.FieldsPerRecord = -1 // ignore differences
 
 	// Skip forward to the starting point
-	for i := 0; ; i++ {
+	for i := 0; startFrom != 0; i++ {
 		_, err := r.Read()
 		if err == io.EOF {
 			log.Printf("EOF at line %d, test will be empty\n", i)
@@ -131,6 +131,7 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 	for i := 0; i < runFor; i++ {
 		record, err := r.Read()
 		if err == io.EOF {
+			//log.Printf("At EOF on %s, no new work to queue\n", filename)
 			break
 		}
 		if err != nil {
@@ -139,7 +140,9 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 		if strip != "" {
 			record[pathField] = strings.Replace(record[pathField], strip, "", 1)
 		}
-		// log.Printf("writing %v to pipe\n", record)
+		if verbose {
+			log.Printf("writing %v to pipe\n", record)
+		}
 		pipe <- record
 	}
 	//log.Print("closing pipe\n")
@@ -161,12 +164,13 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 			go worker(pipe, closed, urlPrefix)
 		}
 		// add to the workers until we have enough
+		log.Printf("now at %d requests/second\n", rate)
 		for range time.Tick(time.Duration(stepDuration) * time.Second) { // nolint
 			//start another progressRate of workers
 			rate += progressRate
 			if rate > tpsTarget {
 				// OK, we're past the range, quit.
-				log.Print("ok, all done\n")
+				log.Print("ok, reached macimum rate, we're done\n")
 				break
 			}
 			for i := 0; i < progressRate; i++ {
@@ -200,6 +204,7 @@ func worker(pipe chan []string, closed chan bool, urlPrefix string) {
 
 		select {
 		case <-closed:
+			//log.Print("pipe closed, no more requests to send.\n")
 			return
 		case r = <-pipe:
 			//log.Printf("got %v\n", r)
@@ -207,7 +212,7 @@ func worker(pipe chan []string, closed chan bool, urlPrefix string) {
 
 		switch {
 		case r == nil:
-			//log.Print("worker at EOF\n")
+			//log.Print("worker reached EOF, no more requests to send.\n")
 			return
 		case len(r) != 9:
 			// bad input data, crash please.
@@ -244,7 +249,7 @@ func putJunkFile(baseURL, path string, size int64) {
 
 // get a url and do nothing with it.
 func getJunkFile(baseURL, path string) {
-	//log.Printf("in getJunkFile(%s, %s), Protocol=%v\n", baseURL, path, Protocol)
+	//log.Printf("in getJunkFile(%s, %s), protocol=%v\n", baseURL, path, protocol)
 
 	switch protocol {
 	case HTTPProtocol:

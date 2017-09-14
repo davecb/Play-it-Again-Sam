@@ -30,6 +30,7 @@ var httpClient = &http.Client{
 
 // RestGet does a GET from an http target and times it
 func RestGet(baseURL, path string) {
+	//log.Printf("in RestGet(%s,%s)\n", baseURL, path)
 	req, err := http.NewRequest("GET", baseURL+"/"+path, nil)
 	if err != nil {
 		// try running right through this
