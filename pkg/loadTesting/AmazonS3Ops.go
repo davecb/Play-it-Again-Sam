@@ -27,7 +27,7 @@ var bucket = "loadtest"
 
 // AmazonS3Get does a GET from an s3Protocol target and times it,
 func AmazonS3Get(baseURL, path string) {
-	//fmt.Printf("in AmazonS3Get(%s, %s)\n", baseURL, path)
+	log.Printf("in AmazonS3Get(%s, %s)\n", baseURL, path)
 
 	file, err := ioutil.TempFile("/tmp", "loadTesting")
 	if err != nil {
@@ -64,8 +64,8 @@ func AmazonS3Get(baseURL, path string) {
 // AmazonS3Put puts a file and times it
 // error return is used only by mkLoadTestFiles
 func AmazonS3Put(baseURL, path string, size int64) error {
-
-	//log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
+	log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
+	
 	file, err := os.Open(junkDataFile)
 	if err != nil {
 		return fmt.Errorf("Unable to open junk-data file %s, %v", junkDataFile, err)
@@ -112,7 +112,7 @@ func AmazonS3Put(baseURL, path string, size int64) error {
 func mustCreateService(myEndpoint string, awsLogLevel aws.LogLevelType) *s3.S3 {
 
 	if S3params.AccessKey == "" {
-		log.Fatal("called AmazonS3Put with no s3 params, internal error\n")
+		log.Fatal("called mustCreateService with no s3 params, internal error\n")
 	}
 	if verbose {
 		awsLogLevel = aws.LogDebugWithSigning | aws.LogDebugWithHTTPBody
