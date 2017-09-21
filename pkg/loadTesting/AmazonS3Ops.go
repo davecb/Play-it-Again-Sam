@@ -23,7 +23,7 @@ import (
 
 var svc *s3.S3
 var awsLogLevel = aws.LogOff
-var bucket = "loadtest"
+var bucket = "images.s3.kobo.com" // FIXME
 
 // AmazonS3Get does a GET from an s3Protocol target and times it,
 func AmazonS3Get(baseURL, path string) {
@@ -65,7 +65,7 @@ func AmazonS3Get(baseURL, path string) {
 // error return is used only by mkLoadTestFiles
 func AmazonS3Put(baseURL, path string, size int64) error {
 	log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
-	
+
 	file, err := os.Open(junkDataFile)
 	if err != nil {
 		return fmt.Errorf("Unable to open junk-data file %s, %v", junkDataFile, err)

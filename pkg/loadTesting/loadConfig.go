@@ -43,9 +43,9 @@ func LoadConfig(fullPath string) error {
 		}
 		//log.Printf("name=%s,value=%s\n", record[0], record[1])
 		switch record[0] {
-		case "s3.accessKey":
+		case "S3_ACCESS_KEY":
 			S3params.AccessKey = record[1]
-		case "s3.secretKey":
+		case "S3_SECRET_KEY":
 			S3params.SecretKey = record[1]
 		}
 	}
