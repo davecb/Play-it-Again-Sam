@@ -25,11 +25,11 @@ const (
 
 // These are the field names in the csv file
 const ( // nolint
-	dateField = iota // nolint
-	timeField
-	latencyField      // nolint
-	transferTimeField // nolint
-	thinkTimeField    // nolint
+	dateField         = iota // nolint
+	timeField                // nolint
+	latencyField             // nolint
+	transferTimeField        // nolint
+	thinkTimeField           // nolint
 	bytesField
 	pathField
 	returnCodeField
@@ -128,7 +128,8 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 	}
 
 	// From there, copy to pipe
-	for i := 0; i < runFor; i++ {
+	recNo := 0
+	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
 		if err == io.EOF {
 			//log.Printf("At EOF on %s, no new work to queue\n", filename)
@@ -145,7 +146,7 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 		}
 		pipe <- record
 	}
-	//log.Print("closing pipe\n")
+	log.Printf("Loaded %d records, closing input\n", recNo)
 	close(pipe)
 }
 
@@ -170,7 +171,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 			rate += progressRate
 			if rate > tpsTarget {
 				// OK, we're past the range, quit.
-				log.Print("completed maximum rate, starting %d sec cleanup timer\n", timeout)
+				log.Printf("completed maximum rate, starting %d sec cleanup timer\n", timeout)
 				break
 			}
 			for i := 0; i < progressRate; i++ {
@@ -184,6 +185,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 		close(closed) // We're done
 	case tpsTarget != 0:
 		// start tpsTarget workers, to run until out of data.
+		log.Printf("starting, at %d requests/second\n", tpsTarget)
 		for i := 0; i < tpsTarget; i++ {
 			// start a worker
 			go worker(pipe, closed, urlPrefix)

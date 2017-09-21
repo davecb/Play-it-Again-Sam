@@ -43,9 +43,6 @@ func RestGet(baseURL, path string) {
 		return
 	}
 	req.Header.Add("cache-control", "no-cache")
-	if verbose {
-		dumpRequest(req)
-	}
 
 	initial := time.Now() // Response time starts
 	resp, err := httpClient.Do(req)
@@ -77,7 +74,9 @@ func RestGet(baseURL, path string) {
 		alive <- true
 		return
 	}
-	if verbose {
+	if verbose || firstDigit(resp.StatusCode) == 5 {
+		// dump if its not a 200 OK, etc.
+		dumpRequest(req)
 		dumpResponse(resp)
 	}
 
@@ -124,12 +123,14 @@ func RestPut(baseURL, path string, size int64) {
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
-		// FIXME, continue?
 		dumpRequest(req)
 		dumpResponse(resp)
+		// FIXME, continue?
 		log.Fatalf(`error reading http response, "%v": halting.\n`, err)
 	}
-	if verbose {
+	if verbose || firstDigit(resp.StatusCode) == 5 {
+		// dump if its not a 200 OK, etc.
+		dumpRequest(req)
 		dumpResponse(resp)
 	}
 
@@ -137,6 +138,16 @@ func RestPut(baseURL, path string, size int64) {
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(contents), path, resp.StatusCode)
 	alive <- true
+}
+
+// return the first digit of a status code, where
+// 1 - informational
+// 2 - success
+// 3 - partial success
+// 4 - temporary failure
+// 5 - permanent failure
+func firstDigit(i int) int {
+	return i / 100
 }
 
 // dumpRequest provides extra information about an http request if it can
@@ -152,7 +163,7 @@ func dumpRequest(req *http.Request) {
 	if err != nil {
 		log.Fatalf("fatal error dumping http request, %v: halting.\n", err)
 	}
-	log.Printf("Request: %s\n", dump)
+	log.Printf("Request: \n%s\n", dump)
 }
 
 // dumpResponse provides extra information about an http response
@@ -178,5 +189,5 @@ func dumpResponse(resp *http.Response) {
 	for key, value := range hdr {
 		log.Println("   ", key, ":", value)
 	}
-	log.Printf("    Contents: %s\n", string(contents))
+	log.Printf("    Contents: \"\n%s\"\n", string(contents))
 }
