@@ -43,6 +43,7 @@ type Config struct {
 	Strip        string
 	Timeout      time.Duration
 	StepDuration int
+	HostHeader	string
 }
 
 // Verbose turns on extra information for understanding the test
@@ -59,6 +60,9 @@ var timeout time.Duration
 
 // stepDuration, typically 10 or 30
 var stepDuration int
+
+// optional host header
+var hostHeader string
 
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
@@ -82,6 +86,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	strip = conf.Strip
 	timeout = conf.Timeout
 	stepDuration = conf.StepDuration
+	hostHeader = conf.HostHeader
 
 	doPrepWork(baseURL)           // Named init(), creates junkDataFile
 	defer os.Remove(junkDataFile) // nolint

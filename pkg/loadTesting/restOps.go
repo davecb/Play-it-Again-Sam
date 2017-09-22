@@ -43,6 +43,12 @@ func RestGet(baseURL, path string) {
 		return
 	}
 	req.Header.Add("cache-control", "no-cache")
+	if hostHeader != "" {
+		req.Host = hostHeader
+		// Go disfeature: host is special,
+		// See also https://github.com/golang/go/issues/7682
+		req.Header.Add("Host", hostHeader)
+	}
 
 	initial := time.Now() // Response time starts
 	resp, err := httpClient.Do(req)

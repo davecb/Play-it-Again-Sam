@@ -27,7 +27,7 @@ func main() {
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var verbose bool
-	var configFile, strip string
+	var configFile, strip, hostHeader string
 	var err error
 
 	flag.IntVar(&runFor, "for", 0, "number of records to use, eg 1000 ")
@@ -41,6 +41,7 @@ func main() {
 	flag.BoolVar(&verbose, "v", false, "set verbose to true")
 	flag.StringVar(&configFile, "config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.StringVar(&strip, "strip", "", "strip text from paths")
+	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.Parse()
 
 	if flag.NArg() < 2 {
@@ -49,7 +50,7 @@ func main() {
 	}
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
 	if runFor == 0 {
-		runFor =  math.MaxInt64
+		runFor = math.MaxInt64
 	}
 	if tpsTarget == 0 {
 		log.Fatal("You must specify a --tps target, halting.")
@@ -66,7 +67,7 @@ func main() {
 	case ceph:
 		proto = loadTesting.CephProtocol
 	default: //REST
-		proto= loadTesting.HTTPProtocol
+		proto = loadTesting.HTTPProtocol
 	}
 
 	filename := flag.Arg(0)
@@ -84,13 +85,13 @@ func main() {
 		log.Fatalf("No base url provided, halting. \n")
 	}
 
-
 	loadTesting.RunLoadTest(io.Reader(f), filename, startFrom, runFor, tpsTarget, progressRate, baseURL,
 		loadTesting.Config{
-			Verbose:  verbose,
-			Protocol: proto,
-			Strip:    strip,
-			Timeout:  terminationTimeout,
+			Verbose:      verbose,
+			Protocol:     proto,
+			Strip:        strip,
+			Timeout:      terminationTimeout,
 			StepDuration: stepDuration,
+			HostHeader:   hostHeader,
 		})
 }
