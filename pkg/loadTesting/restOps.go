@@ -31,7 +31,7 @@ var httpClient = &http.Client{
 // RestGet does a GET from an http target and times it
 func RestGet(baseURL, path string) {
 	//log.Printf("in RestGet(%s,%s)\n", baseURL, path)
-	req, err := http.NewRequest("GET", baseURL + path, nil)
+	req, err := http.NewRequest("GET", baseURL+"/"+path, nil)
 	if err != nil {
 		// try running right through this
 		// log.Fatalf("error creating http request, %v: halting.\n", err)
@@ -113,7 +113,7 @@ func RestPut(baseURL, path string, size int64) {
 
 	initial := time.Now() // Response time starts
 	// do put
-	req, err := http.NewRequest("PUT", baseURL + path, io.LimitReader(fp, size))
+	req, err := http.NewRequest("PUT", baseURL+"/"+path, io.LimitReader(fp, size))
 	if err != nil {
 		dumpRequest(req)
 		log.Fatalf("error creating http request, %v: halting.\n", err)
