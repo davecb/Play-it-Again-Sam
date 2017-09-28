@@ -39,15 +39,19 @@ const ( // nolint
 // Config contains all the optional parameters.
 type Config struct {
 	Verbose      bool
+	Debug        bool
 	Protocol     int
 	Strip        string
 	Timeout      time.Duration
 	StepDuration int
-	HostHeader	string
+	HostHeader   string
 }
 
 // Verbose turns on extra information for understanding the test
 var verbose bool
+
+// Debug turns on trace stuff
+var debug bool
 
 // Protocol indicates which of the above is in use
 var protocol int
@@ -78,17 +82,21 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	tpsTarget, progressRate int, baseURL string, conf Config) {
 	var processed = 0
 
-	//log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
-	//	tpsTarget, progressRate, fromTime, forTime, baseURL)
 	// get settings from conf parameter
 	verbose = conf.Verbose
+	debug = conf.Debug
 	protocol = conf.Protocol
 	strip = conf.Strip
 	timeout = conf.Timeout
 	stepDuration = conf.StepDuration
 	hostHeader = conf.HostHeader
 
-	doPrepWork(baseURL)           // Named init(), creates junkDataFile
+	if debug {
+		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
+			tpsTarget, progressRate, fromTime, forTime, baseURL)
+	}
+
+	doPrepWork(baseURL)           // Named "init" fucntion, creates junkDataFile
 	defer os.Remove(junkDataFile) // nolint
 
 	go workSelector(f, filename, fromTime, forTime, strip, pipe) // which pipes work to ...
@@ -110,7 +118,9 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 // workSelector pipes a selection from a file to the workers
 func workSelector(f io.Reader, filename string, startFrom, runFor int, strip string, pipe chan []string) {
 
-	//log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
+	if debug {
+		log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
+	}
 	r := csv.NewReader(f)
 	r.Comma = ' '
 	r.Comment = '#'
@@ -127,7 +137,7 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 			log.Fatalf("Fatal error skipping forward in %s: %s\n", filename, err)
 		}
 		if i >= startFrom {
-			log.Printf("Skipped over %d lines, about to start test\n", i)
+			log.Printf("Skipped over %d lines, about to start reading data\n", i)
 			break
 		}
 	}
@@ -146,9 +156,7 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 		if strip != "" {
 			record[pathField] = strings.Replace(record[pathField], strip, "", 1)
 		}
-		if verbose {
-			log.Printf("writing %v to pipe\n", record)
-		}
+		//log.Printf("writing %v to pipe\n", record)
 		pipe <- record
 	}
 	log.Printf("Loaded %d records, closing input\n", recNo)
@@ -157,8 +165,10 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 
 // generateLoad starts progressRate new threads every 10 seconds until we hit progressRate
 func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix string) {
-	//log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, file=%s\n",
-	//	tpsTarget, progressRate, filename)
+	if debug {
+		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
+			tpsTarget, progressRate)
+	}
 
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc\n")
 	var closed = make(chan bool)
@@ -202,7 +212,9 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 
 // worker reads and executes a task every second until it hits eof
 func worker(pipe chan []string, closed chan bool, urlPrefix string) {
-	//log.Print("started a worker\n")
+	if debug {
+		log.Print("started a worker\n")
+	}
 	// wait a random fraction of one second before looping, for randomness.
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
@@ -241,7 +253,9 @@ func worker(pipe chan []string, closed chan bool, urlPrefix string) {
 
 // putJunkFile sends a specified number of bytes from /dev/urandom via a PUT
 func putJunkFile(baseURL, path string, size int64) {
-	//log.Printf("in putJunkFile(%s, %s, %d)\n", baseURL, path, size)
+	if debug {
+		log.Printf("in putJunkFile(%s, %s, %d)\n", baseURL, path, size)
+	}
 
 	switch protocol {
 	case HTTPProtocol:
@@ -256,7 +270,9 @@ func putJunkFile(baseURL, path string, size int64) {
 
 // get a url and do nothing with it.
 func getJunkFile(baseURL, path string) {
-	//log.Printf("in getJunkFile(%s, %s), protocol=%v\n", baseURL, path, protocol)
+	if debug {
+		log.Printf("in getJunkFile(%s, %s), protocol=%v\n", baseURL, path, protocol)
+	}
 
 	switch protocol {
 	case HTTPProtocol:

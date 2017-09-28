@@ -26,7 +26,7 @@ func main() {
 	var tpsTarget, progressRate, stepDuration int
 	var startFrom, runFor int
 	var s3, ceph, rest bool
-	var verbose bool
+	var verbose, debug bool
 	var configFile, strip, hostHeader string
 	var err error
 
@@ -42,6 +42,7 @@ func main() {
 	flag.StringVar(&configFile, "config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.StringVar(&strip, "strip", "", "strip text from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
+	flag.BoolVar(&debug, "d", false, "add debugging")
 	flag.Parse()
 
 	if flag.NArg() < 2 {
@@ -88,6 +89,7 @@ func main() {
 	loadTesting.RunLoadTest(io.Reader(f), filename, startFrom, runFor, tpsTarget, progressRate, baseURL,
 		loadTesting.Config{
 			Verbose:      verbose,
+			Debug:	  	  debug,
 			Protocol:     proto,
 			Strip:        strip,
 			Timeout:      terminationTimeout,

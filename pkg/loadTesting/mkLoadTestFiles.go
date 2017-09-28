@@ -20,13 +20,17 @@ import (
 // MkLoadTestFiles interprets the time period and decodes what to create .
 func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int, conf Config) {
 
-	//log.Printf("in MkLoadTestFiles(f *os.File, filename=%s, baseURL=%s, startFrom=%d, runFor=%d)",
-	// 	filename, baseURL, startFrom, runFor)
 	// get settings from conf parameter
 	verbose = conf.Verbose
+	debug = conf.Debug
 	protocol = conf.Protocol
 	strip = conf.Strip
 	timeout = conf.Timeout
+	if debug {
+		log.Printf("in MkLoadTestFiles(f *os.File, filename=%s, baseURL=%s, startFrom=%d, runFor=%d)",
+			filename, baseURL, startFrom, runFor)
+	}
+
 	doPrepWork(baseURL)
 	log.Printf("starting...\n")
 	defer os.Remove(junkDataFile) // nolint
@@ -98,7 +102,9 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 func mkFile(baseURL, sourceFile, fullPath, size string) {
 	var err error
 
-	log.Printf("in mkFile(baseURL=%s, sourceFile=%s, fullPath=%s, size=%s", baseURL, sourceFile, fullPath, size)
+	if debug {
+		log.Printf("in mkFile(baseURL=%s, sourceFile=%s, fullPath=%s, size=%s", baseURL, sourceFile, fullPath, size)
+	}
 	fileSize, err := strconv.ParseInt(size, 10, 64) // FIXME hoist
 	if err != nil {
 		log.Fatalf("can't get size from %q", size)

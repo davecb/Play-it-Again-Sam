@@ -30,7 +30,9 @@ var httpClient = &http.Client{
 
 // RestGet does a GET from an http target and times it
 func RestGet(baseURL, path string) {
-	//log.Printf("in RestGet(%s,%s)\n", baseURL, path)
+	if debug {
+		log.Printf("in RestGet(%s,%s)\n", baseURL, path)
+	}
 	req, err := http.NewRequest("GET", baseURL+"/"+path, nil)
 	if err != nil {
 		// try running right through this
@@ -96,7 +98,9 @@ func RestGet(baseURL, path string) {
 // FIXME add err back as a return value
 func RestPut(baseURL, path string, size int64) {
 
-	//log.Printf("putting %s\n", baseURL+"/"+path)
+	if debug {
+		log.Printf("putting %s\n", baseURL+"/"+path)
+	}
 	if size <= 0 {
 		fmt.Printf("%s 0 0 0 %d %s %d PUT\n",
 			time.Now().Format("2006-01-02 15:04:05.000"),

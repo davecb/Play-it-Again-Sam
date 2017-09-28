@@ -1,68 +1,102 @@
 // perf2Seconds reduces a perf .csv file to a by-seconds perf .csv file
 package main
 
-//import (
-//	"bufio"
-//	"fmt"
-//	"log"
-//	"os"
-//	"os/exec"
-//)
-//
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"os/exec"
+)
+
 func main() {
-	//	// parse the comamnd-line
-	//	//get an input or -
-	//	// open it as a file
-	//	// sort it and pipe to an fd
-	//	// this admittedly looks wierd, use --debug to see what it does
-	//	// sort -k 2.1,2.2nb -k 2.5,2.6nb -k2.8,2.12nb --temporary-directory=/var/tmp |\
-	//	// call perf2Seconds(fd)
+	var err error
+	var stdin, file io.WriteCloser
+
+	if len(os.Args) == 0 {
+		log.Fatalf("Usage: %s -|file", os.Args[0])
+	}
+
+	cmdName := "sort"
+	cmdArgs := []string{"-k2.1,2.2nb", "-k2.5,2.6nb", "-k2.8,2.12nb",
+		"--temporary-directory=/var/tmp"}
+	cmd := exec.Command(cmdName, cmdArgs...)
+	if os.Args[1] == "-" {
+		stdin, err = cmd.StdinPipe()
+		if err != nil {
+			log.Fatalf("%v: unable to open stdin, %v\n",
+				os.Args[0], err)
+		}
+		defer stdin.Close() // nolint
+	} else {
+		file, err = os.Open(os.Args[1])
+		if err != nil {
+			log.Fatalf("%v: could not open %q, %v\n",
+				os.Args[0], os.Args[1], err)
+		}
+		defer file.Close()
+		cmd.Stdin = file
+	}
+
+	out, err := cmd.CombinedOutput()
+	fmt.Printf("%s\n", out)
+	if err != nil {
+		log.Fatalf("%v: unable to run cat, %v\n", os.Args[0], err)
+	}
+	//cmdReader, err := cmd.StdoutPipe()
+	//if err != nil {
+	//	fmt.Errorf("Error creating StdoutPipe for Cmd, %v\n", err)
+	//}
+	//scanner := bufio.NewScanner(cmdReader)
 	//
-	//	//// docker build current directory
-	//	cmdName := "sort"
-	//	cmdArgs := []string{"-k", "2.1,2.2nb", "-k", "2.5,2.6nb", "-k", "2.8,2.12nb",
-	//		"--temporary-directory=/var/tmp"}
-	//
-	//	cmd := exec.Command(cmdName, cmdArgs...)
-	//	cmdReader, err := cmd.StdoutPipe()
-	//	if err != nil {
-	//		fmt.Fprintln(os.Stderr, "Error creating StdoutPipe for Cmd", err)
-	//		os.Exit(1)
-	//	}
-	//	scanner := bufio.NewScanner(cmdReader)
-	//	go func() {
-	//		for scanner.Scan() {
-	//			fmt.Printf("docker build out | %s\n", scanner.Text())
-	//		}
-	//	}()
-	//
-	//	err = cmd.Start()
-	//	if err != nil {
+	//err = cmd.Run()
+	//if err != nil {
 	//		fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
 	//		os.Exit(1)
-	//	}
-	//
-	//	err = cmd.Wait()
-	//	if err != nil {
-	//		fmt.Fprintln(os.Stderr, "Error waiting for Cmd", err)
-	//		os.Exit(1)
-	//	}
-	//	file, err := os.Open("/path/to/file.txt")
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//	defer file.Close()
-	//
-	//	scanner := bufio.NewScanner(file)
-	//	for scanner.Scan() {
-	//		fmt.Println(scanner.Text())
-	//	}
-	//
-	//	if err := scanner.Err(); err != nil {
-	//		log.Fatal(err)
-	//	}
-	//
+	//}
+	//perf2Seconds(scanner)
 }
+
+// nolint
+func perf2Seconds(scanner *bufio.Scanner) {
+
+	for scanner.Scan() {
+		fmt.Printf("Got %s\n", scanner.Text())
+	}
+}
+
+//	}()
+//
+//	err = cmd.Start()
+//	if err != nil {
+//		fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
+//		os.Exit(1)
+//	}
+//
+//	err = cmd.Wait()
+//	if err != nil {
+//		fmt.Fprintln(os.Stderr, "Error waiting for Cmd", err)
+//		os.Exit(1)
+//	}
+
+//next bit:
+//	file, err := os.Open("/path/to/file.txt")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	defer file.Close()
+//
+//	scanner := bufio.NewScanner(file)
+//	for scanner.Scan() {
+//		fmt.Println(scanner.Text())
+//	}
+//
+//	if err := scanner.Err(); err != nil {
+//		log.Fatal(err)
+//	}
+//
+//}
 
 //
 //func perf2Seconds() {

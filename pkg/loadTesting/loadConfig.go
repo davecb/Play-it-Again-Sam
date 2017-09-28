@@ -21,7 +21,9 @@ var S3params S3config
 // LoadConfig loads the s3/ceph parameters from a plain-text file.
 // The format is specific to a particular customer.
 func LoadConfig(fullPath string) error {
-	log.Printf("in LoadLoadtestConfig(%s)\n", fullPath)
+	if debug {
+		log.Printf("in LoadLoadtestConfig(%s)\n", fullPath)
+	}
 
 	in, err := os.Open(fullPath)
 	if err != nil {
@@ -49,8 +51,8 @@ func LoadConfig(fullPath string) error {
 			S3params.SecretKey = record[1]
 		}
 	}
-	//if verbose {
-	log.Printf("access key=%q,secret=%q\n", S3params.AccessKey, S3params.SecretKey)
-	//}
+	if debug {
+		log.Printf("access key=%q,secret=%q\n", S3params.AccessKey, S3params.SecretKey)
+	}
 	return nil
 }

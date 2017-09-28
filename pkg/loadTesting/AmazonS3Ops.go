@@ -27,7 +27,9 @@ var bucket = "images.s3.kobo.com" // FIXME
 
 // AmazonS3Get does a GET from an s3Protocol target and times it,
 func AmazonS3Get(baseURL, path string) {
-	log.Printf("in AmazonS3Get(%s, %s)\n", baseURL, path)
+	if debug {
+		log.Printf("in AmazonS3Get(%s, %s)\n", baseURL, path)
+	}
 
 	file, err := ioutil.TempFile("/tmp", "loadTesting")
 	if err != nil {
@@ -64,7 +66,9 @@ func AmazonS3Get(baseURL, path string) {
 // AmazonS3Put puts a file and times it
 // error return is used only by mkLoadTestFiles
 func AmazonS3Put(baseURL, path string, size int64) error {
-	log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
+	if debug {
+		log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
+	}
 
 	file, err := os.Open(junkDataFile)
 	if err != nil {
