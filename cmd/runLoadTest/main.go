@@ -27,6 +27,7 @@ func main() {
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var verbose, debug bool
+	var serial bool
 	var configFile, strip, hostHeader string
 	var err error
 
@@ -38,11 +39,12 @@ func main() {
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
-	flag.BoolVar(&verbose, "v", false, "set verbose to true")
+	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
 	flag.StringVar(&configFile, "config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.StringVar(&strip, "strip", "", "strip text from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.BoolVar(&debug, "d", false, "add debugging")
+	flag.BoolVar(&verbose, "v", false, "set verbose to true")
 	flag.Parse()
 
 	if flag.NArg() < 2 {
@@ -89,7 +91,8 @@ func main() {
 	loadTesting.RunLoadTest(io.Reader(f), filename, startFrom, runFor, tpsTarget, progressRate, baseURL,
 		loadTesting.Config{
 			Verbose:      verbose,
-			Debug:	  	  debug,
+			Debug:        debug,
+			Serialize:    serial,
 			Protocol:     proto,
 			Strip:        strip,
 			Timeout:      terminationTimeout,

@@ -10,7 +10,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -40,6 +39,7 @@ const ( // nolint
 type Config struct {
 	Verbose      bool
 	Debug        bool
+	Serialize    bool
 	Protocol     int
 	Strip        string
 	Timeout      time.Duration
@@ -68,6 +68,9 @@ var stepDuration int
 // optional host header
 var hostHeader string
 
+// serialize load tests, which changes the applied load: be carefull!
+var serialize bool
+
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
 var alive = make(chan bool, 1000)
@@ -85,6 +88,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	// get settings from conf parameter
 	verbose = conf.Verbose
 	debug = conf.Debug
+	serialize = conf.Serialize
 	protocol = conf.Protocol
 	strip = conf.Strip
 	timeout = conf.Timeout
@@ -237,14 +241,25 @@ func worker(pipe chan []string, closed chan bool, urlPrefix string) {
 			// bad input data, crash please.
 			log.Fatalf("number of fields != 9 in %v", r)
 		case r[operatorField] == "GET":
-			go getJunkFile(urlPrefix, r[pathField])
-		case r[operatorField] == "PUT":
-			fileSize, err := strconv.ParseInt(r[bytesField], 10, 64)
-			if err != nil {
-				// fail the run if given bad input data here, too
-				log.Fatalf("could not parse size field in %v\n", r)
+			if serialize {
+				// force this NOT to be asynchronous, for load tests only
+				getJunkFile(urlPrefix, r[pathField])
+			} else {
+				go getJunkFile(urlPrefix, r[pathField])
 			}
-			go putJunkFile(urlPrefix, r[pathField], fileSize)
+		case r[operatorField] == "PUT":
+			// FIXME: treat PUT as GET, probably a 404
+			if serialize {
+				getJunkFile(urlPrefix, r[pathField])
+			} else {
+				go getJunkFile(urlPrefix, r[pathField])
+			}
+			//fileSize, err := strconv.ParseInt(r[bytesField], 10, 64)
+			//if err != nil {
+			//	// fail the run if given bad input data here, too
+			//	log.Fatalf("could not parse size field in %v\n", r)
+			//}
+			//go putJunkFile(urlPrefix, r[pathField], fileSize)
 		default:
 			log.Fatal("operations other than GET and PUT are not implemented yet\n")
 		}
@@ -288,7 +303,7 @@ func getJunkFile(baseURL, path string) {
 
 // doPrepWork makes sure we have the prerequisites by protocol
 func doPrepWork(baseURL string) {
-	MustCreateFilesystemFile(junkDataFile, size)
+	//MustCreateFilesystemFile(junkDataFile, size)  FXIME. needed for PUT
 	switch protocol {
 	case S3Protocol:
 		AmazonS3Prep(baseURL)
