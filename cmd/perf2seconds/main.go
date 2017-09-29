@@ -1,70 +1,70 @@
 // perf2Seconds reduces a perf .csv file to a by-seconds perf .csv file
 package main
 
-import (
-	"bufio"
-	"fmt"
-	"io"
-	"log"
-	"os"
-	"os/exec"
-)
-
-func main() {
-	var err error
-	var stdin, file io.WriteCloser
-
-	if len(os.Args) == 0 {
-		log.Fatalf("Usage: %s -|file", os.Args[0])
-	}
-
-	cmdName := "sort"
-	cmdArgs := []string{"-k2.1,2.2nb", "-k2.5,2.6nb", "-k2.8,2.12nb",
-		"--temporary-directory=/var/tmp"}
-	cmd := exec.Command(cmdName, cmdArgs...)
-	if os.Args[1] == "-" {
-		stdin, err = cmd.StdinPipe()
-		if err != nil {
-			log.Fatalf("%v: unable to open stdin, %v\n",
-				os.Args[0], err)
-		}
-		defer stdin.Close() // nolint
-	} else {
-		file, err = os.Open(os.Args[1])
-		if err != nil {
-			log.Fatalf("%v: could not open %q, %v\n",
-				os.Args[0], os.Args[1], err)
-		}
-		defer file.Close()
-		cmd.Stdin = file
-	}
-
-	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s\n", out)
-	if err != nil {
-		log.Fatalf("%v: unable to run cat, %v\n", os.Args[0], err)
-	}
-	//cmdReader, err := cmd.StdoutPipe()
-	//if err != nil {
-	//	fmt.Errorf("Error creating StdoutPipe for Cmd, %v\n", err)
-	//}
-	//scanner := bufio.NewScanner(cmdReader)
-	//
-	//err = cmd.Run()
-	//if err != nil {
-	//		fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
-	//		os.Exit(1)
-	//}
-	//perf2Seconds(scanner)
-}
-
-// nolint
-func perf2Seconds(scanner *bufio.Scanner) {
-
-	for scanner.Scan() {
-		fmt.Printf("Got %s\n", scanner.Text())
-	}
-}
+//import (
+//	"bufio"
+//	"fmt"
+//	"io"
+//	"log"
+//	"os"
+//	"os/exec"
+//)
+//
+//func main() {
+//	var err error
+//	var stdin, file io.WriteCloser
+//
+//	if len(os.Args) == 0 {
+//		log.Fatalf("Usage: %s -|file", os.Args[0])
+//	}
+//
+//	cmdName := "sort"
+//	cmdArgs := []string{"-k2.1,2.2nb", "-k2.5,2.6nb", "-k2.8,2.12nb",
+//		"--temporary-directory=/var/tmp"}
+//	cmd := exec.Command(cmdName, cmdArgs...)
+//	if os.Args[1] == "-" {
+//		stdin, err = cmd.StdinPipe()
+//		if err != nil {
+//			log.Fatalf("%v: unable to open stdin, %v\n",
+//				os.Args[0], err)
+//		}
+//		defer stdin.Close() // nolint
+//	} else {
+//		file, err = os.Open(os.Args[1])
+//		if err != nil {
+//			log.Fatalf("%v: could not open %q, %v\n",
+//				os.Args[0], os.Args[1], err)
+//		}
+//		defer file.Close()
+//		cmd.Stdin = file
+//	}
+//
+//	out, err := cmd.CombinedOutput()
+//	fmt.Printf("%s\n", out)
+//	if err != nil {
+//		log.Fatalf("%v: unable to run cat, %v\n", os.Args[0], err)
+//	}
+//	//cmdReader, err := cmd.StdoutPipe()
+//	//if err != nil {
+//	//	fmt.Errorf("Error creating StdoutPipe for Cmd, %v\n", err)
+//	//}
+//	//scanner := bufio.NewScanner(cmdReader)
+//	//
+//	//err = cmd.Run()
+//	//if err != nil {
+//	//		fmt.Fprintln(os.Stderr, "Error starting Cmd", err)
+//	//		os.Exit(1)
+//	//}
+//	//perf2Seconds(scanner)
+//}
+//
+//// nolint
+//func perf2Seconds(scanner *bufio.Scanner) {
+//
+//	for scanner.Scan() {
+//		fmt.Printf("Got %s\n", scanner.Text())
+//	}
+//}
 
 //	}()
 //

@@ -40,6 +40,7 @@ type Config struct {
 	Verbose      bool
 	Debug        bool
 	Serialize    bool
+	Cache        bool
 	Protocol     int
 	Strip        string
 	Timeout      time.Duration
@@ -52,6 +53,9 @@ var verbose bool
 
 // Debug turns on trace stuff
 var debug bool
+
+// cache turns off no-cache header
+var cache bool
 
 // Protocol indicates which of the above is in use
 var protocol int
@@ -88,6 +92,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	// get settings from conf parameter
 	verbose = conf.Verbose
 	debug = conf.Debug
+	cache = conf.Cache
 	serialize = conf.Serialize
 	protocol = conf.Protocol
 	strip = conf.Strip

@@ -44,7 +44,9 @@ func RestGet(baseURL, path string) {
 		alive <- true
 		return
 	}
-	req.Header.Add("cache-control", "no-cache")
+	if !cache {
+		req.Header.Add("cache-control", "no-cache")
+	}
 	if hostHeader != "" {
 		req.Host = hostHeader
 		// Go disfeature: host is special,

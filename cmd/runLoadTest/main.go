@@ -27,7 +27,7 @@ func main() {
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var verbose, debug bool
-	var serial bool
+	var serial, cache bool
 	var configFile, strip, hostHeader string
 	var err error
 
@@ -43,6 +43,7 @@ func main() {
 	flag.StringVar(&configFile, "config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.StringVar(&strip, "strip", "", "strip text from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
+	flag.BoolVar(&cache, "cache", false, "allow caching")
 	flag.BoolVar(&debug, "d", false, "add debugging")
 	flag.BoolVar(&verbose, "v", false, "set verbose to true")
 	flag.Parse()
@@ -93,6 +94,7 @@ func main() {
 			Verbose:      verbose,
 			Debug:        debug,
 			Serialize:    serial,
+			Cache:        cache,
 			Protocol:     proto,
 			Strip:        strip,
 			Timeout:      terminationTimeout,
