@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	// FIXME aws "github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
@@ -45,21 +44,18 @@ func AmazonS3Get(baseURL, path string) {
 			Key:    aws.String(path),
 		})
 	responseTime := time.Since(initial) // 				***** Response time ends
-	if err == nil {
-		fmt.Printf("%s %f 0 0 %d %s 200 GET\n",
+	if err != nil {
+		rc := errorCodeToHTTPCode(err)
+		fmt.Printf("%s %f 0 0 %d %s %d GET\n",
 			initial.Format("2006-01-02 15:04:05.000"),
-			responseTime.Seconds(), numBytes, path)
-	} else {
-		fmt.Printf("%s %f 0 0 %d %s 4XX GET\n",
-			initial.Format("2006-01-02 15:04:05.000"),
-			responseTime.Seconds(), numBytes, path)
+			responseTime.Seconds(), numBytes, path, rc)
 		// Extract and report the failure, iff possible
-		reqerr, ok := err.(awserr.RequestFailure)
-		if ok {
-			log.Printf("s3 reported an error fetching %s, %v\n",
-				path, reqerr)
-		}
+		alive <- true
+		return
 	}
+	fmt.Printf("%s %f 0 0 %d %s 200 GET\n",
+			initial.Format("2006-01-02 15:04:05.000"),
+			responseTime.Seconds(), numBytes, path)
 	alive <- true
 }
 
@@ -147,4 +143,18 @@ func AmazonS3Prep(baseURL string) {
 	if svc == nil {
 		svc = mustCreateService(baseURL, awsLogLevel)
 	}
+}
+
+// errorCodeToHTTPCode is trickey! FIXME
+func errorCodeToHTTPCode(err error) int {
+	aerr, ok := err.(awserr.Error)
+	if !ok {
+		return -2 // not from aws
+	}
+	reqErr, ok := aerr.(awserr.RequestFailure)
+	if !ok {
+		return -1 // not a request failure
+	}
+	// A service error occurred, it has an HTTP code
+	return reqErr.StatusCode()
 }
