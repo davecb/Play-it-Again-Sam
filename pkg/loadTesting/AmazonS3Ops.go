@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 )
 
 var svc *s3.S3
@@ -54,8 +54,8 @@ func AmazonS3Get(baseURL, path string) {
 		return
 	}
 	fmt.Printf("%s %f 0 0 %d %s 200 GET\n",
-			initial.Format("2006-01-02 15:04:05.000"),
-			responseTime.Seconds(), numBytes, path)
+		initial.Format("2006-01-02 15:04:05.000"),
+		responseTime.Seconds(), numBytes, path)
 	alive <- true
 }
 
@@ -145,7 +145,8 @@ func AmazonS3Prep(baseURL string) {
 	}
 }
 
-// errorCodeToHTTPCode is trickey! FIXME
+// errorCodeToHTTPCode is wimpey!
+// only a few codes (eg, 404) are implemented
 func errorCodeToHTTPCode(err error) int {
 	aerr, ok := err.(awserr.Error)
 	if !ok {
