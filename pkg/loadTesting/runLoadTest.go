@@ -41,6 +41,7 @@ type Config struct {
 	Debug        bool
 	Serialize    bool
 	Cache        bool
+	RealTime     bool
 	Protocol     int
 	Strip        string
 	Timeout      time.Duration
@@ -56,6 +57,9 @@ var debug bool
 
 // cache turns off no-cache header
 var cache bool
+
+// realTime turns on pipe-like processing
+var realTime bool
 
 // Protocol indicates which of the above is in use
 var protocol int
@@ -122,6 +126,7 @@ func setConf(conf Config) {
 	verbose = conf.Verbose
 	debug = conf.Debug
 	cache = conf.Cache
+	realTime = conf.RealTime
 	serialize = conf.Serialize
 	protocol = conf.Protocol
 	strip = conf.Strip
@@ -162,6 +167,11 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, strip str
 	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
 		if err == io.EOF {
+			if realTime {
+				// just keep reading
+				time.Sleep(time.Millisecond)
+				continue
+			}
 			//log.Printf("At EOF on %s, no new work to queue\n", filename)
 			break
 		}
@@ -188,6 +198,12 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc\n")
 	var closed = make(chan bool)
 	switch {
+	case realTime: // progress rate is defined by the input stream
+		log.Print("starting to read the input file continuously, ^C to stop\n")
+		for i := 0; i < 3; i++ {
+			// The "3" is a heuristic
+			go worker(pipe, closed, urlPrefix)
+		}
 	case progressRate != 0:
 		// start the first workers
 		rate := progressRate
@@ -220,7 +236,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 			// start a worker
 			go worker(pipe, closed, urlPrefix)
 		}
-	case tpsTarget <= 0:
+	case tpsTarget < 0:
 		log.Fatal("A zero or negative tps target is not meaningfull, halting\n")
 	}
 }
