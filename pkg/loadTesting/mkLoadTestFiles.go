@@ -15,17 +15,11 @@ import (
 	"strings"
 )
 
-// nolint
-
 // MkLoadTestFiles interprets the time period and decodes what to create .
 func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int, conf Config) {
 
 	// get settings from conf parameter
-	verbose = conf.Verbose
-	debug = conf.Debug
-	protocol = conf.Protocol
-	strip = conf.Strip
-	timeout = conf.Timeout
+	setConf(conf)
 	if debug {
 		log.Printf("in MkLoadTestFiles(f *os.File, filename=%s, baseURL=%s, startFrom=%d, runFor=%d)",
 			filename, baseURL, startFrom, runFor)

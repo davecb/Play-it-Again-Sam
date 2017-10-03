@@ -82,6 +82,7 @@ var alive = make(chan bool, 1000)
 ///var bucketName = "loadtest"
 var junkDataFile = "/tmp/LoadTestJunkDataFile"
 
+// nolint
 const size = 396759652 // FIXME, this is a heuristic
 
 // RunLoadTest does whatever main figured out that the caller wanted.
@@ -90,15 +91,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	var processed = 0
 
 	// get settings from conf parameter
-	verbose = conf.Verbose
-	debug = conf.Debug
-	cache = conf.Cache
-	serialize = conf.Serialize
-	protocol = conf.Protocol
-	strip = conf.Strip
-	timeout = conf.Timeout
-	stepDuration = conf.StepDuration
-	hostHeader = conf.HostHeader
+	setConf(conf)
 
 	if debug {
 		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
@@ -122,6 +115,19 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 			os.Exit(0)
 		}
 	}
+}
+
+// setConf copies the conf parameters to globals
+func setConf(conf Config) {
+	verbose = conf.Verbose
+	debug = conf.Debug
+	cache = conf.Cache
+	serialize = conf.Serialize
+	protocol = conf.Protocol
+	strip = conf.Strip
+	timeout = conf.Timeout
+	stepDuration = conf.StepDuration
+	hostHeader = conf.HostHeader
 }
 
 // workSelector pipes a selection from a file to the workers
@@ -272,7 +278,7 @@ func worker(pipe chan []string, closed chan bool, urlPrefix string) {
 }
 
 // putJunkFile sends a specified number of bytes from /dev/urandom via a PUT
-func putJunkFile(baseURL, path string, size int64) {
+func putJunkFile(baseURL, path string, size int64) { // nolint
 	if debug {
 		log.Printf("in putJunkFile(%s, %s, %d)\n", baseURL, path, size)
 	}
