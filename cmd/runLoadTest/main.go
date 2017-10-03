@@ -27,7 +27,7 @@ func main() {
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var verbose, debug bool
-	var serial, cache bool
+	var serial, cache, realTime  bool
 	var configFile, strip, hostHeader string
 	var err error
 
@@ -44,6 +44,7 @@ func main() {
 	flag.StringVar(&strip, "strip", "", "strip text from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.BoolVar(&cache, "cache", false, "allow caching")
+	flag.BoolVar(&realTime, "real-time", false, "tail -f the input file")
 	flag.BoolVar(&debug, "d", false, "add debugging")
 	flag.BoolVar(&verbose, "v", false, "set verbose to true")
 	flag.Parse()
@@ -95,6 +96,7 @@ func main() {
 			Debug:        debug,
 			Serialize:    serial,
 			Cache:        cache,
+			RealTime:     realTime,
 			Protocol:     proto,
 			Strip:        strip,
 			Timeout:      terminationTimeout,
