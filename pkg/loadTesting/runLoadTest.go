@@ -238,6 +238,12 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 		}
 	case tpsTarget < 0:
 		log.Fatal("A zero or negative tps target is not meaningfull, halting\n")
+	case realTime:
+		log.Print("starting to read the input file continuously, ^C to stop\n")
+		for i := 0; i < 3; i++ {
+			// The "3" is a heuristic
+			go worker(pipe, closed, urlPrefix)
+		}
 	}
 }
 
