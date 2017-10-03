@@ -57,7 +57,7 @@ func main() {
 	if runFor == 0 {
 		runFor = math.MaxInt64
 	}
-	if tpsTarget == 0 {
+	if tpsTarget == 0 && !realTime {
 		log.Fatal("You must specify a --tps target, halting.")
 	}
 
