@@ -16,24 +16,27 @@ import (
 )
 
 // MkLoadTestFiles interprets the time period and decodes what to create .
-func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int, conf Config) {
-
-	// get settings from conf parameter
-	setConf(conf)
-	if debug {
+func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int, cfg Config) {
+	if conf.Debug {
 		log.Printf("in MkLoadTestFiles(f *os.File, filename=%s, baseURL=%s, startFrom=%d, runFor=%d)",
 			filename, baseURL, startFrom, runFor)
 	}
 
+	conf = cfg
 	doPrepWork(baseURL)
-	log.Printf("starting...\n")
-	defer os.Remove(junkDataFile) // nolint
+	defer os.Remove(junkDataFile) // nolint FIXME, for write
 
 	r := csv.NewReader(f)
 	r.Comma = ' '
 	r.Comment = '#'
 	r.FieldsPerRecord = -1 // ignore differences
 
+	skipForward(startFrom, r, filename)
+	makeFiles(runFor, r, filename, baseURL)
+}
+
+// skipForward skips over files we don't want to create
+func skipForward(startFrom int, r *csv.Reader, filename string) {
 	//skip forward if startFrom is non-zero
 	for i := 0; i < startFrom; i++ {
 		record, err := r.Read()
@@ -45,7 +48,10 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 		}
 		log.Printf("skipped %s\n", record)
 	}
+}
 
+// makeFiles creates a quantity of files
+func makeFiles(runFor int, r *csv.Reader, filename string, baseURL string) {
 	for i := 0; i < runFor; i++ {
 		record, err := r.Read()
 		if err == io.EOF {
@@ -92,25 +98,24 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 	}
 }
 
-// mkfile creates a file of specified size or says why not.
+// mkfile creates a single file of specified size or says why not.
 func mkFile(baseURL, sourceFile, fullPath, size string) {
 	var err error
 
-	if debug {
+	if conf.Debug {
 		log.Printf("in mkFile(baseURL=%s, sourceFile=%s, fullPath=%s, size=%s", baseURL, sourceFile, fullPath, size)
 	}
 	fileSize, err := strconv.ParseInt(size, 10, 64) // FIXME hoist
 	if err != nil {
 		log.Fatalf("can't get size from %q", size)
 	}
-	switch protocol {
+	switch conf.Protocol {
 	case FilesystemProtocol: // prepend current directory to path
 		err = TimedCreateFilesystemFile("./"+strings.TrimPrefix(fullPath, "/"), fileSize)
 	case S3Protocol:
-		//err =  MinioS3Put(baseURL, fullPath, size)
 		err = AmazonS3Put(baseURL, fullPath, fileSize)
-	case HTTPProtocol:
-		RestPut("http://"+baseURL, fullPath, fileSize)
+	case RESTProtocol:
+		err = RestPut("http://"+baseURL, fullPath, fileSize)
 	case CephProtocol: // Pre-alpha stage
 		err = createCephFile(baseURL+fullPath, fileSize)
 	}

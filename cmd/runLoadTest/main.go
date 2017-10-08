@@ -35,18 +35,18 @@ func main() {
 	flag.IntVar(&startFrom, "from", 0, "number of records to skip, eg 100")
 	flag.IntVar(&tpsTarget, "tps", 0, "TPS target")
 	flag.IntVar(&stepDuration, "duration", 10, "Duration of a step")
-	flag.IntVar(&progressRate, "progress", 0, "progress rate in TPS steps")
+	flag.IntVar(&progressRate, "progress", 0, "progress rate, in TPS steps")
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
-	flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
+	//flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
 	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
-	flag.StringVar(&configFile, "config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
-	flag.StringVar(&strip, "strip", "", "strip text from paths")
+	flag.StringVar(&configFile, "s3config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
+	flag.StringVar(&strip, "strip", "", "test to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.BoolVar(&cache, "cache", false, "allow caching")
 	flag.BoolVar(&realTime, "real-time", false, "tail -f the input file")
-	flag.BoolVar(&debug, "d", false, "add debugging")
-	flag.BoolVar(&verbose, "v", false, "set verbose to true")
+	flag.BoolVar(&debug, "d", false, "add conf.Debugging")
+	flag.BoolVar(&verbose, "v", false, "add verbose messages")
 	flag.Parse()
 
 	if flag.NArg() < 2 {
@@ -54,30 +54,23 @@ func main() {
 		usage()
 	}
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
+
 	if runFor == 0 {
 		runFor = math.MaxInt64
 	}
+	
 	if tpsTarget == 0 && !realTime {
 		log.Fatal("You must specify a --tps target, halting.")
 	}
 
-	var proto = loadTesting.HTTPProtocol
-	switch {
-	case s3:
-		proto = loadTesting.S3Protocol
-		err = loadTesting.LoadConfig(configFile)
-		if err != nil {
-			log.Fatalf("Could not read config file %s, halting. %v", configFile, err)
-		}
-	case ceph:
-		proto = loadTesting.CephProtocol
-	default: //REST
-		proto = loadTesting.HTTPProtocol
+	proto, err := setProtocol(s3, configFile, ceph)
+	if err != nil {
+		log.Fatalf("Error Serting protocol %v, halting.", err)
 	}
-
+	
 	filename := flag.Arg(0)
 	if filename == "" {
-		log.Fatalf("No load-test csv file provided, halting.\n")
+		log.Fatalf("No load-test .csv file provided, halting.\n")
 	}
 	f, err := os.Open(filename)
 	if err != nil {
@@ -90,7 +83,8 @@ func main() {
 		log.Fatalf("No base url provided, halting. \n")
 	}
 
-	loadTesting.RunLoadTest(io.Reader(f), filename, startFrom, runFor, tpsTarget, progressRate, baseURL,
+	loadTesting.RunLoadTest(io.Reader(f), filename, startFrom, runFor,
+		tpsTarget, progressRate, baseURL,
 		loadTesting.Config{
 			Verbose:      verbose,
 			Debug:        debug,
@@ -103,4 +97,23 @@ func main() {
 			StepDuration: stepDuration,
 			HostHeader:   hostHeader,
 		})
+}
+
+func setProtocol(s3 bool, configFile string, ceph bool) (int, error) {
+	var err error
+
+	var proto = loadTesting.RESTProtocol
+	switch {
+	case s3:
+		proto = loadTesting.S3Protocol
+		err = loadTesting.LoadConfig(configFile)
+		if err != nil {
+			log.Fatalf("Could not read config file %s, halting. %v", configFile, err)
+		}
+	case ceph:
+		proto = loadTesting.CephProtocol // unimplemented
+	default: //REST
+		proto = loadTesting.RESTProtocol
+	}
+	return proto, err
 }

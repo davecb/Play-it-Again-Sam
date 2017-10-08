@@ -26,7 +26,7 @@ var bucket = "images.s3.kobo.com" // FIXME
 
 // AmazonS3Get does a GET from an s3Protocol target and times it,
 func AmazonS3Get(baseURL, path string) {
-	if debug {
+	if conf.Debug {
 		log.Printf("in AmazonS3Get(%s, %s)\n", baseURL, path)
 	}
 
@@ -62,7 +62,7 @@ func AmazonS3Get(baseURL, path string) {
 // AmazonS3Put puts a file and times it
 // error return is used only by mkLoadTestFiles
 func AmazonS3Put(baseURL, path string, size int64) error {
-	if debug {
+	if conf.Debug {
 		log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
 	}
 
@@ -114,7 +114,7 @@ func mustCreateService(myEndpoint string, awsLogLevel aws.LogLevelType) *s3.S3 {
 	if S3params.AccessKey == "" {
 		log.Fatal("called mustCreateService with no s3 params, internal error\n")
 	}
-	if verbose {
+	if conf.Verbose {
 		awsLogLevel = aws.LogDebugWithSigning | aws.LogDebugWithHTTPBody
 	}
 	token := ""

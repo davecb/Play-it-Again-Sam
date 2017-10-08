@@ -30,7 +30,7 @@ var httpClient = &http.Client{
 
 // RestGet does a GET from an http target and times it
 func RestGet(baseURL, path string) {
-	if debug {
+	if conf.Debug {
 		log.Printf("in RestGet(%s,%s)\n", baseURL, path)
 	}
 	req, err := http.NewRequest("GET", baseURL+"/"+path, nil)
@@ -44,14 +44,14 @@ func RestGet(baseURL, path string) {
 		alive <- true
 		return
 	}
-	if !cache {
+	if !conf.Cache {
 		req.Header.Add("cache-control", "no-cache")
 	}
-	if hostHeader != "" {
-		req.Host = hostHeader
+	if conf.HostHeader != "" {
+		req.Host = conf.HostHeader
 		// Go disfeature: host is special,
 		// See also https://github.com/golang/go/issues/7682
-		req.Header.Add("Host", hostHeader)
+		req.Header.Add("Host", conf.HostHeader)
 	}
 
 	initial := time.Now() // Response time starts
@@ -84,7 +84,7 @@ func RestGet(baseURL, path string) {
 		alive <- true
 		return
 	}
-	if verbose || firstDigit(resp.StatusCode) == 5 {
+	if conf.Verbose || firstDigit(resp.StatusCode) == 5 {
 		// dump if its not a 200 OK, etc.
 		dumpRequest(req)
 		dumpResponse(resp)
@@ -96,11 +96,10 @@ func RestGet(baseURL, path string) {
 	alive <- true
 }
 
-// RestPut does an ordinary (not ceph or s3) put operation.
-// FIXME add err back as a return value
-func RestPut(baseURL, path string, size int64) {
+// RestPut does an ordinary REST (not ceph or s3) put operation.
+func RestPut(baseURL, path string, size int64) error {
 
-	if debug {
+	if conf.Debug {
 		log.Printf("putting %s\n", baseURL+"/"+path)
 	}
 	if size <= 0 {
@@ -108,12 +107,12 @@ func RestPut(baseURL, path string, size int64) {
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			size, path, 411) // 411 means "length required"
 		alive <- true
-		return
+		return nil
 	}
 	// make sure we have a dummy file
 	fp, err := os.Open(junkDataFile)
 	if err != nil {
-		log.Fatalf("Can't open %q\n", junkDataFile)
+		return fmt.Errorf("can't open %q", junkDataFile)
 	}
 	defer fp.Close() // nolint
 
@@ -140,7 +139,7 @@ func RestPut(baseURL, path string, size int64) {
 		// FIXME, continue?
 		log.Fatalf(`error reading http response, "%v": halting.\n`, err)
 	}
-	if verbose || firstDigit(resp.StatusCode) == 5 {
+	if conf.Verbose || firstDigit(resp.StatusCode) == 5 {
 		// dump if its not a 200 OK, etc.
 		dumpRequest(req)
 		dumpResponse(resp)
@@ -150,6 +149,7 @@ func RestPut(baseURL, path string, size int64) {
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(contents), path, resp.StatusCode)
 	alive <- true
+	return nil
 }
 
 // return the first digit of a status code, where

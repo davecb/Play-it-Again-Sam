@@ -52,20 +52,9 @@ func main() {
 	}
 	defer f.Close() // nolint
 
-	var proto = loadTesting.FilesystemProtocol
-	switch {
-	case s3:
-		proto = loadTesting.S3Protocol
-		err = loadTesting.LoadConfig(configFile)
-		if err != nil {
-			log.Fatalf("Could not read config file %s, halting. %v", configFile, err)
-		}
-	case ceph:
-		proto = loadTesting.CephProtocol
-	case rest:
-		proto = loadTesting.HTTPProtocol
-	default:
-		proto = loadTesting.FilesystemProtocol
+	proto, err := setProtocol(s3, configFile, ceph)
+	if err != nil {
+		log.Fatalf("Error Serting protocol %v, halting.", err)
 	}
 
 	loadTesting.MkLoadTestFiles(f, filename, baseURL, startFrom, runFor,
@@ -76,4 +65,23 @@ func main() {
 			// Timeout is 0
 		})
 
+}
+
+func setProtocol(s3 bool, configFile string, ceph bool) (int, error) {
+	var err error
+
+	var proto = loadTesting.RESTProtocol
+	switch {
+	case s3:
+		proto = loadTesting.S3Protocol
+		err = loadTesting.LoadConfig(configFile)
+		if err != nil {
+			log.Fatalf("Could not read config file %s, halting. %v", configFile, err)
+		}
+	case ceph:
+		proto = loadTesting.CephProtocol // unimplemented
+	default: //REST
+		proto = loadTesting.RESTProtocol
+	}
+	return proto, err
 }
