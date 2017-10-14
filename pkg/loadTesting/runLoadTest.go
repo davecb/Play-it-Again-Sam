@@ -60,20 +60,21 @@ const size = 396759652 // nolint // FIXME, this is a heuristic
 
 // RunLoadTest does whatever main figured out that the caller wanted.
 func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
-	tpsTarget, progressRate int, baseURL string, cfg Config) {
+	tpsTarget, progressRate, startTps int, baseURL string, cfg Config) {
 	var processed = 0
 	conf = cfg
 
 	if conf.Debug {
-		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
-			tpsTarget, progressRate, fromTime, forTime, baseURL)
+		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, " +
+			"startTps=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
+			tpsTarget, progressRate, startTps, fromTime, forTime, baseURL)
 	}
 
 	doPrepWork(baseURL)           // Named "init" fucntion, creates junkDataFile
 	defer os.Remove(junkDataFile) // nolint
 
 	go workSelector(f, filename, fromTime, forTime, pipe)    // which pipes work to ...
-	go generateLoad(pipe, tpsTarget, progressRate, baseURL)  // which then writes to "alive"
+	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)  // which then writes to "alive"
 	for {
 		select {
 		case <-alive:
@@ -133,7 +134,7 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 }
 
 // generateLoad starts progressRate new threads every 10 seconds until we hit progressRate
-func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix string) {
+func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, urlPrefix string) {
 	if conf.Debug {
 		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 			tpsTarget, progressRate)
@@ -145,7 +146,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate int, urlPrefix str
 	case conf.RealTime: // progress rate is defined by the input stream
 		runRealTimeLoad(pipe, closed, urlPrefix)
 	case progressRate != 0:
-		runProgressivelyIncreasingLoad(progressRate, tpsTarget, pipe, closed, urlPrefix)
+		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe, closed, urlPrefix)
 	case tpsTarget != 0:
 		runSteadyLoad(tpsTarget, pipe, closed, urlPrefix)
 	case tpsTarget < 0:
@@ -173,11 +174,15 @@ func runRealTimeLoad(pipe chan []string, closed chan bool, urlPrefix string) {
 }
 
 // runProgressivelyIncreasingLoad, the classic load test
-func runProgressivelyIncreasingLoad(progressRate, tpsTarget int, pipe chan []string,
+func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string,
 	closed chan bool, urlPrefix string) {
+
 	// start the first workers
-	rate := progressRate
-	for i := 0; i < progressRate; i++ {
+	if startTps == 0 {
+		startTps = progressRate
+	}
+	rate := startTps
+	for i := 0; i < startTps; i++ {
 		go worker(pipe, closed, urlPrefix)
 	}
 	// add to the workers until we have enough

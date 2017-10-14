@@ -5,7 +5,8 @@
 package main
 
 import (
-	"newLoadTesting/pkg/loadTesting"
+	"loadTesting/pkg/loadTesting"
+
 
 	"flag"
 	"fmt"
