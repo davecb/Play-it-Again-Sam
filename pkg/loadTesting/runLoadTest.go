@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	//"old/pathExpressions/src/github.com/derekparker/delve/dwarf/op"
 )
 
 // The protocols supported by the library
@@ -21,6 +22,14 @@ const (
 	S3Protocol
 	CephProtocol
 )
+
+// operations are the things a protocol must support
+type operation interface {     // nolint
+    Init()                     // nolint
+    Get(path string)           // nolint
+    Put(path string, size int) // nolint
+}
+
 
 // These are the field names in the csv file
 const ( // nolint
@@ -51,9 +60,11 @@ type Config struct {
 
 
 var conf Config
+var op = RestProto{}
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
 var alive = make(chan bool, 1000)
+var closed = make(chan bool)
 
 var junkDataFile = "/tmp/LoadTestJunkDataFile" // FIXME for write and r/w tests
 const size = 396759652 // nolint // FIXME, this is a heuristic
@@ -70,8 +81,18 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 			tpsTarget, progressRate, startTps, fromTime, forTime, baseURL)
 	}
 
-	doPrepWork(baseURL)           // Named "init" fucntion, creates junkDataFile
-	defer os.Remove(junkDataFile) // nolint
+	// Figure out set of operations to use
+	switch conf.Protocol {
+	case RESTProtocol:
+		op = RestProto{prefix: baseURL}
+		op.Init()
+	//case S3Protocol:
+	//	op = S3Proto{prefix: baseURL}
+	//	op.Init()
+	default:
+		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
+	}
+	// FIXME defer os.Remove(junkDataFile) // nolint
 
 	go workSelector(f, filename, fromTime, forTime, pipe)    // which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)  // which then writes to "alive"
@@ -141,41 +162,39 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 	}
 
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc\n")
-	var closed = make(chan bool)
 	switch {
 	case conf.RealTime: // progress rate is defined by the input stream
-		runRealTimeLoad(pipe, closed, urlPrefix)
+		runRealTimeLoad(pipe,)
 	case progressRate != 0:
-		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe, closed, urlPrefix)
+		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
 	case tpsTarget != 0:
-		runSteadyLoad(tpsTarget, pipe, closed, urlPrefix)
+		runSteadyLoad(tpsTarget, pipe)
 	case tpsTarget < 0:
 		log.Fatal("A zero or negative tps target is not meaningfull, halting\n")
 	}
 }
 
 // run at a steady tps until the end of the data
-func runSteadyLoad(tpsTarget int, pipe chan []string, closed chan bool, urlPrefix string) {
+func runSteadyLoad(tpsTarget int, pipe chan []string) {
 	log.Printf("starting, at %d requests/second\n", tpsTarget)
 	// start tpsTarget workers
 	for i := 0; i < tpsTarget; i++ {
-		go worker(pipe, closed, urlPrefix)
+		go worker(pipe)
 	}
 }
 
 // run at whatever load comes down the pipe, used for running in
 // parallel to an existing system
-func runRealTimeLoad(pipe chan []string, closed chan bool, urlPrefix string) {
+func runRealTimeLoad(pipe chan []string) {
 	log.Print("starting to read the input file continuously, ^C to stop\n")
 	for i := 0; i < 3; i++ {
 		// The "3" is a heuristic
-		go worker(pipe, closed, urlPrefix)
+		go worker(pipe)
 	}
 }
 
 // runProgressivelyIncreasingLoad, the classic load test
-func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string,
-	closed chan bool, urlPrefix string) {
+func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string) {
 
 	// start the first workers
 	if startTps == 0 {
@@ -183,7 +202,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	}
 	rate := startTps
 	for i := 0; i < startTps; i++ {
-		go worker(pipe, closed, urlPrefix)
+		go worker(pipe)
 	}
 	// add to the workers until we have enough
 	log.Printf("now at %d requests/second\n", rate)
@@ -196,7 +215,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 			break
 		}
 		for i := 0; i < progressRate; i++ {
-			go worker(pipe, closed, urlPrefix)
+			go worker(pipe)
 		}
 		log.Printf("now at %d requests/second\n", rate)
 	}
@@ -207,7 +226,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 
 
 // worker reads and executes a task every second until it hits eof
-func worker(pipe chan []string, closed chan bool, urlPrefix string) {
+func worker(pipe chan []string) {
 	if conf.Debug {
 		log.Print("started a worker\n")
 	}
@@ -215,82 +234,41 @@ func worker(pipe chan []string, closed chan bool, urlPrefix string) {
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
 	for range time.Tick(1 * time.Second) { // nolint
-		var r []string
+		doWork()
+	}
+}
 
-		select {
-		case <-closed:
-			//log.Print("pipe closed, no more requests to send.\n")
-			return
-		case r = <-pipe:
-			//log.Printf("got %v\n", r)
+// work is the thing that happens each second.
+func doWork() {
+	var r []string
+
+	select {
+	case <-closed:
+		//log.Print("pipe closed, no more requests to send.\n")
+		return
+	case r = <-pipe:
+		//log.Printf("got %v\n", r)
+	}
+
+	switch {
+	case r == nil:
+		//log.Print("worker reached EOF, no more requests to send.\n")
+		return
+	case len(r) != 9:
+		// bad input data, crash please.
+		log.Fatalf("number of fields != 9 in %v", r)
+	case r[operatorField] == "GET":
+		if conf.Serialize {
+			// force this NOT to be asynchronous, for load tests only
+			op.Get(r[pathField])
+		} else {
+			go op.Get(r[pathField])
 		}
-
-		switch {
-		case r == nil:
-			//log.Print("worker reached EOF, no more requests to send.\n")
-			return
-		case len(r) != 9:
-			// bad input data, crash please.
-			log.Fatalf("number of fields != 9 in %v", r)
-		case r[operatorField] == "GET":
-			if conf.Serialize {
-				// force this NOT to be asynchronous, for load tests only
-				getJunkFile(urlPrefix, r[pathField])
-			} else {
-				go getJunkFile(urlPrefix, r[pathField])
-			}
-		case r[operatorField] == "PUT":
-			// FIXME: treat PUT as a no-op
-		default:
-			log.Fatal("operations other than GET and PUT are not implemented yet\n")
-		}
-	}
-}
-
-// putJunkFile sends a specified number of bytes via a PUT
-func putJunkFile(baseURL, path string, size int64) { // nolint
-	var err error
-
-	if conf.Debug {
-		log.Printf("in putJunkFile(%s, %s, %d)\n", baseURL, path, size)
-	}
-	switch conf.Protocol {
-	case RESTProtocol:
-		err = RestPut(baseURL, path, size)
-	case S3Protocol:
-		err = AmazonS3Put(baseURL, path, size) // nolint
+	case r[operatorField] == "PUT":
+		// FIXME: treat PUT as a no-op
 	default:
-		err = fmt.Errorf("protocol %d not implemented yet", conf.Protocol)
-	}
-	if err != nil {
-		log.Fatalf("Faial error in putJunkFile, %v\n", err)
-	}
-	// alive <- true
-}
-
-// get a url and then throw it away.
-func getJunkFile(baseURL, path string) {
-	if conf.Debug {
-		log.Printf("in getJunkFile(%s, %s), protocol=%v\n", baseURL, path, conf.Protocol)
-	}
-
-	switch conf.Protocol {
-	case RESTProtocol:
-		RestGet(baseURL, path)
-	case S3Protocol:
-		//MinioS3Get(baseURL, path)
-		AmazonS3Get(baseURL, path)
-	default:
-		log.Fatalf("Protocol %d not implemented yet\n", conf.Protocol)
-	}
-	// alive <- true
-}
-
-// doPrepWork makes sure we have the prerequisites by protocol
-func doPrepWork(baseURL string) {
-	//MustCreateFilesystemFile(junkDataFile, size)  FXIME. needed for PUT
-	switch conf.Protocol {
-	case S3Protocol:
-		AmazonS3Prep(baseURL)
+		log.Fatal("operations other than GET and PUT are not implemented yet\n")
 	}
 }
+
+

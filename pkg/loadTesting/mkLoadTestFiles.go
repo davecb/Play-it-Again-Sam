@@ -7,7 +7,6 @@ package loadTesting
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -23,7 +22,7 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 	}
 
 	conf = cfg
-	doPrepWork(baseURL)
+	//doPrepWork(baseURL)    use op.Init()
 	defer os.Remove(junkDataFile) // nolint FIXME, for write
 
 	r := csv.NewReader(f)
@@ -112,12 +111,14 @@ func mkFile(baseURL, sourceFile, fullPath, size string) {
 	switch conf.Protocol {
 	case FilesystemProtocol: // prepend current directory to path
 		err = TimedCreateFilesystemFile("./"+strings.TrimPrefix(fullPath, "/"), fileSize)
-	case S3Protocol:
-		err = AmazonS3Put(baseURL, fullPath, fileSize)
-	case RESTProtocol:
-		err = RestPut("http://"+baseURL, fullPath, fileSize)
-	case CephProtocol: // Pre-alpha stage
-		err = createCephFile(baseURL+fullPath, fileSize)
+	//case S3Protocol:
+	//	err = AmazonS3Put(baseURL, fullPath, fileSize)
+	//case RESTProtocol:
+	//	err = RestPut("http://"+baseURL, fullPath, fileSize)
+	//case CephProtocol: // Pre-alpha stage
+	//	err = createCephFile(baseURL+fullPath, fileSize)
+	default:
+		log.Fatalf("Unimplemented protocol %d, halting\n", conf.Protocol)
 	}
 	if err != nil {
 		log.Fatalf(`Fatal error mid-way in %s: "%s" while creating %s of size %s\n`,
@@ -125,7 +126,3 @@ func mkFile(baseURL, sourceFile, fullPath, size string) {
 	}
 }
 
-// createCephFile implements a file creation on ceph, natively: refactor
-func createCephFile(fullPath string, size int64) error {
-	return fmt.Errorf("createCephFile(%s, %d) not implemented", fullPath, size)
-}

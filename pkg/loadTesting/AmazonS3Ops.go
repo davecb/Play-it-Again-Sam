@@ -20,14 +20,19 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
+// S3Proto satisfies operation by doing rest operations.
+type S3Proto struct {
+	prefix string
+}
+
 var svc *s3.S3
-var awsLogLevel = aws.LogOff
+var awsLogLevel = aws.LogOff // FIXME, this is horrid!
 var bucket = "images.s3.kobo.com" // FIXME
 
-// AmazonS3Get does a GET from an s3Protocol target and times it,
-func AmazonS3Get(baseURL, path string) {
+// Get does a get operation from an s3Protocol target and times it,
+func (p S3Proto) Get(path string) {
 	if conf.Debug {
-		log.Printf("in AmazonS3Get(%s, %s)\n", baseURL, path)
+		log.Printf("in AmazonS3Get(%s, %s)\n", p.prefix, path)
 	}
 
 	file, err := ioutil.TempFile("/tmp", "loadTesting")
@@ -59,11 +64,11 @@ func AmazonS3Get(baseURL, path string) {
 	alive <- true
 }
 
-// AmazonS3Put puts a file and times it
-// error return is used only by mkLoadTestFiles
-func AmazonS3Put(baseURL, path string, size int64) error {
+// Put puts a file and times it
+// error return is used only by mkLoadTestFiles  FIXME
+func (p S3Proto) Put(path string, size int64) error {
 	if conf.Debug {
-		log.Printf("in AmazonS3Put(%s, %s, %d)\n", baseURL, path, size)
+		log.Printf("in AmazonS3Put(%s, %s, %d)\n", p.prefix, path, size)
 	}
 
 	file, err := os.Open(junkDataFile)
@@ -138,10 +143,10 @@ func mustCreateService(myEndpoint string, awsLogLevel aws.LogLevelType) *s3.S3 {
 	return svc
 }
 
-// AmazonS3Prep makes sure we have an amazon s3 session and any other prerequisites.
-func AmazonS3Prep(baseURL string) {
+// Init makes sure we have an amazon s3 session and any other prerequisites.
+func (p S3Proto) Init() {
 	if svc == nil {
-		svc = mustCreateService(baseURL, awsLogLevel)
+		svc = mustCreateService(p.prefix, awsLogLevel)
 	}
 }
 

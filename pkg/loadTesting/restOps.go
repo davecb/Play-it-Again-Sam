@@ -11,9 +11,17 @@ import (
 	"time"
 )
 
+// RestProto satisfies operation by doing rest operations.
+type RestProto struct {
+	prefix string
+}
+
+// Init does nothing
+func (p RestProto) Init() {}
+
 // Tuning for large loads. With this, when we start reporting network
 // errors, then we've overloaded somebody. Previously we bottlenecked
-// on closed but not recycled sockets'
+// on closed but not recycled sockets/
 // For calvin this doesn't change the results up to 240, but
 // then the former setup failed.
 const (
@@ -28,12 +36,12 @@ var httpClient = &http.Client{
 	Timeout: time.Duration(RequestTimeout) * time.Second,
 }
 
-// RestGet does a GET from an http target and times it
-func RestGet(baseURL, path string) {
+// Get does a GET from an http target and times it
+func (p RestProto) Get(path string) {
 	if conf.Debug {
-		log.Printf("in RestGet(%s,%s)\n", baseURL, path)
+		log.Printf("in rest.Get(%s)\n", path)
 	}
-	req, err := http.NewRequest("GET", baseURL+"/"+path, nil)
+	req, err := http.NewRequest("GET", p.prefix+"/"+path, nil)
 	if err != nil {
 		// try running right through this
 		// log.Fatalf("error creating http request, %v: halting.\n", err)
@@ -96,11 +104,12 @@ func RestGet(baseURL, path string) {
 	alive <- true
 }
 
-// RestPut does an ordinary REST (not ceph or s3) put operation.
-func RestPut(baseURL, path string, size int64) error {
+// Put does an ordinary REST (not ceph or s3) put operation.
+func (p RestProto) Put(path string, size int64) error {
 
 	if conf.Debug {
-		log.Printf("putting %s\n", baseURL+"/"+path)
+		log.Printf("in rest.Pet(%s, %d)\n", path, size)
+		//log.Printf("putting %s\n", p.prefix+"/"+path)
 	}
 	if size <= 0 {
 		fmt.Printf("%s 0 0 0 %d %s %d PUT\n",
@@ -118,7 +127,7 @@ func RestPut(baseURL, path string, size int64) error {
 
 	initial := time.Now() // Response time starts
 	// do put
-	req, err := http.NewRequest("PUT", baseURL+"/"+path, io.LimitReader(fp, size))
+	req, err := http.NewRequest("PUT", p.prefix+"/"+path, io.LimitReader(fp, size))
 	if err != nil {
 		dumpRequest(req)
 		log.Fatalf("error creating http request, %v: halting.\n", err)
