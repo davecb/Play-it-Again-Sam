@@ -26,8 +26,7 @@ type S3Proto struct {
 }
 
 var svc *s3.S3
-var awsLogLevel = aws.LogOff      // FIXME, this is horrid!
-var bucket = "images.s3.kobo.com" // FIXME
+var awsLogLevel = aws.LogOff
 
 // Get does a get operation from an s3Protocol target and times it,
 func (p S3Proto) Get(path string) error {
@@ -45,7 +44,7 @@ func (p S3Proto) Get(path string) error {
 	initial := time.Now() //              				***** Response time starts
 	numBytes, err := downloader.Download(file,
 		&s3.GetObjectInput{
-			Bucket: aws.String(bucket),
+			Bucket: aws.String(conf.S3Bucket),
 			Key:    aws.String(path),
 		})
 	responseTime := time.Since(initial) // 				***** Response time ends
@@ -85,7 +84,7 @@ func (p S3Proto) Put(path string, size int64) error {
 	uploader := s3manager.NewUploaderWithClient(svc)
 	initial := time.Now() //              				***** Response time starts
 	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(bucket),
+		Bucket: aws.String(conf.S3Bucket),
 		Key:    aws.String(path),
 		Body:   lr,
 	})
@@ -111,13 +110,13 @@ func (p S3Proto) Put(path string, size int64) error {
 		initial.Format("2006-01-02 15:04:05.000"),
 		responseTime.Seconds(), size, path)
 	alive <- true
-	return fmt.Errorf("unable to upload %q to %q, %v", path, bucket, err)
+	return fmt.Errorf("unable to upload %q to %q, %v", path, conf.S3Bucket, err)
 }
 
 // mustCreateService creates a connection to an s3-compatible server.
 func mustCreateService(myEndpoint string, awsLogLevel aws.LogLevelType) *s3.S3 {
 
-	if S3params.AccessKey == "" {
+	if conf.S3Key == "" {
 		log.Fatal("called mustCreateService with no s3 params, internal error\n")
 	}
 	if conf.Verbose {
@@ -125,7 +124,7 @@ func mustCreateService(myEndpoint string, awsLogLevel aws.LogLevelType) *s3.S3 {
 			aws.LogDebugWithRequestErrors
 	}
 	token := ""
-	creds := credentials.NewStaticCredentials(S3params.AccessKey, S3params.SecretKey, token)
+	creds := credentials.NewStaticCredentials(conf.S3Key, conf.S3Secret, token)
 	_, err := creds.Get()
 	if err != nil {
 		log.Fatalf("bad credentials: %s\n", err)

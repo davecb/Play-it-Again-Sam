@@ -11,6 +11,8 @@ import (
 	"log"
 	"math"
 	"os"
+
+	"github.com/vharitonsky/iniflags"
 )
 
 const terminationTimeout = 35
@@ -26,9 +28,10 @@ func main() {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
 	var s3, ceph, rest bool
+	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug bool
 	var serial, cache, realTime bool
-	var configFile, strip, hostHeader string
+	var strip, hostHeader string
 	var err error
 
 	flag.IntVar(&runFor, "for", 0, "number of records to use, eg 1000 ")
@@ -37,19 +40,24 @@ func main() {
 	flag.IntVar(&progressRate, "progress", 0, "progress rate, in TPS steps")
 	flag.IntVar(&progressRate, "start-tps", 0, "TPS to start from")
 	flag.IntVar(&stepDuration, "duration", 10, "Duration of a step")
-
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	//flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
 	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
-	flag.StringVar(&configFile, "s3config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
+	//flag.StringVar(&configFile, "s3config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.StringVar(&strip, "strip", "", "test to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.BoolVar(&cache, "cache", false, "allow caching")
 	flag.BoolVar(&realTime, "real-time", false, "tail -f the input file")
 	flag.BoolVar(&debug, "d", false, "add conf.Debugging")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
-	flag.Parse()
+	flag.StringVar(&s3Bucket, "s3-bucket", "images.s3.kobo.com",
+		"set bucket when using s3 protocol")
+	flag.StringVar(&s3Key, "s3-key", "KEY NOT SET",
+		   "set key when using s3 protocol")
+	flag.StringVar(&s3Secret, "s3-secret", "SECRET NOT SET",
+		"set secret when using s3 protocol")
+	iniflags.Parse()
 
 	if flag.NArg() < 2 {
 		fmt.Fprint(os.Stderr, "You must supply a load.csv file and a url\n")
@@ -65,7 +73,7 @@ func main() {
 		log.Fatal("You must specify a --tps target, halting.")
 	}
 
-	proto, err := setProtocol(s3, configFile, ceph)
+	proto, err := setProtocol(s3, ceph)
 	if err != nil {
 		log.Fatalf("Error Serting protocol %v, halting.", err)
 	}
@@ -94,6 +102,9 @@ func main() {
 			Cache:        cache,
 			RealTime:     realTime,
 			Protocol:     proto,
+			S3Key:		  s3Key,
+			S3Secret:	  s3Secret,
+			S3Bucket:	  s3Bucket,
 			Strip:        strip,
 			Timeout:      terminationTimeout,
 			StepDuration: stepDuration,
@@ -101,17 +112,13 @@ func main() {
 		})
 }
 
-func setProtocol(s3 bool, configFile string, ceph bool) (int, error) {
+func setProtocol(s3, ceph bool) (int, error) {
 	var err error
 
 	var proto = loadTesting.RESTProtocol
 	switch {
 	case s3:
 		proto = loadTesting.S3Protocol
-		err = loadTesting.LoadConfig(configFile)
-		if err != nil {
-			log.Fatalf("Could not read config file %s, halting. %v", configFile, err)
-		}
 	case ceph:
 		proto = loadTesting.CephProtocol // unimplemented
 	default: //REST

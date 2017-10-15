@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# jmeter2perf -- turn jmeter XML into standard perf reports, 
+#	doing one-minute samples
+#Input:
+# <sampleResult timeStamp="1144094509435" dataType="text" 
+#   1           2          3              4         5
+# threadName="Thread Group 1-10" 
+# 6           7            8
+# label="http://172.16.10.196/webservice/TraderService" time="42" 
+# 9      10                                             11    12
+# responseMessage="OK" responseCode="200" success="true"/>
+# 13               14  15            16   17       18
+#
+# Output
+#yyyy/MM/dd hh:mm:ss latency xfertime responsetime throughput tps
+# -         00:01:00  0      0         0.0042       0          1.000000
+
+ProgName=`basename $0`
+
+main() {
+	name=$1
+
+	if [ $# -lt 1 ]; then
+		say "$ProgName error: you must supply an input file"
+		say "Usage: $0 wls-file.txt"
+		exit 1
+	fi
+	cat $name |\
+	sed	-e 's/=/ /g' \
+		-e 's/"//g' |\
+	nawk '
+	$17 ~ /200/ {
+		if (base == "") {
+			base = $3
+		}
+		print ($3 - base)/1000 "," $9 "," $13/1000
+	} ' |\
+	sed 's/-/,/g' |\
+	sort -n |\
+	nawk -F, '
+	BEGIN { 
+		t=0.0 
+		m=0.0
+		print "#yyyy/MM/dd mm:ss latency xfertime responsetime throughput tps"
+	}
+	/.*/ {
+		print ">> ", $0
+		if ($1 > (t + 60.0)) {
+			printf("- 00:%d:00 0 0 %f 0 %f\n", minute, sum/n, n/60)
+			t = int($1)
+			minute += 1.0
+			sum = $4 + 0.0
+			n = 1.0
+		}
+		else {
+			sum += $4 + 0.0
+			n += 1.0
+		}
+	}'
+}
+
+say() {
+	echo "$@" 1>&2
+}
+
+main "$@"

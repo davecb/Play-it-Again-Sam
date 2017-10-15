@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 	"time"
-	//"old/pathExpressions/src/github.com/derekparker/delve/dwarf/op"
+	//"github.com/aws/aws-sdk-go/service/s3"
 )
 
 // The protocols supported by the library
@@ -53,6 +53,9 @@ type Config struct {
 	Cache        bool
 	RealTime     bool
 	Protocol     int
+	S3Bucket     string
+	S3Key        string
+	S3Secret     string
 	Strip        string
 	Timeout      time.Duration
 	StepDuration int

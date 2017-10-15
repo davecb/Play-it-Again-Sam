@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# appsettings2loadtesting -- read a Rakuten/Kobo appsettings
+#	file and write a loadtesting .conf file
+#
+ProgName=`basename $0`
+
+main() {
+	name=$1
+
+	if [ $# -lt 1 ]; then
+		say "$ProgName error: you must supply a parameter"
+		say "Usage: $0 appsettings.txt"
+		exit 1
+	fi
+	cat $name |\
+	awk '
+	BEGIN {
+		print "#"
+		print "# loadTesting config, derived from '$name'"
+		print "#"
+	}
+	/S3_ENDPOINT/ {
+		# reserved for future use
+		#http://localhost:7480
+	}
+	/S3_ACCESS_KEY/ {
+		print "s3-key = " $2
+	}
+	/S3_SECRET_KEY/ {
+		print "s3-secret = " $2
+	}
+'
+}
+
+say() {
+	echo "$@" 1>&2
+}
+
+main "$@"

@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# mkperf -- create a per .csv file using paths from an input file
+#
+ProgName=`basename $0`
+
+main() {
+	name=$1
+
+	if [ $# -lt 1 ]; then
+		say "$ProgName error: you must supply a parameter"
+		say "Usage: $0 parameter"
+		exit 1
+	fi
+
+	echo "#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op"
+	cat $name |\
+	while read key junk; do
+		echo "01-Jan-201 00:00:00.0 0.0 0.0 0 0 ${key} 200 GET"
+	done
+}
+
+say() {
+	echo "$@" 1>&2
+}
+
+main "$@"
