@@ -24,11 +24,12 @@ const (
 )
 
 // operations are the things a protocol must support
-type operation interface {     // nolint
-    Init()                     // nolint
-    Get(path string)           // nolint
-    Put(path string, size int) // nolint
+type operation interface {     
+    Init()
+    Get(path string) error
+    Put(path string, size int64) error
 }
+
 
 
 // These are the field names in the csv file
@@ -60,7 +61,7 @@ type Config struct {
 
 
 var conf Config
-var op = RestProto{}
+var op operation
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
 var alive = make(chan bool, 1000)
@@ -86,9 +87,9 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	case RESTProtocol:
 		op = RestProto{prefix: baseURL}
 		op.Init()
-	//case S3Protocol:
-	//	op = S3Proto{prefix: baseURL}
-	//	op.Init()
+	case S3Protocol:
+		op = S3Proto{prefix: baseURL}
+		op.Init()
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
 	}
@@ -260,9 +261,9 @@ func doWork() {
 	case r[operatorField] == "GET":
 		if conf.Serialize {
 			// force this NOT to be asynchronous, for load tests only
-			op.Get(r[pathField])
+			op.Get(r[pathField]) // nolint, ignore return value
 		} else {
-			go op.Get(r[pathField])
+			go op.Get(r[pathField]) // nolint, ignore return value
 		}
 	case r[operatorField] == "PUT":
 		// FIXME: treat PUT as a no-op

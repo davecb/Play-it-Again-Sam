@@ -1,8 +1,8 @@
 package loadTesting
 
-// AmazonS3Ops implements s3 git, put and delete using the Amazon client library.
+// AmazonS3Ops implements s3 get, put and delete using the Amazon client library.
 // Initially the Amazon library was too buggy, but Marcus Watt of the ceph
-// team debugged it. I expect most people will use the Amazon library.
+// team debugged it for me. I expect most people will use the Amazon library.
 
 import (
 	"fmt"
@@ -26,11 +26,11 @@ type S3Proto struct {
 }
 
 var svc *s3.S3
-var awsLogLevel = aws.LogOff // FIXME, this is horrid!
+var awsLogLevel = aws.LogOff      // FIXME, this is horrid!
 var bucket = "images.s3.kobo.com" // FIXME
 
 // Get does a get operation from an s3Protocol target and times it,
-func (p S3Proto) Get(path string) {
+func (p S3Proto) Get(path string) error {
 	if conf.Debug {
 		log.Printf("in AmazonS3Get(%s, %s)\n", p.prefix, path)
 	}
@@ -56,12 +56,13 @@ func (p S3Proto) Get(path string) {
 			responseTime.Seconds(), numBytes, path, rc)
 		// Extract and report the failure, iff possible
 		alive <- true
-		return
+		return nil
 	}
 	fmt.Printf("%s %f 0 0 %d %s 200 GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		responseTime.Seconds(), numBytes, path)
 	alive <- true
+	return nil
 }
 
 // Put puts a file and times it
@@ -120,7 +121,8 @@ func mustCreateService(myEndpoint string, awsLogLevel aws.LogLevelType) *s3.S3 {
 		log.Fatal("called mustCreateService with no s3 params, internal error\n")
 	}
 	if conf.Verbose {
-		awsLogLevel = aws.LogDebugWithSigning | aws.LogDebugWithHTTPBody
+		awsLogLevel = aws.LogDebugWithSigning | aws.LogDebugWithHTTPBody |
+			aws.LogDebugWithRequestErrors
 	}
 	token := ""
 	creds := credentials.NewStaticCredentials(S3params.AccessKey, S3params.SecretKey, token)

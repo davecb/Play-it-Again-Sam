@@ -37,7 +37,7 @@ var httpClient = &http.Client{
 }
 
 // Get does a GET from an http target and times it
-func (p RestProto) Get(path string) {
+func (p RestProto) Get(path string) error {
 	if conf.Debug {
 		log.Printf("in rest.Get(%s)\n", path)
 	}
@@ -50,7 +50,7 @@ func (p RestProto) Get(path string) {
 		fmt.Printf("%s 0 0 0 0 %s %d GET\n",
 			time.Now().Format("2006-01-02 15:04:05.000"), path, -1)
 		alive <- true
-		return
+		return nil
 	}
 	if !conf.Cache {
 		req.Header.Add("cache-control", "no-cache")
@@ -75,7 +75,7 @@ func (p RestProto) Get(path string) {
 			initial.Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), 0.0, 0, path, -2)
 		alive <- true
-		return
+		return nil
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	transferTime := time.Since(initial) - latency // Transfer time ends
@@ -90,7 +90,7 @@ func (p RestProto) Get(path string) {
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), transferTime.Seconds(), 0, path, -3)
 		alive <- true
-		return
+		return nil
 	}
 	if conf.Verbose || firstDigit(resp.StatusCode) == 5 {
 		// dump if its not a 200 OK, etc.
@@ -102,6 +102,7 @@ func (p RestProto) Get(path string) {
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
 	alive <- true
+	return nil
 }
 
 // Put does an ordinary REST (not ceph or s3) put operation.
