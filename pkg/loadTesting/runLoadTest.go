@@ -17,20 +17,18 @@ import (
 
 // The protocols supported by the library
 const (
-	FilesystemProtocol  = iota
-	RESTProtocol        // Eg, RCDN's http-based REST Protocol
+	FilesystemProtocol = iota
+	RESTProtocol       // Eg, RCDN's http-based REST Protocol
 	S3Protocol
 	CephProtocol
 )
 
 // operations are the things a protocol must support
-type operation interface {     
-    Init()
-    Get(path string) error
-    Put(path string, size int64) error
+type operation interface {
+	Init()
+	Get(path string) error
+	Put(path string, size int64) error
 }
-
-
 
 // These are the field names in the csv file
 const ( // nolint
@@ -62,7 +60,6 @@ type Config struct {
 	HostHeader   string
 }
 
-
 var conf Config
 var op operation
 var random = rand.New(rand.NewSource(42))
@@ -71,7 +68,7 @@ var alive = make(chan bool, 1000)
 var closed = make(chan bool)
 
 var junkDataFile = "/tmp/LoadTestJunkDataFile" // FIXME for write and r/w tests
-const size = 396759652 // nolint // FIXME, this is a heuristic
+const size = 396759652                         // nolint // FIXME, this is a heuristic
 
 // RunLoadTest does whatever main figured out that the caller wanted.
 func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
@@ -80,7 +77,7 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	conf = cfg
 
 	if conf.Debug {
-		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, " +
+		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, "+
 			"startTps=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
 			tpsTarget, progressRate, startTps, fromTime, forTime, baseURL)
 	}
@@ -98,8 +95,8 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 	}
 	// FIXME defer os.Remove(junkDataFile) // nolint
 
-	go workSelector(f, filename, fromTime, forTime, pipe)    // which pipes work to ...
-	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)  // which then writes to "alive"
+	go workSelector(f, filename, fromTime, forTime, pipe)             // which pipes work to ...
+	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL) // which then writes to "alive"
 	for {
 		select {
 		case <-alive:
@@ -134,6 +131,7 @@ func workSelector(f io.Reader, filename string, startFrom, runFor int, pipe chan
 // copyToPipe sends work to the workers
 func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) (int, chan []string) {
 	// From there, copy to pipe
+
 	recNo := 0
 	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
@@ -143,12 +141,17 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 				time.Sleep(time.Millisecond)
 				continue
 			}
-			//log.Printf("At EOF on %s, no new work to queue\n", filename)
+			log.Printf("At EOF on %s, no new work to queue\n", filename)
 			break
 		}
 		if err != nil {
 			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
 		}
+		if len(record) != 9 {
+			// FIXME this discards real-time part-records
+			continue
+		}
+
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
@@ -168,7 +171,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc\n")
 	switch {
 	case conf.RealTime: // progress rate is defined by the input stream
-		runRealTimeLoad(pipe,)
+		runRealTimeLoad(pipe)
 	case progressRate != 0:
 		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
 	case tpsTarget != 0:
@@ -228,7 +231,6 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	close(closed) // We're done
 }
 
-
 // worker reads and executes a task every second until it hits eof
 func worker(pipe chan []string) {
 	if conf.Debug {
@@ -274,5 +276,3 @@ func doWork() {
 		log.Fatal("operations other than GET and PUT are not implemented yet\n")
 	}
 }
-
-
