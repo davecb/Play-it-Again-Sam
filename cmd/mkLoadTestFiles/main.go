@@ -13,6 +13,8 @@ import (
 	"log"
 	"math"
 	"os"
+
+	"github.com/vharitonsky/iniflags"
 )
 // See runLoadTest.go for any package vars.
 
@@ -31,7 +33,7 @@ func main() {
 	flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
 	flag.StringVar(&configFile, "config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.BoolVar(&verbose, "v", false, "verbose")
-	flag.Parse()
+	iniflags.Parse()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
 
 	if flag.NArg() < 1 {
@@ -75,10 +77,6 @@ func setProtocol(s3 bool, configFile string, ceph bool) (int, error) {
 	switch {
 	case s3:
 		proto = loadTesting.S3Protocol
-		err = loadTesting.LoadConfig(configFile)
-		if err != nil {
-			log.Fatalf("Could not read config file %s, halting. %v", configFile, err)
-		}
 	case ceph:
 		proto = loadTesting.CephProtocol // unimplemented
 	default: //REST

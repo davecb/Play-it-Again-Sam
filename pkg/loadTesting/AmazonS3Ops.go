@@ -36,7 +36,7 @@ func (p S3Proto) Get(path string) error {
 
 	file, err := ioutil.TempFile("/tmp", "loadTesting")
 	if err != nil {
-		log.Fatal("Unable to create a temp file")
+		log.Fatalf("Unable to create a temp file,  %v", err)
 	}
 	defer os.Remove(file.Name()) // nolint
 
