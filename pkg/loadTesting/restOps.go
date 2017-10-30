@@ -77,7 +77,7 @@ func (p RestProto) Get(path string) error {
 		alive <- true
 		return nil
 	}
-	_, err = ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
@@ -92,7 +92,8 @@ func (p RestProto) Get(path string) error {
 		alive <- true
 		return nil
 	}
-	if conf.Verbose || badGetCode(resp.StatusCode) || resp.ContentLength == 0 {
+
+	if conf.Verbose || badGetCode(resp.StatusCode) || badLen(resp.ContentLength, body) {
 		// dump if its not a 200 OK or 404, etc.
 		dumpRequest(req)
 		dumpResponse(resp)
@@ -173,8 +174,17 @@ func firstDigit(i int) int {
 }
 
 // badGetCode is true if this isn't a 200 or 404
+// in this case "bad" means "ucky"
 func badGetCode(i int) bool {
 	if i == 200 || i == 404 {
+		return true
+	}
+	return false
+}
+
+// balLen reports zero body lengths
+func badLen(bodylen int64, body []byte) bool {
+	if bodylen == 0 || len(body) == 0 {
 		return true
 	}
 	return false
