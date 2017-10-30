@@ -92,8 +92,8 @@ func (p RestProto) Get(path string) error {
 		alive <- true
 		return nil
 	}
-	if conf.Verbose || firstDigit(resp.StatusCode) == 5 {
-		// dump if its not a 200 OK, etc.
+	if conf.Verbose || badGetCode(resp.StatusCode) || len(body) == 0 {
+		// dump if its not a 200 OK or 404, etc.
 		dumpRequest(req)
 		dumpResponse(resp)
 	}
@@ -170,6 +170,14 @@ func (p RestProto) Put(path string, size int64) error {
 // 5 - permanent failure
 func firstDigit(i int) int {
 	return i / 100
+}
+
+// badGetCode is true if this isn't a 200 or 404
+func badGetCode(i int) bool {
+	if i == 200 || i == 404 {
+		return true
+	}
+	return false
 }
 
 // dumpRequest provides extra information about an http request if it can
