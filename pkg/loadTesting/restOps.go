@@ -77,7 +77,7 @@ func (p RestProto) Get(path string) error {
 		alive <- true
 		return nil
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	_, err = ioutil.ReadAll(resp.Body)
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
@@ -92,7 +92,7 @@ func (p RestProto) Get(path string) error {
 		alive <- true
 		return nil
 	}
-	if conf.Verbose || badGetCode(resp.StatusCode) || len(body) == 0 {
+	if conf.Verbose || badGetCode(resp.StatusCode) || resp.ContentLength == 0 {
 		// dump if its not a 200 OK or 404, etc.
 		dumpRequest(req)
 		dumpResponse(resp)
@@ -100,7 +100,7 @@ func (p RestProto) Get(path string) error {
 
 	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
-		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
+		latency.Seconds(), transferTime.Seconds(), resp.ContentLength, path, resp.StatusCode)
 	alive <- true
 	return nil
 }
