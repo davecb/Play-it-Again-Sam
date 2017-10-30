@@ -101,7 +101,7 @@ func (p RestProto) Get(path string) error {
 
 	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
-		latency.Seconds(), transferTime.Seconds(), resp.ContentLength, path, resp.StatusCode)
+		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
 	alive <- true
 	return nil
 }
