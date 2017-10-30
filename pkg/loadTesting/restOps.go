@@ -180,9 +180,9 @@ func firstDigit(i int) int {
 // in this case "bad" means "ucky"
 func badGetCode(i int) bool {
 	if i == 200 || i == 404 {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 // balLen reports zero body lengths
