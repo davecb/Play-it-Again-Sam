@@ -202,17 +202,12 @@ func dumpResponse(resp *http.Response) {
 		log.Print("Response: <nil>\n")
 		return
 	}
-	contents, err := httputil.DumpResponse(resp, true)
+	contents, err := httputil.DumpResponse(resp, false)
 	if err != nil {
-		// Error dumping http response, trying without body.
-		// That avoids errors if length headers are wrong
-		contents, err = httputil.DumpResponse(resp, false)
-		if err != nil {
-			log.Fatalf("error dumping http response, %v: halting.\n", err)
-		}
+		log.Fatalf("error dumping http response, %v: halting.\n", err)
 	}
 	log.Print("Response:\n")
-	log.Printf("    Length: %d\n", len(string(contents)))
+	log.Printf("    Length: %d\n", resp.ContentLength)
 	shortDescr, _ := codeDescr(resp.StatusCode)
 	log.Printf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
 	hdr := resp.Header
