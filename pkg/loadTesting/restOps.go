@@ -93,10 +93,13 @@ func (p RestProto) Get(path string) error {
 		return nil
 	}
 
-	if conf.Verbose || badGetCode(resp.StatusCode) || badLen(resp.ContentLength, body) {
-		// dump if its not a 200 OK or 404, etc.
-		dumpRequest(req)
-		dumpResponse(resp)
+	switch {
+	case conf.Verbose:
+		dumpXact(req, resp, "")
+	case badGetCode(resp.StatusCode):
+		dumpXact(req, resp, "bad return code")
+	case badLen(resp.ContentLength, body):
+		dumpXact(req, resp, "bad length")
 	}
 
 	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
@@ -225,4 +228,13 @@ func dumpResponse(resp *http.Response) {
 		log.Println("   ", key, ":", value)
 	}
 	log.Printf("    Contents: \"\n%s\"\n", string(contents))
+}
+
+// dumpXact dumps request and resposne together, with a reason
+func dumpXact(req *http.Request, resp *http.Response, reason string) {
+	if reason != "" {
+		log.Printf("%s\n", reason)
+	}
+	dumpRequest(req)
+	dumpResponse(resp)
 }
