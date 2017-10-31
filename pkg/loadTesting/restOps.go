@@ -179,10 +179,10 @@ func firstDigit(i int) int {
 	return i / 100
 }
 
-// badGetCode is true if this isn't a 200 or 404
+// badGetCode is true if this isn't a 20X or 404
 // in this case "bad" means "ucky"
 func badGetCode(i int) bool {
-	if i == 200 || i == 404 {
+	if i == 200 || i == 202 || i == 404 {
 		return false
 	}
 	return true
