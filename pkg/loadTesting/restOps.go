@@ -101,6 +101,9 @@ func (p RestProto) Get(path string) error {
 	case badLen(resp.ContentLength, body):
 		dumpXact(req, resp, "bad length")
 	}
+	if conf.Save {
+		saveFile(body)
+	}
 
 	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
@@ -238,3 +241,17 @@ func dumpXact(req *http.Request, resp *http.Response, reason string) {
 	dumpRequest(req)
 	dumpResponse(resp)
 }
+
+// saveFile saves what was received, for debugging
+// not safe! use with --for 1
+func saveFile(body []byte) {
+	filename := "./out.loadTest"
+	f, err := os.Open(filename)
+	if err != nil {
+		log.Fatalf("Error opening %s: %s, halting.", filename, err)
+	}
+	defer f.Close() // nolint
+	f.Write(body)
+}
+
+

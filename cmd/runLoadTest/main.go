@@ -29,7 +29,7 @@ func main() {
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var s3Bucket, s3Key, s3Secret string
-	var verbose, debug bool
+	var verbose, debug, save bool
 	var serial, cache, realTime bool
 	var strip, hostHeader string
 	var err error
@@ -51,6 +51,7 @@ func main() {
 	flag.BoolVar(&realTime, "real-time", false, "tail -f the input file")
 	flag.BoolVar(&debug, "d", false, "add conf.Debugging")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
+	flag.BoolVar(&save, "save", false, "save downloaded files as ./out.loadTest")
 	flag.StringVar(&s3Bucket, "s3-bucket", "images.s3.kobo.com",
 		"set bucket when using s3 protocol")
 	flag.StringVar(&s3Key, "s3-key", "KEY NOT SET",
@@ -98,6 +99,7 @@ func main() {
 		loadTesting.Config{
 			Verbose:      verbose,
 			Debug:        debug,
+			Save:         save,
 			Serialize:    serial,
 			Cache:        cache,
 			RealTime:     realTime,
