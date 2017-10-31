@@ -246,12 +246,15 @@ func dumpXact(req *http.Request, resp *http.Response, reason string) {
 // not safe! use with --for 1
 func saveFile(body []byte) {
 	filename := "./out.loadTest"
-	f, err := os.Open(filename)
+	f, err := os.Create(filename)
 	if err != nil {
-		log.Fatalf("Error opening %s: %s, halting.", filename, err)
+		log.Fatalf("Error opening %s: %v, halting.", filename, err)
 	}
 	defer f.Close() // nolint
-	f.Write(body)
+	_, err = f.Write(body)
+	if err != nil {
+		log.Fatalf("Error writing to %s: %v, halting.", filename, err)
+	}
 }
 
 
