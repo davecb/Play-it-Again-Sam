@@ -49,10 +49,10 @@ func main() {
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.BoolVar(&cache, "cache", false, "allow caching")
 	flag.BoolVar(&realTime, "real-time", false, "tail -f the input file")
-	flag.BoolVar(&debug, "d", false, "add conf.Debugging")
+	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
-	flag.BoolVar(&save, "save", false, "save downloaded files as ./out.loadTest")
-	flag.StringVar(&s3Bucket, "s3-bucket", "images.s3.kobo.com",
+	flag.BoolVar(&save, "save", false, "save downloaded file(s) as ./loadTest.out")
+	flag.StringVar(&s3Bucket, "s3-bucket", "images.s3.kobo.com",  // a favorite customer
 		"set bucket when using s3 protocol")
 	flag.StringVar(&s3Key, "s3-key", "KEY NOT SET",
 		   "set key when using s3 protocol")
@@ -76,7 +76,7 @@ func main() {
 
 	proto, err := setProtocol(s3, ceph)
 	if err != nil {
-		log.Fatalf("Error Serting protocol %v, halting.", err)
+		log.Fatalf("Error Setting protocol %v, halting.", err)
 	}
 
 	filename := flag.Arg(0)

@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-// MkLoadTestFiles interprets the time period and decodes what to create .
+// MkLoadTestFiles interprets the time period and decides what to create.
 func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int, cfg Config) {
 	if conf.Debug {
 		log.Printf("in MkLoadTestFiles(f *os.File, filename=%s, baseURL=%s, startFrom=%d, runFor=%d)",
