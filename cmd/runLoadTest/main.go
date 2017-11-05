@@ -18,7 +18,7 @@ import (
 const terminationTimeout = 35
 
 func usage() {
-	fmt.Fprint(os.Stderr, "Usage: runLoadTest --tps TPS [--progress TPS][--from sec --for sec][-v] load-file.csv baseURL\n")
+	fmt.Fprint(os.Stderr, "Usage: runLoadTest --tps TPS [--progress TPS][--from rec --for rec][-v] load-file.csv baseURL\n")
 	flag.PrintDefaults()
 	os.Exit(1)
 }
@@ -52,10 +52,10 @@ func main() {
 	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
 	flag.BoolVar(&save, "save", false, "save downloaded file(s) as ./loadTest.out")
-	flag.StringVar(&s3Bucket, "s3-bucket", "images.s3.kobo.com",  // a favorite customer
+	flag.StringVar(&s3Bucket, "s3-bucket", "images.s3.kobo.com", // a favorite customer
 		"set bucket when using s3 protocol")
 	flag.StringVar(&s3Key, "s3-key", "KEY NOT SET",
-		   "set key when using s3 protocol")
+		"set key when using s3 protocol")
 	flag.StringVar(&s3Secret, "s3-secret", "SECRET NOT SET",
 		"set secret when using s3 protocol")
 	iniflags.Parse()
@@ -104,9 +104,9 @@ func main() {
 			Cache:        cache,
 			RealTime:     realTime,
 			Protocol:     proto,
-			S3Key:		  s3Key,
-			S3Secret:	  s3Secret,
-			S3Bucket:	  s3Bucket,
+			S3Key:        s3Key,
+			S3Secret:     s3Secret,
+			S3Bucket:     s3Bucket,
 			Strip:        strip,
 			Timeout:      terminationTimeout,
 			StepDuration: stepDuration,

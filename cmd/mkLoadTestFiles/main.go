@@ -31,7 +31,6 @@ func main() {
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
 	flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
-	flag.StringVar(&configFile, "config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.BoolVar(&verbose, "v", false, "verbose")
 	iniflags.Parse()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
