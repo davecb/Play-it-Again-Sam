@@ -1,7 +1,7 @@
 # mkLoadTestFiles(1) 
 mkLoadTestFiles - create files to get in a test
 ## SYNOPSIS
-Usage: mkLoadTestFiles [--s3][-v][--from N --for N] load-file.csv url
+Usage: mkLoadTestFiles [-from N -for N][-v] load-file.csv url
 
 ## DESCRIPTION
 This program creates a set of files for a load test, by default in a 

@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# mkperf -- create a per .csv file using paths from an input file
+# mkperf -- create a perf .csv file using paths from an input file.
+#Used to create an input journal/file from a list of files.
 #
 ProgName=`basename $0`
 
