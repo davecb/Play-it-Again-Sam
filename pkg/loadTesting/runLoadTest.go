@@ -113,6 +113,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 }
 
 // workSelector pipes a selection from a file to the workers
+// FIXME, make  f an io.ReadSeeker, nolint
 func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan []string) {
 
 	if conf.Debug {
@@ -120,7 +121,7 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 	}
 	if conf.Tail {
 		// if we're tailing, start at the end
-		_, err := f.Seek(0, io.SeekEnd)
+		_, err := f.Seek(0, os.SEEK_END)  // FIXME use io.SeekEnd, nolint
 		if err != nil {
 			log.Fatalf("Fatal error seeking to the end of %s: %s\n", filename, err)
 		}
