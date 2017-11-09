@@ -7,7 +7,6 @@ import (
 
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"math"
 	"os"
@@ -30,7 +29,7 @@ func main() {
 	var s3, ceph, rest bool
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, save bool
-	var serial, cache, realTime bool
+	var serial, cache, tail bool
 	var strip, hostHeader string
 	var err error
 
@@ -48,7 +47,7 @@ func main() {
 	flag.StringVar(&strip, "strip", "", "test to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.BoolVar(&cache, "cache", false, "allow caching")
-	flag.BoolVar(&realTime, "real-time", false, "tail -f the input file")
+	flag.BoolVar(&tail, "tail", false, "tail -f the input file")
 	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
 	flag.BoolVar(&save, "save", false, "save downloaded file(s) as ./loadTest.out")
@@ -70,7 +69,7 @@ func main() {
 		runFor = math.MaxInt64
 	}
 
-	if tpsTarget == 0 && !realTime {
+	if tpsTarget == 0 {
 		log.Fatal("You must specify a --tps target, halting.")
 	}
 
@@ -94,7 +93,7 @@ func main() {
 		log.Fatalf("No base url provided, halting. \n")
 	}
 
-	loadTesting.RunLoadTest(io.Reader(f), filename, startFrom, runFor,
+	loadTesting.RunLoadTest(f, filename, startFrom, runFor,
 		tpsTarget, progressRate, startTps, baseURL,
 		loadTesting.Config{
 			Verbose:      verbose,
@@ -102,7 +101,7 @@ func main() {
 			Save:         save,
 			Serialize:    serial,
 			Cache:        cache,
-			RealTime:     realTime,
+			Tail:         tail,
 			Protocol:     proto,
 			S3Key:        s3Key,
 			S3Secret:     s3Secret,

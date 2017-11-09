@@ -50,7 +50,7 @@ type Config struct {
 	Save         bool
 	Serialize    bool
 	Cache        bool
-	RealTime     bool
+	Tail         bool
 	Protocol     int
 	S3Bucket     string
 	S3Key        string
@@ -72,7 +72,7 @@ var junkDataFile = "/tmp/LoadTestJunkDataFile" // FIXME for write and r/w tests
 const size = 396759652                         // nolint // FIXME, this is a heuristic
 
 // RunLoadTest does whatever main figured out that the caller wanted.
-func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
+func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	tpsTarget, progressRate, startTps int, baseURL string, cfg Config) {
 	var processed = 0
 	conf = cfg
@@ -113,10 +113,17 @@ func RunLoadTest(f io.Reader, filename string, fromTime, forTime int,
 }
 
 // workSelector pipes a selection from a file to the workers
-func workSelector(f io.Reader, filename string, startFrom, runFor int, pipe chan []string) {
+func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan []string) {
 
 	if conf.Debug {
 		log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
+	}
+	if conf.Tail {
+		// if we're tailing, start at the end
+		_, err := f.Seek(0, io.SeekEnd)
+		if err != nil {
+			log.Fatalf("Fatal error seeking to the end of %s: %s\n", filename, err)
+		}
 	}
 	r := csv.NewReader(f)
 	r.Comma = ' '
@@ -137,7 +144,7 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
 		if err == io.EOF {
-			if conf.RealTime {
+			if conf.Tail {
 				// just keep reading
 				time.Sleep(time.Millisecond)
 				continue
@@ -171,13 +178,11 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc\n")
 	switch {
-	case conf.RealTime: // progress rate is defined by the input stream
-		runRealTimeLoad(pipe)
 	case progressRate != 0:
 		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
 	case tpsTarget != 0:
 		runSteadyLoad(tpsTarget, pipe)
-	case tpsTarget < 0:
+	case tpsTarget <= 0:
 		log.Fatal("A zero or negative tps target is not meaningfull, halting\n")
 	}
 }
@@ -187,16 +192,6 @@ func runSteadyLoad(tpsTarget int, pipe chan []string) {
 	log.Printf("starting, at %d requests/second\n", tpsTarget)
 	// start tpsTarget workers
 	for i := 0; i < tpsTarget; i++ {
-		go worker(pipe)
-	}
-}
-
-// run at whatever load comes down the pipe, used for running in
-// parallel to an existing system
-func runRealTimeLoad(pipe chan []string) {
-	log.Print("starting to read the input file continuously, ^C to stop\n")
-	for i := 0; i < 3; i++ {
-		// The "3" is a heuristic
 		go worker(pipe)
 	}
 }
