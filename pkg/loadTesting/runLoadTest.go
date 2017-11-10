@@ -121,10 +121,12 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 	}
 	if conf.Tail {
 		// if we're tailing, start at the end
-		_, err := f.Seek(0, os.SEEK_END)  // FIXME use io.SeekEnd, nolint
+		_, err := f.Seek(0, io.SeekEnd)
 		if err != nil {
 			log.Fatalf("Fatal error seeking to the end of %s: %s\n", filename, err)
 		}
+		log.Printf("Seeked to the end of %s, doing a tail -f with normal timeouts\n",
+			filename)
 	}
 	r := csv.NewReader(f)
 	r.Comma = ' '
@@ -144,16 +146,16 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 	recNo := 0
 	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
-		if err == io.EOF {
-			if conf.Tail {
-				// just keep reading
-				time.Sleep(time.Millisecond)
-				continue
-			}
+		switch {
+		case err == io.EOF && conf.Tail:
+			// just keep reading
+			time.Sleep(time.Millisecond)
+			log.Print("tail -f\n")
+			continue
+		case err == io.EOF:
 			log.Printf("At EOF on %s, no new work to queue\n", filename)
 			break
-		}
-		if err != nil {
+		case err != nil:
 			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
 		}
 		if len(record) != 9 {
@@ -164,7 +166,7 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		//log.Printf("writing %v to pipe\n", record)
+		log.Printf("writing %v to pipe\n", record)
 		pipe <- record
 	}
 	return recNo, pipe
