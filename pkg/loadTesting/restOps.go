@@ -184,11 +184,7 @@ func dumpXact(req *http.Request, resp *http.Response, body []byte, reason string
 	}
 	dumpRequest(req)
 	dumpResponse(resp)
-	if conf.Crash && body != nil {
-		saveFile(body)
-		log.Fatal("crash option set, saving to loadTesting.out and halting")
-	}
-
+	dumpBody(body)
 }
 
 // dumpRequest provides extra information about an http request if it can
@@ -228,20 +224,11 @@ func dumpResponse(resp *http.Response) {
 	log.Printf("    Contents: \"\n%s\"\n", string(contents))
 }
 
-// saveFile saves what was received, for debugging
-// Not safe! use with --for 1, as it tries to write a single file.
-func saveFile(body []byte) {
+// dumpBody
+func dumpBody(body []byte) {
 	if body == nil {
+		log.Print("Body: <nil>\n")
 		return
 	}
-	filename := "./loadTest.out"
-	f, err := os.Create(filename)
-	if err != nil {
-		log.Fatalf("Error opening %s: %v, halting.", filename, err)
-	}
-	defer f.Close() // nolint
-	_, err = f.Write(body)
-	if err != nil {
-		log.Fatalf("Error writing to %s: %v, halting.", filename, err)
-	}
+	log.Printf("Body:\n %d\n", body)
 }

@@ -47,7 +47,6 @@ const ( // nolint
 type Config struct {
 	Verbose      bool
 	Debug        bool
-	Crash        bool
 	Serialize    bool
 	Cache        bool
 	Tail         bool
