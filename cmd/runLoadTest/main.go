@@ -28,7 +28,7 @@ func main() {
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var s3Bucket, s3Key, s3Secret string
-	var verbose, debug bool
+	var verbose, debug, crash bool
 	var serial, cache, tail bool
 	var strip, hostHeader string
 	var err error
@@ -50,6 +50,7 @@ func main() {
 	flag.BoolVar(&tail, "tail", false, "tail -f the input file")
 	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
+	flag.BoolVar(&crash, "crash", false, "exit on any error return")
 	flag.StringVar(&s3Bucket, "s3-bucket", "BUCKET NOT SET",
 		"set bucket when using s3 protocol")
 	flag.StringVar(&s3Key, "s3-key", "KEY NOT SET",
@@ -97,6 +98,7 @@ func main() {
 		loadTesting.Config{
 			Verbose:      verbose,
 			Debug:        debug,
+			Crash:	      crash,
 			Serialize:    serial,
 			Cache:        cache,
 			Tail:         tail,

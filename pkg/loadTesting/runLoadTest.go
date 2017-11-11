@@ -47,6 +47,7 @@ const ( // nolint
 type Config struct {
 	Verbose      bool
 	Debug        bool
+	Crash 		 bool
 	Serialize    bool
 	Cache        bool
 	Tail         bool
@@ -112,8 +113,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 }
 
 // workSelector pipes a selection from a file to the workers
-// FIXME, make  f an io.ReadSeeker, nolint
-func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan []string) {
+func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan []string) {  // nolint
 
 	if conf.Debug {
 		log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
@@ -165,7 +165,7 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		log.Printf("writing %v to pipe\n", record)
+		//log.Printf("writing %v to pipe\n", record)
 		pipe <- record
 	}
 	return recNo, pipe

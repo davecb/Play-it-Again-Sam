@@ -43,8 +43,7 @@ func (p RestProto) Get(path string) error {
 	}
 	req, err := http.NewRequest("GET", p.prefix+"/"+path, nil)
 	if err != nil {
-		log.Printf("error creating http request, %v: continuing.\n", err)
-		dumpRequest(req)
+		dumpXact(req, nil, nil, conf.Crash, "error creating http request", err)
 		fmt.Printf("%s 0 0 0 0 %s %d GET\n",
 			time.Now().Format("2006-01-02 15:04:05.000"), path, -1)
 		alive <- true
@@ -67,7 +66,7 @@ func (p RestProto) Get(path string) error {
 	if err != nil {
 		//log.Fatalf("error getting http response, %v: halting.\n", err)
 		// try running right through this
-		dumpXact(req, resp, nil,"error getting http response", err)
+		dumpXact(req, resp, nil, conf.Crash, "error getting http response", err)
 		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 			initial.Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), 0.0, 0, path, -2)
@@ -78,7 +77,7 @@ func (p RestProto) Get(path string) error {
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
-		dumpXact(req, resp, body, "error reading http response, continuing", err)
+		dumpXact(req, resp, body, conf.Crash,"error reading http response, continuing", err)
 		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), transferTime.Seconds(), 0, path, -3)
@@ -87,12 +86,12 @@ func (p RestProto) Get(path string) error {
 	}
 	// And, in the non-error cases, conditionally dump
 	switch {
-	case conf.Verbose:
-		dumpXact(req, resp, body,"", nil)
 	case badGetCode(resp.StatusCode):
-		dumpXact(req, resp, body,"bad return code", nil)
+		dumpXact(req, resp, body, conf.Crash,"bad return code", nil)
 	case badLen(resp.ContentLength, body):
-		dumpXact(req, resp, body,"bad length", nil)
+		dumpXact(req, resp, body,  conf.Crash,"bad length", nil)
+	case conf.Verbose:
+		dumpXact(req, resp, body, conf.Crash,"", nil)
 	}
 
 
@@ -128,28 +127,27 @@ func (p RestProto) Put(path string, size int64) error {
 	// do put
 	req, err := http.NewRequest("PUT", p.prefix+"/"+path, io.LimitReader(fp, size))
 	if err != nil {
-		dumpRequest(req)
-		log.Fatalf("error creating http request, %v: halting.\n", err)
+		// report and exit
+		dumpXact(req, nil, nil, true, "error creating http request", err)
 	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		// Timeouts and bad parameters will trigger this case. FIXME, continue?
-		dumpRequest(req)
-		log.Fatalf("error getting http response, %v: halting.\n", err)
+		dumpXact(req, nil, nil, true, "error getting http response", err)
 	}
 	latency := time.Since(initial) // Response time ends
 	contents, err := ioutil.ReadAll(resp.Body)
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
-		dumpXact(req, resp, contents,"error reading http response", err)
+		dumpXact(req, resp, contents, true,"error reading http response", err)
 	}
 	// And, in the non-error cases, conditionally dump
 	switch {
-	case conf.Verbose:
-		dumpXact(req, resp, contents, "", nil)
 	case badGetCode(resp.StatusCode): // FIXME, putCode
-		dumpXact(req, resp, contents,"bad return code", nil)
+		dumpXact(req, resp, contents, conf.Crash,"bad return code", nil)
+	case conf.Verbose:
+		dumpXact(req, resp, contents, conf.Crash,"", nil)
 	}
 	fmt.Printf("%s %f %f 0 %d %s %d PUT\n",
 		initial.Format("2006-01-02 15:04:05.000"),
@@ -164,6 +162,8 @@ func badGetCode(i int) bool {
 	if i == 200 || i == 202 || i == 404 {
 		return false
 	}
+	// if --crash is set, returning true will trigger
+	// a dump of the bad transaction and a shutdown
 	return true
 }
 
@@ -176,59 +176,62 @@ func badLen(bodylen int64, body []byte) bool {
 }
 
 // dumpXact dumps request and response together, with a reason
-func dumpXact(req *http.Request, resp *http.Response, body []byte, reason string, err error) {
+func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, reason string, err error) {
+	var r string
 	if err != nil {
-		log.Printf("%s, %v\n", reason, err)
+		r = fmt.Sprintf("%s, %v\n", reason, err)
 	} else {
-		log.Printf("%s\n", reason)
+		r = fmt.Sprintf("%s\n", reason)
 	}
-	dumpRequest(req)
-	dumpResponse(resp)
-	dumpBody(body)
+	r += requestToString(req)
+	r += responseToString(resp)
+	r += bodyToString(body)
+	log.Printf("%s\n", r)
+	if crash {
+		log.Fatalf("halting.\n")
+	}
 }
 
-// dumpRequest provides extra information about an http request if it can
-func dumpRequest(req *http.Request) {
+// requestToString provides extra information about an http request if it can
+func requestToString(req *http.Request) string {
 	var dump []byte
 	var err error
 
 	if req == nil {
-		log.Print("Request: <nil>\n")
-		return
+		return "Request: <nil>\n"
 	}
 	dump, err = httputil.DumpRequestOut(req, true)
 	if err != nil {
-		log.Fatalf("fatal error dumping http request, %v: halting.\n", err)
+		return fmt.Sprintf("fatal error dumping http request, %v\n", err)
 	}
-	log.Printf("Request: \n%s\n", dump)
+	return fmt.Sprintf("Request: \n%s", dump)
 }
 
-// dumpResponse provides extra information about an http response
-func dumpResponse(resp *http.Response) {
+// responseToString provides extra information about an http response
+func responseToString(resp *http.Response) string {
 	if resp == nil {
-		log.Print("Response: <nil>\n")
-		return
+		return"Response: <nil>\n"
 	}
 	contents, err := httputil.DumpResponse(resp, false)
 	if err != nil {
-		log.Fatalf("error dumping http response, %v: halting.\n", err)
+		return fmt.Sprintf("error dumping http response, %v\n", err)
 	}
-	log.Print("Response:\n")
-	log.Printf("    Length: %d\n", resp.ContentLength)
+	s := "Response headers:\n"
+	s += fmt.Sprintf("    Length: %d\n", resp.ContentLength)
 	shortDescr, _ := codeDescr(resp.StatusCode)
-	log.Printf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
+	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
 	hdr := resp.Header
 	for key, value := range hdr {
-		log.Println("   ", key, ":", value)
+		s += fmt.Sprintln("   ", key, ":", value)
 	}
-	log.Printf("    Contents: \"\n%s\"\n", string(contents))
+	s += fmt.Sprintf("Response contents: \n%s", string(contents))
+	return s
 }
 
-// dumpBody
-func dumpBody(body []byte) {
+// bodyToString
+func bodyToString(body []byte) string {
 	if body == nil {
-		log.Print("Body: <nil>\n")
-		return
+		return "Body: <nil>\n"
 	}
-	log.Printf("Body:\n %d\n", body)
+	return fmt.Sprintf("Body:\n %s\n", body)
 }
