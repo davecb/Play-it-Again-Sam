@@ -47,7 +47,7 @@ const ( // nolint
 type Config struct {
 	Verbose      bool
 	Debug        bool
-	Save         bool
+	Crash        bool
 	Serialize    bool
 	Cache        bool
 	Tail         bool
@@ -144,7 +144,7 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 	// From there, copy to pipe
 
 	recNo := 0
-	for ; recNo < runFor; recNo++ {
+    forloop: for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
 		switch {
 		case err == io.EOF && conf.Tail:
@@ -154,7 +154,7 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 			continue
 		case err == io.EOF:
 			log.Printf("At EOF on %s, no new work to queue\n", filename)
-			break
+			break forloop
 		case err != nil:
 			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
 		}

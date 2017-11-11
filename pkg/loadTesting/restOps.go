@@ -67,7 +67,7 @@ func (p RestProto) Get(path string) error {
 	if err != nil {
 		//log.Fatalf("error getting http response, %v: halting.\n", err)
 		// try running right through this
-		dumpXact(req, resp, "error getting http response", err)
+		dumpXact(req, resp, nil,"error getting http response", err)
 		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 			initial.Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), 0.0, 0, path, -2)
@@ -78,7 +78,7 @@ func (p RestProto) Get(path string) error {
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
-		dumpXact(req, resp, "error reading http response, continuing", err)
+		dumpXact(req, resp, body, "error reading http response, continuing", err)
 		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			latency.Seconds(), transferTime.Seconds(), 0, path, -3)
@@ -88,16 +88,13 @@ func (p RestProto) Get(path string) error {
 	// And, in the non-error cases, conditionally dump
 	switch {
 	case conf.Verbose:
-		dumpXact(req, resp, "", nil)
+		dumpXact(req, resp, body,"", nil)
 	case badGetCode(resp.StatusCode):
-		dumpXact(req, resp, "bad return code", nil)
+		dumpXact(req, resp, body,"bad return code", nil)
 	case badLen(resp.ContentLength, body):
-		dumpXact(req, resp, "bad length", nil)
+		dumpXact(req, resp, body,"bad length", nil)
 	}
-	
-	if conf.Save {
-		saveFile(body)
-	}
+
 
 	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
@@ -145,14 +142,14 @@ func (p RestProto) Put(path string, size int64) error {
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
-		dumpXact(req, resp, "error reading http response", err)
+		dumpXact(req, resp, contents,"error reading http response", err)
 	}
 	// And, in the non-error cases, conditionally dump
 	switch {
 	case conf.Verbose:
-		dumpXact(req, resp, "", nil)
+		dumpXact(req, resp, contents, "", nil)
 	case badGetCode(resp.StatusCode): // FIXME, putCode
-		dumpXact(req, resp, "bad return code", nil)
+		dumpXact(req, resp, contents,"bad return code", nil)
 	}
 	fmt.Printf("%s %f %f 0 %d %s %d PUT\n",
 		initial.Format("2006-01-02 15:04:05.000"),
@@ -179,7 +176,7 @@ func badLen(bodylen int64, body []byte) bool {
 }
 
 // dumpXact dumps request and response together, with a reason
-func dumpXact(req *http.Request, resp *http.Response, reason string, err error) {
+func dumpXact(req *http.Request, resp *http.Response, body []byte, reason string, err error) {
 	if err != nil {
 		log.Printf("%s, %v\n", reason, err)
 	} else {
@@ -187,6 +184,11 @@ func dumpXact(req *http.Request, resp *http.Response, reason string, err error) 
 	}
 	dumpRequest(req)
 	dumpResponse(resp)
+	if conf.Crash {
+		saveFile(body)
+		log.Fatal("crash option set, saving to loadTesting.out and halting")
+	}
+
 }
 
 // dumpRequest provides extra information about an http request if it can
@@ -229,6 +231,9 @@ func dumpResponse(resp *http.Response) {
 // saveFile saves what was received, for debugging
 // Not safe! use with --for 1, as it tries to write a single file.
 func saveFile(body []byte) {
+	if body == nil {
+		return
+	}
 	filename := "./loadTest.out"
 	f, err := os.Create(filename)
 	if err != nil {
