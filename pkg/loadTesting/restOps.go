@@ -184,7 +184,7 @@ func dumpXact(req *http.Request, resp *http.Response, body []byte, reason string
 	}
 	dumpRequest(req)
 	dumpResponse(resp)
-	if conf.Crash {
+	if conf.Crash && body != nil {
 		saveFile(body)
 		log.Fatal("crash option set, saving to loadTesting.out and halting")
 	}
