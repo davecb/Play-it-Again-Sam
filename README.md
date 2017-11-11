@@ -1,4 +1,5 @@
-# loadTesting
+# Play it again, Sam.
 
-This replaces the old separate mkLoadTest and runLoadTest
-with a new repo with the new algorithm.
+A record/replay load testing program, "loadTesting"
+for short.  "Sam" for short wouldn't mean anything...
+
