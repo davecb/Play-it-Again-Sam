@@ -47,7 +47,7 @@ const ( // nolint
 type Config struct {
 	Verbose      bool
 	Debug        bool
-	Crash 		 bool
+	Crash        bool
 	Serialize    bool
 	Cache        bool
 	Tail         bool
@@ -113,7 +113,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 }
 
 // workSelector pipes a selection from a file to the workers
-func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan []string) {  // nolint
+func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan []string) { // nolint
 
 	if conf.Debug {
 		log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
@@ -124,7 +124,7 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 		if err != nil {
 			log.Fatalf("Fatal error seeking to the end of %s: %s\n", filename, err)
 		}
-		log.Printf("Seeked to the end of %s, doing a tail -f with normal timeouts\n",
+		log.Printf("seeked to the end of %s, doing a tail -f with normal timeouts\n",
 			filename)
 	}
 	r := csv.NewReader(f)
@@ -143,13 +143,13 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 	// From there, copy to pipe
 
 	recNo := 0
-    forloop: for ; recNo < runFor; recNo++ {
+forloop:
+	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
 		switch {
 		case err == io.EOF && conf.Tail:
 			// just keep reading
-			time.Sleep(time.Millisecond)
-			log.Print("tail -f\n")
+			time.Sleep(100 * time.Millisecond)
 			continue
 		case err == io.EOF:
 			log.Printf("At EOF on %s, no new work to queue\n", filename)
@@ -158,14 +158,16 @@ func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) 
 			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
 		}
 		if len(record) != 9 {
-			// FIXME this discards real-time part-records
+			// FIXME? this discards real-time part-records
 			continue
 		}
 
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		//log.Printf("writing %v to pipe\n", record)
+		if conf.Debug {
+			log.Printf("writing %v to pipe\n", record)
+		}
 		pipe <- record
 	}
 	return recNo, pipe
