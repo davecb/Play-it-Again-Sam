@@ -127,11 +127,11 @@ Eg, --tps and -tps mean the same thing.
    requests while waiting for responses. This creates an invalid test, 
    but is useful for providing a limited load during debugging.   
    
--save 
-* save downloaded file(s) as ./loadTest.out
-  This attempts to save the response from a GET as a file 
-  in the current directory. Not thread-safe, so only use for
-  debugging with -tps 1 -for 1
+-crash
+* exit on an error by the system under test.
+  This stops the program whe it gets an error (other than a 404, which
+  is soemthing we often have as part of a test). Used to stop on
+  any unexpected issue, so you can fix it.
    
 -d	
 * add debugging messages  

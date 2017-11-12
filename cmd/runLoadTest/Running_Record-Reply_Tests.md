@@ -63,18 +63,76 @@ in the log line, and copy it into the "latency" column of the stats
 when putting it into our standard format.
 
 For our  purposes,
-let's assume the old system was running at 200 requests a asecond, 
+let's assume the old system was running at 200 requests a second, 
 and was returning the average file in 0.3 second.
 
 ## Doing a smoke test
-At this point, we can try a simple test.   XXX
--for 1 -tps 1 -v
+At this point, we can try a simple test. The classic debugging test
+is
+```
+runLoadTest -v --rest  --tps 1 --for 1 \
+	../load.csv http://calvin
+```
+That runs a single operation in verbose mode, which should look like
+```
+#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc
+2017/11/11 21:11:20 runLoadTest.go:194: starting, at 1 requests/second
+2017/11/11 21:11:20 runLoadTest.go:137: Loaded 1 records, closing input
+2017/11/11 21:11:22 restOps.go:189: 
+Request: 
+GET /zaphod-beebelbrox.jpg HTTP/1.1
+Host: calvin
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 122944
+    Status code: 200 È OK
+    Last-Modified : [Fri, 11 Aug 2017 13:59:57 GMT]
+    Accept-Ranges : [bytes]
+    Server : [nginx/1.10.3 (Ubuntu)]
+    Content-Type : [image/jpeg]
+    Content-Length : [12530]
+    Date : [Sun, 12 Nov 2017 02:11:47 GMT]
+    Connection : [keep-alive]
+    Etag : ["598db85d-30f2"]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Length: 122944
+Accept-Ranges: bytes
+Connection: keep-alive
+Content-Type: image/jpeg
+Date: Sun, 12 Nov 2017 02:11:47 GMT
+Etag: "598db85d-30f2"
+Last-Modified: Fri, 11 Aug 2017 13:59:57 GMT
+Server: nginx/1.10.3 (Ubuntu)
+
+Body:
+ ���'���OJ�����cDe��*�7;
+
+```
+followed by many lines of gibberish from viewing a gif as text.
+
 
 ## Debugging the system under test  
--d to debug the load tester
--v to get more info about the SUT
-all errors trigger -v
---crash to stop
+The next step is to replay from beginning to end without errors.
+
+Instead of `--for 1`, we run through the whole file at some convenient
+speed. If the system is expected to handle 100 request/second (TPS), 
+try running at `--tps 100 --crash`, and see if you can get a clean run 
+from beginning to end.
+
+Any error will put the verbose switch on, and --crash will stop
+as soon as there is an error, instead of continuing.
+
+If you're not use the load tester is behaving properly, ass the `-d` 
+debug option, and it will add extra information to the output.
+
+You may have to take some problematic operations out of the input file, 
+such as a get that always returns a 408 (a timeout), but be careful:
+you might take something important out.
+
 
 ## Doing a load test
 try a large range
