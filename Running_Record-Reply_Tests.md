@@ -6,9 +6,9 @@ a new system will behave.
 
 The idea here is to increase the load in requests per second on
 your system to see where it start to turn into a hockey-stick "_/" 
-curve from too much load
+curve from too much load, as shown in figure 1:
  
-![image](https://user-images.githubusercontent.com/559505/32694390-8e1bec20-c70c-11e7-9c5b-9da23b237b84.png)
+![image](https://user-images.githubusercontent.com/559505/32694390-8e1bec20-c70c-11e7-9c5b-9da23b237b84.png "Figure 1")
 
 In the image above, the latency time (delay, slowness) greatly increases
 after 250 requests per second. Below that it gently increases, as we'll 
@@ -19,7 +19,7 @@ From that, we can conclude that the particular disk I'm testing is good
 only at low loads, but doesn't "hit the wall" until it's terribly overloaded.
 Which is reasonable, as the disk is actually one designed for low 
 power consumption and noise. That it can handle a huge "normal overload"
-is a lovely thing to discover!
+is a nice thing to discover!
 
 ## Collecting initial data
 
@@ -129,20 +129,43 @@ as soon as there is an error, instead of continuing.
 If you're not use the load tester is behaving properly, ass the `-d` 
 debug option, and it will add extra information to the output.
 
-You may have to take some problematic operations out of the input file, 
-such as a get that always returns a 408 (a timeout), but be careful:
-you might take something important out.
+You may have to take some problematic lines out of the input file, 
+such as a get that always returns a 408 (ie, a timeout), but be careful:
+you might take something important out!
 
 
 ## Doing a load test
-try a large range
--tps 1000 -progress 100
-plot 2
-get an idea of the range you care about
-plot 3
+Once you have a test that will run from end to end at a moderate load,
+try a test with a load varying from small to perhaps ten time the maximum
+you expect to use.  It's important to have tests well above the normal
+range, as that gives you a clearer idea about the point at which the
+response time curve turns upwards in the classic hockey-stick, "_/".
+
+In our example using Calvin, we first measured from 50 to 400, then
+converted the raw log into one with one-second samples, `perf2seconds 
+raw.csv >calvin50to400.csv` and then plotted response times against
+request per second using Libre Office.
+
+That gave us the results we saw in Figure 1. We then took a look at 
+10 to 130 request per second to 
+see more detail about the range we were most interested in. Figure 2, 
+below, illustrates that.
+
+![image](https://user-images.githubusercontent.com/559505/32694530-403fe0fc-c710-11e7-9c6d-bb2447c357e7.png "Figure 2")
+
+Here we see the total response time reaches 0.3 seconds at 40 requests 
+per second, and 1.0 seconds at 110 request per second.  If we were trying
+to build an array of these disk that would take 0.3 seconds or
+less to return an object at 200 request per second, we'd need 
+at least five disks. 
+ 
 
 ## Understanding what you're seeing
-times
-looking for the wait time to start to dominate
-very approximately 2 RT
-example of 0.1 to 0.3 as normal overload
+In performance work, you're far more interested in how much time it takes
+to do something than in the bandwidth of the devices.  The latter is easy
+to measure and advertise: the former is what you what you actually need.
+
+If you know how long a device takes to do a task, you can provide enough
+of them to meet a performance target that is specified in seconds at a 
+specified load. Try figuring _that_ out from tne bandwidth figures in a
+manufacturer's spec-sheet!

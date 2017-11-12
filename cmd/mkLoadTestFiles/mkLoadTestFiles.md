@@ -8,8 +8,8 @@ This program creates a set of files for a load test, by default in a
 local filesystem.  The files contain different amounts of the same
 sequence of random data.
 
-It exist to avoid having the logic in runLoadTest, although it reports
-its performance in exactly the same way as runLoadTest
+It exists to avoid having the logic in runLoadTest, although it reports
+its performance in exactly the same way as runLoadTest does.
 
 ### Data options   
 -for int 
@@ -59,7 +59,7 @@ above options to be specified in a configuration file.
 The input and output files are identical, of the form
 ```csv
 #yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
-2017-09-21 08:15:07.270 0 0 0 0 /upload/images/383bcc59-354b-46fb-b66c-0907b21fad94_albert.jpg 200 GET
+2017-09-21 08:15:07.270 0 0 0 0 /zaphod-beeblebrox.jpg 200 GET
 
 ```
 As an input, only the url and the file size are significant. The url is 
@@ -68,7 +68,7 @@ filename to be created.
  
 
 ## "SEE ALSO"
-perf2seconds(1), nginx2perf(1), runLoadTest(1)
+perf2seconds.md, nginx2perf.md, runLoadTest.md, Running_Record-Reply_Tests.md
 
 ## EXAMPLES
 

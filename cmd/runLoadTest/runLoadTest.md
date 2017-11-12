@@ -53,11 +53,30 @@ Eg, --tps and -tps mean the same thing.
   This is handy when one has already done a test at a low range of TPS
   and wishes to test at higher loads.
      
--real-time 
-* Override -tps and tail -f the input file instead.    
+-tail 
+* Tail -f the input file.    
   This allows a machine to be fed the same load as another machine
-  at the same time. It is for parallel running and finding cases
-  where the new program differs from the old.
+  at the same time, up to a speciofied tps. It is for parallel running
+  and finding cases where the new program differs from the old.
+  
+  
+### Test-type options (not used)
+-ro [reserved]
+* Run the test honoring only GET lines in the input. This is the default
+  case, and the -ro option itself is reserved for when we have -rw and 
+  -wo options
+  
+-rw max [reserved]
+* Run the test using both GET and PUT lines. The parameter is the size 
+  in bytes of the largest file to be put, so it can be precreated from
+  /dev/urandom. This was formerly the default, but the used case was
+  malformed and it was deferred.
+  
+-wo max [reserved]
+* Run the test using only PUT lines. The parameter is the size 
+  in bytes of the largest file to be put, so it can be precreated from
+  /dev/urandom. Only ever used for creating data, but mkLoadTestFiles 
+  did a cleaner job. Deferred pending a good use case.
       
 
 ### Data options   
@@ -203,7 +222,8 @@ As an output, the analyzable fields are
  
 
 ## "SEE ALSO"
-perf2seconds(1), nginx2perf(1), mkLoadTestFiles(1)
+perf2seconds.md, nginx2perf.md, mkLoadTestFiles.md, Running_Record-Reply_Tests.md
+
 
 ## EXAMPLES
 This is a test of my storage machine, _calvin_, from
