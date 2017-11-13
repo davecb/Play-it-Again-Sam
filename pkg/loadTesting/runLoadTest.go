@@ -26,8 +26,8 @@ const (
 // operations are the things a protocol must support
 type operation interface {
 	Init()
-	Get(path string) error
-	Put(path string, size int64) error
+	Get(path, oldRc string) error
+	Put(path string, size int64) error  // FIXME add oldRc
 }
 
 // These are the field names in the csv file
@@ -266,9 +266,9 @@ func doWork() {
 	case r[operatorField] == "GET":
 		if conf.Serialize {
 			// force this NOT to be asynchronous, for load tests only
-			op.Get(r[pathField]) // nolint, ignore return value
+			op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		} else {
-			go op.Get(r[pathField]) // nolint, ignore return value
+			go op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		}
 	case r[operatorField] == "PUT":
 		// FIXME: treat PUT as a no-op

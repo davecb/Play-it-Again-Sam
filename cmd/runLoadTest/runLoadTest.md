@@ -241,7 +241,8 @@ perf2seconds raw.csv >calvin10to250.csv
 ```
 
 ## BUGS
-PUT and DELE require refactoring and have been disabled.
+PUT and DELE require refactoring and have been disabled, pending the
+-rw and -wo options
 
 ^C kills everything instantly. 
 

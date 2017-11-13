@@ -2,13 +2,12 @@ package loadTesting
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"os"
 	"time"
+	"strconv"
 )
 
 // RestProto satisfies operation by doing rest operations.
@@ -37,7 +36,7 @@ var httpClient = &http.Client{
 }
 
 // Get does a GET from an http target and times it
-func (p RestProto) Get(path string) error {
+func (p RestProto) Get(path string, oldRc string) error {
 	if conf.Debug {
 		log.Printf("in rest.Get(%s)\n", path)
 	}
@@ -84,8 +83,12 @@ func (p RestProto) Get(path string) error {
 		alive <- true
 		return nil
 	}
+	old, _ := strconv.Atoi(oldRc)
+
 	// And, in the non-error cases, conditionally dump
 	switch {
+	case resp.StatusCode != old:
+		dumpXact(req, resp, body, conf.Crash, fmt.Sprintf("expected %d, got %d", old, resp.StatusCode), nil)
 	case badGetCode(resp.StatusCode):
 		dumpXact(req, resp, body, conf.Crash,"bad return code", nil)
 	case badLen(resp.ContentLength, body):
@@ -104,56 +107,57 @@ func (p RestProto) Get(path string) error {
 
 // Put does an ordinary REST (not ceph or s3) put operation.
 func (p RestProto) Put(path string, size int64) error {
-
-	if conf.Debug {
-		log.Printf("in rest.Pet(%s, %d)\n", path, size)
-		//log.Printf("putting %s\n", p.prefix+"/"+path)
-	}
-	if size <= 0 {
-		fmt.Printf("%s 0 0 0 %d %s %d PUT\n",
-			time.Now().Format("2006-01-02 15:04:05.000"),
-			size, path, 411) // 411 means "length required"
-		alive <- true
-		return nil
-	}
-	// make sure we have a dummy file
-	fp, err := os.Open(junkDataFile)
-	if err != nil {
-		return fmt.Errorf("can't open %q", junkDataFile)
-	}
-	defer fp.Close() // nolint
-
-	initial := time.Now() // Response time starts
-	// do put
-	req, err := http.NewRequest("PUT", p.prefix+"/"+path, io.LimitReader(fp, size))
-	if err != nil {
-		// report and exit
-		dumpXact(req, nil, nil, true, "error creating http request", err)
-	}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		// Timeouts and bad parameters will trigger this case. FIXME, continue?
-		dumpXact(req, nil, nil, true, "error getting http response", err)
-	}
-	latency := time.Since(initial) // Response time ends
-	contents, err := ioutil.ReadAll(resp.Body)
-	transferTime := time.Since(initial) - latency // Transfer time ends
-	defer resp.Body.Close()                       // nolint
-	if err != nil {
-		dumpXact(req, resp, contents, true,"error reading http response", err)
-	}
-	// And, in the non-error cases, conditionally dump
-	switch {
-	case badGetCode(resp.StatusCode): // FIXME, putCode
-		dumpXact(req, resp, contents, conf.Crash,"bad return code", nil)
-	case conf.Verbose:
-		dumpXact(req, resp, contents, conf.Crash,"", nil)
-	}
-	fmt.Printf("%s %f %f 0 %d %s %d PUT\n",
-		initial.Format("2006-01-02 15:04:05.000"),
-		latency.Seconds(), transferTime.Seconds(), len(contents), path, resp.StatusCode)
-	alive <- true
-	return nil
+	return fmt.Errorf("put is not implemented yet")
+	//
+	//if conf.Debug {
+	//	log.Printf("in rest.Pet(%s, %d)\n", path, size)
+	//	//log.Printf("putting %s\n", p.prefix+"/"+path)
+	//}
+	//if size <= 0 {
+	//	fmt.Printf("%s 0 0 0 %d %s %d PUT\n",
+	//		time.Now().Format("2006-01-02 15:04:05.000"),
+	//		size, path, 411) // 411 means "length required"
+	//	alive <- true
+	//	return nil
+	//}
+	//// make sure we have a dummy file
+	//fp, err := os.Open(junkDataFile)
+	//if err != nil {
+	//	return fmt.Errorf("can't open %q", junkDataFile)
+	//}
+	//defer fp.Close() // nolint
+	//
+	//initial := time.Now() // Response time starts
+	//// do put
+	//req, err := http.NewRequest("PUT", p.prefix+"/"+path, io.LimitReader(fp, size))
+	//if err != nil {
+	//	// report and exit
+	//	dumpXact(req, nil, nil, true, "error creating http request", err)
+	//}
+	//resp, err := httpClient.Do(req)
+	//if err != nil {
+	//	// Timeouts and bad parameters will trigger this case. FIXME, continue?
+	//	dumpXact(req, nil, nil, true, "error getting http response", err)
+	//}
+	//latency := time.Since(initial) // Response time ends
+	//contents, err := ioutil.ReadAll(resp.Body)
+	//transferTime := time.Since(initial) - latency // Transfer time ends
+	//defer resp.Body.Close()                       // nolint
+	//if err != nil {
+	//	dumpXact(req, resp, contents, true,"error reading http response", err)
+	//}
+	//// And, in the non-error cases, conditionally dump
+	//switch {
+	//case badGetCode(resp.StatusCode): // FIXME, putCode
+	//	dumpXact(req, resp, contents, conf.Crash,"bad return code", nil)
+	//case conf.Verbose:
+	//	dumpXact(req, resp, contents, conf.Crash,"", nil)
+	//}
+	//fmt.Printf("%s %f %f 0 %d %s %d PUT\n",
+	//	initial.Format("2006-01-02 15:04:05.000"),
+	//	latency.Seconds(), transferTime.Seconds(), len(contents), path, resp.StatusCode)
+	//alive <- true
+	//return nil
 }
 
 // badGetCode is true if this isn't a 20X or 404

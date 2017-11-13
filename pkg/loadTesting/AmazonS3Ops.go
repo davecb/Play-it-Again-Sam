@@ -29,7 +29,7 @@ var svc *s3.S3
 var awsLogLevel = aws.LogOff
 
 // Get does a get operation from an s3Protocol target and times it,
-func (p S3Proto) Get(path string) error {
+func (p S3Proto) Get(path string, oldRc string) error {
 	if conf.Debug {
 		log.Printf("in AmazonS3Get(%s, %s)\n", p.prefix, path)
 	}
