@@ -1,7 +1,6 @@
 package loadTesting
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -14,9 +13,12 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 	initial := time.Now() //               Response time starts
 	MustCreateFilesystemFile(fullPath, size)
 	responseTime := time.Since(initial) // Response time ends
-	fmt.Printf("%s %f 0 0 %d %s 201 PUT\n",
-		initial.Format("2006-01-02 15:04:05.000"),
-		responseTime.Seconds(), size, fullPath)
+	//fmt.Printf("%s %f 0 0 %d %s 201 PUT\n",
+	//	initial.Format("2006-01-02 15:04:05.000"),
+	//	responseTime.Seconds(), size, fullPath)
+	// FIXME: 200 OK or 201 Created?
+	reportPerformance(initial, responseTime, 0, nil, fullPath, 201, "")
+
 	alive <- true
 	return nil
 

@@ -43,8 +43,9 @@ func (p RestProto) Get(path string, oldRc string) error {
 	req, err := http.NewRequest("GET", p.prefix+"/"+path, nil)
 	if err != nil {
 		dumpXact(req, nil, nil, conf.Crash, "error creating http request", err)
-		fmt.Printf("%s 0 0 0 0 %s %d GET\n",
-			time.Now().Format("2006-01-02 15:04:05.000"), path, -1)
+		//fmt.Printf("%s 0 0 0 0 %s %d GET\n",
+		//	time.Now().Format("2006-01-02 15:04:05.000"), path, -1)
+		reportPerformance(time.Now(), 0, 0, nil, path, -1, oldRc)
 		alive <- true
 		return nil
 	}
@@ -66,9 +67,10 @@ func (p RestProto) Get(path string, oldRc string) error {
 		//log.Fatalf("error getting http response, %v: halting.\n", err)
 		// try running right through this
 		dumpXact(req, resp, nil, conf.Crash, "error getting http response", err)
-		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
-			initial.Format("2006-01-02 15:04:05.000"),
-			latency.Seconds(), 0.0, 0, path, -2)
+		//fmt.Printf("%s %f %f 0 %d %s %d GET\n",
+		//	initial.Format("2006-01-02 15:04:05.000"),
+		//	latency.Seconds(), 0.0, 0, path, -2)
+		reportPerformance(initial, latency, 0, nil, path, resp.StatusCode, oldRc)
 		alive <- true
 		return nil
 	}
@@ -77,18 +79,16 @@ func (p RestProto) Get(path string, oldRc string) error {
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
 		dumpXact(req, resp, body, conf.Crash,"error reading http response, continuing", err)
-		fmt.Printf("%s %f %f 0 %d %s %d GET\n",
-			time.Now().Format("2006-01-02 15:04:05.000"),
-			latency.Seconds(), transferTime.Seconds(), 0, path, -3)
+		//fmt.Printf("%s %f %f 0 %d %s %d GET\n",
+		//	time.Now().Format("2006-01-02 15:04:05.000"),
+		//	latency.Seconds(), transferTime.Seconds(), 0, path, -3)
+		reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 		alive <- true
 		return nil
 	}
-	old, _ := strconv.Atoi(oldRc)
 
 	// And, in the non-error cases, conditionally dump
 	switch {
-	case resp.StatusCode != old:
-		dumpXact(req, resp, body, conf.Crash, fmt.Sprintf("expected %d, got %d", old, resp.StatusCode), nil)
 	case badGetCode(resp.StatusCode):
 		dumpXact(req, resp, body, conf.Crash,"bad return code", nil)
 	case badLen(resp.ContentLength, body):
@@ -97,12 +97,27 @@ func (p RestProto) Get(path string, oldRc string) error {
 		dumpXact(req, resp, body, conf.Crash,"", nil)
 	}
 
-
-	fmt.Printf("%s %f %f 0 %d %s %d GET\n",
-		initial.Format("2006-01-02 15:04:05.000"),
-		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
+	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 	alive <- true
 	return nil
+}
+
+// reportPerformance in standard format
+func reportPerformance(initial time.Time, latency time.Duration,
+	transferTime time.Duration,	body []byte, path string,
+	rc int, oldRc string) {
+	var annotation = ""
+
+	if oldRc != "" {
+		old, _ := strconv.Atoi(oldRc)
+		if rc != old {
+			annotation = fmt.Sprintf(" expected=%d", old)
+		}
+	}
+	fmt.Printf("%s %f %f 0 %d %s %d GET%s\n",
+		initial.Format("2006-01-02 15:04:05.000"),
+		latency.Seconds(), transferTime.Seconds(), len(body), path,
+		rc, annotation)
 }
 
 // Put does an ordinary REST (not ceph or s3) put operation.
@@ -131,7 +146,7 @@ func (p RestProto) Put(path string, size int64) error {
 	//// do put
 	//req, err := http.NewRequest("PUT", p.prefix+"/"+path, io.LimitReader(fp, size))
 	//if err != nil {
-	//	// report and exit
+	//	// reportPerformance and exit
 	//	dumpXact(req, nil, nil, true, "error creating http request", err)
 	//}
 	//resp, err := httpClient.Do(req)
@@ -153,9 +168,7 @@ func (p RestProto) Put(path string, size int64) error {
 	//case conf.Verbose:
 	//	dumpXact(req, resp, contents, conf.Crash,"", nil)
 	//}
-	//fmt.Printf("%s %f %f 0 %d %s %d PUT\n",
-	//	initial.Format("2006-01-02 15:04:05.000"),
-	//	latency.Seconds(), transferTime.Seconds(), len(contents), path, resp.StatusCode)
+	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
 	//alive <- true
 	//return nil
 }

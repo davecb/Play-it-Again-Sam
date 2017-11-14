@@ -6,7 +6,6 @@ package loadTesting
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -53,13 +52,17 @@ func (p S3Proto) Get(path string, oldRc string) error {
 		fmt.Printf("%s %f 0 0 %d %s %d GET\n",
 			initial.Format("2006-01-02 15:04:05.000"),
 			responseTime.Seconds(), numBytes, path, rc)
-		// Extract and report the failure, iff possible
+		reportPerformance(initial, responseTime, 0, nil, path, rc, oldRc)
+
+		// Extract and reportPerformance the failure, iff possible
 		alive <- true
 		return nil
 	}
 	fmt.Printf("%s %f 0 0 %d %s 200 GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		responseTime.Seconds(), numBytes, path)
+	reportPerformance(initial, responseTime, 0, nil, path, 200, oldRc)
+
 	alive <- true
 	return nil
 }
@@ -67,50 +70,51 @@ func (p S3Proto) Get(path string, oldRc string) error {
 // Put puts a file and times it
 // error return is used only by mkLoadTestFiles  FIXME
 func (p S3Proto) Put(path string, size int64) error {
-	if conf.Debug {
-		log.Printf("in AmazonS3Put(%s, %s, %d)\n", p.prefix, path, size)
-	}
-
-	file, err := os.Open(junkDataFile)
-	if err != nil {
-		return fmt.Errorf("Unable to open junk-data file %s, %v", junkDataFile, err)
-	}
-	defer file.Close() // nolint
-	lr := io.LimitReader(file, size)
-
-	if svc == nil {
-		return fmt.Errorf("missing service %v", svc)
-	}
-	uploader := s3manager.NewUploaderWithClient(svc)
-	initial := time.Now() //              				***** Response time starts
-	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(conf.S3Bucket),
-		Key:    aws.String(path),
-		Body:   lr,
-	})
-	responseTime := time.Since(initial) // 				***** Response time ends
-	// FIXME swap this around
-	if err == nil {
-		fmt.Printf("%s %f 0 0 %d %s 201 PUT\n",
-			initial.Format("2006-01-02 15:04:05.000"),
-			responseTime.Seconds(), size, path)
-		alive <- true
-		return nil
-	}
-	// This doesn't seem to do what one exoects: FIXME?
-	// reqerr, ok := err.(awserr.RequestFailure)
-	//if ok {
-	//	log.Printf("%s %f 0 0 %d %s %d GET\n",
-	//		initial.Format("2006-01-02 15:04:05.000"),
-	//		responseTime.Seconds(), size, path, reqerr.StatusCode)
-	//	alive <- true
-	// return nil
+	return fmt.Errorf("put is not implemented yet")
+	//if conf.Debug {
+	//	log.Printf("in AmazonS3Put(%s, %s, %d)\n", p.prefix, path, size)
 	//}
-	fmt.Printf("%s %f 0 0 %d %s 4XX GET\n",
-		initial.Format("2006-01-02 15:04:05.000"),
-		responseTime.Seconds(), size, path)
-	alive <- true
-	return fmt.Errorf("unable to upload %q to %q, %v", path, conf.S3Bucket, err)
+	//
+	//file, err := os.Open(junkDataFile)
+	//if err != nil {
+	//	return fmt.Errorf("Unable to open junk-data file %s, %v", junkDataFile, err)
+	//}
+	//defer file.Close() // nolint
+	//lr := io.LimitReader(file, size)
+	//
+	//if svc == nil {
+	//	return fmt.Errorf("missing service %v", svc)
+	//}
+	//uploader := s3manager.NewUploaderWithClient(svc)
+	//initial := time.Now() //              				***** Response time starts
+	//_, err = uploader.Upload(&s3manager.UploadInput{
+	//	Bucket: aws.String(conf.S3Bucket),
+	//	Key:    aws.String(path),
+	//	Body:   lr,
+	//})
+	//responseTime := time.Since(initial) // 				***** Response time ends
+	//// FIXME swap this around
+	//if err == nil {
+	//	fmt.Printf("%s %f 0 0 %d %s 201 PUT\n",
+	//		initial.Format("2006-01-02 15:04:05.000"),
+	//		responseTime.Seconds(), size, path)
+	//	alive <- true
+	//	return nil
+	//}
+	//// This doesn't seem to do what one exoects: FIXME?
+	//// reqerr, ok := err.(awserr.RequestFailure)
+	////if ok {
+	////	log.Printf("%s %f 0 0 %d %s %d GET\n",
+	////		initial.Format("2006-01-02 15:04:05.000"),
+	////		responseTime.Seconds(), size, path, reqerr.StatusCode)
+	////	alive <- true
+	//// return nil
+	////}
+	//fmt.Printf("%s %f 0 0 %d %s 4XX GET\n",
+	//	initial.Format("2006-01-02 15:04:05.000"),
+	//	responseTime.Seconds(), size, path)
+	//alive <- true
+	//return fmt.Errorf("unable to upload %q to %q, %v", path, conf.S3Bucket, err)
 }
 
 // mustCreateService creates a connection to an s3-compatible server.
