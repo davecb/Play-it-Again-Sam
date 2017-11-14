@@ -27,6 +27,7 @@ func main() {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
 	var s3, ceph, rest bool
+	var ro, rw, wo bool
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash bool
 	var serial, cache, tail bool
@@ -39,18 +40,24 @@ func main() {
 	flag.IntVar(&progressRate, "progress", 0, "progress rate, in TPS steps")
 	flag.IntVar(&progressRate, "start-tps", 0, "TPS to start from")
 	flag.IntVar(&stepDuration, "duration", 10, "Duration of a step")
+
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
-	//flag.BoolVar(&ceph, "ceph", false, "use ceph native protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
+
+	flag.BoolVar(&ro, "ro", true, "read-only test")
+	flag.BoolVar(&rw, "rw", false, "read-write test")
+	flag.BoolVar(&wo, "wo", false, "write-only test")
+
 	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
-	//flag.StringVar(&configFile, "s3config", "/home/davecb/vagrant/aoi1/src/RCDN/appsettings.txt", "config file")
 	flag.StringVar(&strip, "strip", "", "test to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.BoolVar(&cache, "cache", false, "allow caching")
 	flag.BoolVar(&tail, "tail", false, "tail -f the input file")
+
 	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
 	flag.BoolVar(&crash, "crash", false, "exit on any error return")
+
 	flag.StringVar(&s3Bucket, "s3-bucket", "BUCKET NOT SET",
 		"set bucket when using s3 protocol")
 	flag.StringVar(&s3Key, "s3-key", "KEY NOT SET",
@@ -71,6 +78,9 @@ func main() {
 
 	if tpsTarget == 0 {
 		log.Fatal("You must specify a --tps target, halting.")
+	}
+	if wo || rw {
+		log.Fatal("Read-write and write-only tests are not yet implemented, use default or -ro.")
 	}
 
 	proto, err := setProtocol(s3, ceph)
