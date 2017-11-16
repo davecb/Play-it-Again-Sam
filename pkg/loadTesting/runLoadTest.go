@@ -270,9 +270,7 @@ func doWork() {
 		} else {
 			go op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		}
-	case r[operatorField] == "PUT":
-		// FIXME: treat PUT as a no-op
 	default:
-		log.Fatal("operations other than GET and PUT are not implemented yet\n")
+		log.Printf("got unimplemented operation %s in %v, ignored\n",  r[operatorField], r)
 	}
 }
