@@ -70,7 +70,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 		//fmt.Printf("%s %f %f 0 %d %s %d GET\n",
 		//	initial.Format("2006-01-02 15:04:05.000"),
 		//	latency.Seconds(), 0.0, 0, path, -2)
-		reportPerformance(initial, latency, 0, nil, path, resp.StatusCode, oldRc)
+		reportPerformance(initial, latency, 0, nil, path, -2, oldRc)
 		alive <- true
 		return nil
 	}
@@ -110,7 +110,7 @@ func reportPerformance(initial time.Time, latency time.Duration,
 
 	if oldRc != "" {
 		old, _ := strconv.Atoi(oldRc)
-		if rc != old {
+		if rc != old && old != 0 {
 			annotation = fmt.Sprintf(" expected=%d", old)
 		}
 	}

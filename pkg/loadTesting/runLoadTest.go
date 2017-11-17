@@ -27,7 +27,7 @@ const (
 type operation interface {
 	Init()
 	Get(path, oldRc string) error
-	Put(path string, size int64) error  // FIXME add oldRc
+	Put(path string, size int64) error // FIXME add oldRc
 }
 
 // These are the field names in the csv file
@@ -265,12 +265,12 @@ func doWork() {
 		log.Fatalf("number of fields != 9 in %v", r)
 	case r[operatorField] == "GET":
 		if conf.Serialize {
-			// force this NOT to be asynchronous, for load tests only
+			// force this NOT to be asynchronous, for long-running load tests only
 			op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		} else {
 			go op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		}
 	default:
-		log.Printf("got unimplemented operation %s in %v, ignored\n",  r[operatorField], r)
+		log.Printf("got unimplemented operation %s in %v, ignored\n", r[operatorField], r)
 	}
 }
