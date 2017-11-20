@@ -249,7 +249,9 @@ func doWork() {
 
 	select {
 	case <-closed:
-		//log.Print("pipe closed, no more requests to send.\n")
+		if conf.Debug {
+			log.Print("pipe closed, no more requests to process.\n")
+		}
 		return
 	case r = <-pipe:
 		//log.Printf("got %v\n", r)
