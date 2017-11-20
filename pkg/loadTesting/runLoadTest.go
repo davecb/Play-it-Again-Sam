@@ -165,9 +165,8 @@ forloop:
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		if conf.Debug {
-			log.Printf("writing %v to pipe\n", record)
-		}
+		// log.Printf("writing %v to pipe\n", record)
+
 		pipe <- record
 	}
 	return recNo, pipe

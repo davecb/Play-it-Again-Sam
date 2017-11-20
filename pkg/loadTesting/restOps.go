@@ -43,8 +43,6 @@ func (p RestProto) Get(path string, oldRc string) error {
 	req, err := http.NewRequest("GET", p.prefix+"/"+path, nil)
 	if err != nil {
 		dumpXact(req, nil, nil, conf.Crash, "error creating http request", err)
-		//fmt.Printf("%s 0 0 0 0 %s %d GET\n",
-		//	time.Now().Format("2006-01-02 15:04:05.000"), path, -1)
 		reportPerformance(time.Now(), 0, 0, nil, path, -1, oldRc)
 		alive <- true
 		return nil
@@ -67,10 +65,8 @@ func (p RestProto) Get(path string, oldRc string) error {
 		//log.Fatalf("error getting http response, %v: halting.\n", err)
 		// try running right through this
 		dumpXact(req, resp, nil, conf.Crash, "error getting http response", err)
-		//fmt.Printf("%s %f %f 0 %d %s %d GET\n",
-		//	initial.Format("2006-01-02 15:04:05.000"),
-		//	latency.Seconds(), 0.0, 0, path, -2)
-		reportPerformance(initial, latency, 0, nil, path, -2, oldRc)
+		// 444 is nginx's code for server has returned no information ans/or EOF
+		reportPerformance(initial, latency, 0, nil, path, 444, oldRc)
 		alive <- true
 		return nil
 	}
@@ -79,9 +75,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
 		dumpXact(req, resp, body, conf.Crash,"error reading http response, continuing", err)
-		//fmt.Printf("%s %f %f 0 %d %s %d GET\n",
-		//	time.Now().Format("2006-01-02 15:04:05.000"),
-		//	latency.Seconds(), transferTime.Seconds(), 0, path, -3)
+		// the resp is available, the body, distinctly less so (;-))
 		reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 		alive <- true
 		return nil
@@ -94,7 +88,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 	case badLen(resp.ContentLength, body):
 		dumpXact(req, resp, body,  conf.Crash,"bad length", nil)
 	case conf.Verbose:
-		dumpXact(req, resp, body, conf.Crash,"", nil)
+		dumpXact(req, resp, body, conf.Crash,"verbose", nil)
 	}
 
 	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
