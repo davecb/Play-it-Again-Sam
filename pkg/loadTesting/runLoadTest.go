@@ -239,12 +239,15 @@ func worker(pipe chan []string) {
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
 	for range time.Tick(1 * time.Second) { // nolint
-		doWork()
+		done := doWork()
+		if done {
+			return
+		}
 	}
 }
 
 // work is the thing that happens each second.
-func doWork() {
+func doWork() bool {
 	var r []string
 
 	select {
@@ -252,7 +255,7 @@ func doWork() {
 		if conf.Debug {
 			log.Print("pipe closed, no more requests to process.\n")
 		}
-		return
+		return true
 	case r = <-pipe:
 		//log.Printf("got %v\n", r)
 	}
@@ -260,7 +263,7 @@ func doWork() {
 	switch {
 	case r == nil:
 		//log.Print("worker reached EOF, no more requests to send.\n")
-		return
+		return true
 	case len(r) != 9:
 		// bad input data, crash please.
 		log.Fatalf("number of fields != 9 in %v", r)
@@ -274,4 +277,5 @@ func doWork() {
 	default:
 		log.Printf("got unimplemented operation %s in %v, ignored\n", r[operatorField], r)
 	}
+	return false
 }
