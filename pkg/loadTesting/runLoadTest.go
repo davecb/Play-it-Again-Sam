@@ -239,6 +239,13 @@ func worker(pipe chan []string) {
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
 	for range time.Tick(1 * time.Second) { // nolint
+		select {
+		case <-closed:
+			if conf.Debug {
+				log.Print("pipe closed, no more requests to process.\n")
+			}
+			return
+		}
 		doWork()
 	}
 }
@@ -247,16 +254,7 @@ func worker(pipe chan []string) {
 func doWork() {
 	var r []string
 
-	select {
-	case <-closed:
-		if conf.Debug {
-			log.Print("pipe closed, no more requests to process.\n")
-		}
-		return
-	case r = <-pipe:
-		//log.Printf("got %v\n", r)
-	}
-
+	r = <-pipe
 	switch {
 	case r == nil:
 		//log.Print("worker reached EOF, no more requests to send.\n")
