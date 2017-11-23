@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 	//"github.com/aws/aws-sdk-go/service/s3"
+	"gopkg.in/fsnotify.v1"
+	//"google.golang.org/genproto/googleapis/watcher/v1"
 )
 
 // The protocols supported by the library
@@ -83,7 +85,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 			tpsTarget, progressRate, startTps, fromTime, forTime, baseURL)
 	}
 
-	// Figure out set of operations to use
+	// Figure out which set of operations to use
 	switch conf.Protocol {
 	case RESTProtocol:
 		op = RestProto{prefix: baseURL}
@@ -94,7 +96,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
 	}
-	// FIXME defer os.Remove(junkDataFile) // nolint
+	// FIXME for write: defer os.Remove(junkDataFile) // nolint
 
 	go workSelector(f, filename, fromTime, forTime, pipe)             // which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL) // which then writes to "alive"
@@ -114,6 +116,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 
 // workSelector pipes a selection from a file to the workers
 func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan []string) { // nolint
+	var watcher *fsnotify.Watcher
 
 	if conf.Debug {
 		log.Printf("in workSelector(r, %s, startFrom=%d runFor=%d, pipe)\n", filename, startFrom, runFor)
@@ -124,22 +127,33 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 		if err != nil {
 			log.Fatalf("Fatal error seeking to the end of %s: %s\n", filename, err)
 		}
+		watcher, _ = fsnotify.NewWatcher()
+		if err != nil {
+			log.Fatalf("Fatal error setting up fsnotify for tail of %s: %s\n", filename, err)
+			// FIXME: to fall back to polling, set watcher to nil
+		}
+		defer watcher.Close()
+		err = watcher.Add(filename)
+		if err != nil {
+			log.Fatalf("Fatal error addding %s to fsnotify: %s\n", filename, err)
+		}
 		log.Printf("seeked to the end of %s, doing a tail -f with normal timeouts\n",
 			filename)
 	}
+
 	r := csv.NewReader(f)
 	r.Comma = ' '
 	r.Comment = '#'
 	r.FieldsPerRecord = -1 // ignore differences
 
 	skipForward(startFrom, r, filename)
-	recNo, pipe := copyToPipe(runFor, r, filename, pipe)
+	recNo, pipe := copyToPipe(runFor, r, filename, pipe, watcher)
 	log.Printf("Loaded %d records, closing input\n", recNo)
 	close(pipe)
 }
 
 // copyToPipe sends work to the workers
-func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string) (int, chan []string) {
+func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string, watcher *fsnotify.Watcher) (int, chan []string) {
 	// From there, copy to pipe
 
 	recNo := 0
@@ -148,8 +162,15 @@ forloop:
 		record, err := r.Read()
 		switch {
 		case err == io.EOF && conf.Tail:
-			// just keep reading
-			time.Sleep(100 * time.Millisecond)
+			// just keep reading, even if we truncate...
+			if watcher == nil {
+				time.Sleep(100 * time.Millisecond)
+			} else {
+				//log.Print("waiting for fsnotify\n")
+				if err = waitForChange(watcher); err != nil {
+					log.Fatalf("Fatal error waiting for fsnotify on %s, %v\n", filename, err)
+				}
+			}
 			continue
 		case err == io.EOF:
 			log.Printf("At EOF on %s, no new work to queue\n", filename)
@@ -179,7 +200,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 			tpsTarget, progressRate)
 	}
 
-	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc\n")
+	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op\n")
 	switch {
 	case progressRate != 0:
 		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
@@ -278,4 +299,19 @@ func doWork() bool {
 		log.Printf("got unimplemented operation %s in %v, ignored\n", r[operatorField], r)
 	}
 	return false
+}
+
+// waitForChange waits for the tail of a file to be written to
+// cargo courtesy Satyajit Ranjeev, http://satran.in/2017/11/15/Implementing_tails_follow_in_go.html
+func waitForChange(w *fsnotify.Watcher) error {
+	for {
+		select {
+		case event := <-w.Events:
+			if event.Op&fsnotify.Write == fsnotify.Write {
+				return nil
+			}
+		case err := <-w.Errors:
+			return err
+		}
+	}
 }

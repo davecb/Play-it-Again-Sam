@@ -71,6 +71,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 		return nil
 	}
 	body, err := ioutil.ReadAll(resp.Body)
+	// how about io.Copy(ioutil.Discard, resp.Body)
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
