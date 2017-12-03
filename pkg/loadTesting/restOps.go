@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"time"
-	"strconv"
 )
 
 // RestProto satisfies operation by doing rest operations.
@@ -95,24 +94,6 @@ func (p RestProto) Get(path string, oldRc string) error {
 	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 	alive <- true
 	return nil
-}
-
-// reportPerformance in standard format
-func reportPerformance(initial time.Time, latency time.Duration,
-	transferTime time.Duration,	body []byte, path string,
-	rc int, oldRc string) {
-	var annotation = ""
-
-	if oldRc != "" {
-		old, _ := strconv.Atoi(oldRc)
-		if rc != old && old != 0 {
-			annotation = fmt.Sprintf(" expected=%d", old)
-		}
-	}
-	fmt.Printf("%s %f %f 0 %d %s %d GET%s\n",
-		initial.Format("2006-01-02 15:04:05.000"),
-		latency.Seconds(), transferTime.Seconds(), len(body), path,
-		rc, annotation)
 }
 
 // Put does an ordinary REST (not ceph or s3) put operation.

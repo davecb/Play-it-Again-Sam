@@ -15,6 +15,8 @@ import (
 	//"github.com/aws/aws-sdk-go/service/s3"
 	"gopkg.in/fsnotify.v1"
 	//"google.golang.org/genproto/googleapis/watcher/v1"
+	"strconv"
+	"syscall"
 )
 
 // The protocols supported by the library
@@ -78,6 +80,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	tpsTarget, progressRate, startTps int, baseURL string, cfg Config) {
 	var processed = 0
 	conf = cfg
+	defer reportRUsage("RunLoadTest", time.Now())
 
 	if conf.Debug {
 		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, "+
@@ -96,10 +99,11 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
 	}
-	// FIXME for write: defer os.Remove(junkDataFile) // nolint
+	// FIXME for write: defer os.Remove(junkDataFile)
 
 	go workSelector(f, filename, fromTime, forTime, pipe)             // which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL) // which then writes to "alive"
+  waiter:
 	for {
 		select {
 		case <-alive:
@@ -109,7 +113,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 			log.Printf("%d records processed\n", processed)
 			log.Printf("No activity after %d seconds, halting normally.\n",
 				conf.Timeout)
-			os.Exit(0)
+			break waiter
 		}
 	}
 }
@@ -132,7 +136,7 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 			log.Fatalf("Fatal error setting up fsnotify for tail of %s: %s\n", filename, err)
 			// FIXME: to fall back to polling, set watcher to nil
 		}
-		defer watcher.Close()
+		defer watcher.Close()  // nolint
 		err = watcher.Add(filename)
 		if err != nil {
 			log.Fatalf("Fatal error addding %s to fsnotify: %s\n", filename, err)
@@ -314,4 +318,45 @@ func waitForChange(w *fsnotify.Watcher) error {
 			return err
 		}
 	}
+}
+
+
+
+// reportPerformance in standard format
+func reportPerformance(initial time.Time, latency time.Duration,
+	transferTime time.Duration,	body []byte, path string,
+	rc int, oldRc string) {
+	var annotation = ""
+
+	if oldRc != "" {
+		old, _ := strconv.Atoi(oldRc)
+		if rc != old && old != 0 {
+			annotation = fmt.Sprintf(" expected=%d", old)
+		}
+	}
+	fmt.Printf("%s %f %f 0 %d %s %d GET%s\n",
+		initial.Format("2006-01-02 15:04:05.000"),
+		latency.Seconds(), transferTime.Seconds(), len(body), path,
+		rc, annotation)
+}
+
+// reportRusage reports cpu-seconds, memory and IOPS used
+func reportRUsage(name string, start time.Time) {
+	var r syscall.Rusage
+
+	err := syscall.Getrusage(syscall.RUSAGE_SELF, &r)
+	if err != nil {
+		log.Fatal(err)
+		log.Printf("%s %s %d no resource usage available\n",
+			start.Format("2006-01-02 15:04:05.000"), name, os.Getpid())
+		return
+	}
+	fmt.Fprint(os.Stderr,"#date      time         name        pid  utime stime maxrss inblock outblock\n")
+	fmt.Fprintf(os.Stderr,"%s %s %d %f %f %d %d %d\n", start.Format("2006-01-02 15:04:05.000"),
+		name, os.Getpid(), seconds(r.Utime), seconds(r.Stime), r.Maxrss * 1024, r.Inblock, r.Oublock)
+}
+
+// seconds converts a syscall.Timeval to seconds
+func seconds(t syscall.Timeval) float64 {
+	return float64(time.Duration(t.Sec)*time.Second + time.Duration(t.Usec)*time.Microsecond) /float64(time.Second)
 }
