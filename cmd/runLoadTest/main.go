@@ -3,7 +3,7 @@
 package main
 
 import (
-	"loadTesting/pkg/loadTesting"
+	"Play-it-Again-Sam/pkg/loadTesting"
 
 	"flag"
 	"fmt"
