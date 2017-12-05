@@ -17,7 +17,9 @@ import (
 const terminationTimeout = 35
 
 func usage() {
-	fmt.Fprint(os.Stderr, "Usage: runLoadTest --tps TPS [--progress TPS][--from rec --for rec][-v] load-file.csv baseURL\n")
+	//nolint
+	fmt.Fprint(os.Stderr, "Usage: runLoadTest --tps TPS [--progress "+
+		"TPS][--from rec --for rec][-v] load-file.csv baseURL\n")
 	flag.PrintDefaults()
 	os.Exit(1)
 }
@@ -67,7 +69,7 @@ func main() {
 	iniflags.Parse()
 
 	if flag.NArg() < 2 {
-		fmt.Fprint(os.Stderr, "You must supply a load.csv file and a url\n")
+		fmt.Fprint(os.Stderr, "You must supply a load.csv file and a url\n") //nolint
 		usage()
 	}
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
@@ -108,7 +110,7 @@ func main() {
 		loadTesting.Config{
 			Verbose:      verbose,
 			Debug:        debug,
-			Crash:	      crash,
+			Crash:        crash,
 			Serialize:    serial,
 			Cache:        cache,
 			Tail:         tail,
@@ -126,7 +128,7 @@ func main() {
 func setProtocol(s3, ceph bool) (int, error) {
 	var err error
 
-	var proto = loadTesting.RESTProtocol
+	var proto int
 	switch {
 	case s3:
 		proto = loadTesting.S3Protocol

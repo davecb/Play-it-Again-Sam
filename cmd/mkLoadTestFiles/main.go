@@ -5,8 +5,7 @@
 package main
 
 import (
-	"loadTesting/pkg/loadTesting"
-
+	"Play-it-Again-Sam/pkg/loadTesting"
 
 	"flag"
 	"fmt"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/vharitonsky/iniflags"
 )
+
 // See runLoadTest.go for any package vars.
 
 // main interprets the options and args.
@@ -31,7 +31,7 @@ func main() {
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
 
 	if flag.NArg() < 1 {
-		fmt.Fprint(os.Stderr, "Usage: mkLoadTestFiles [-v][--from N --for N] load-file.csv url\n")
+		fmt.Fprint(os.Stderr, "Usage: mkLoadTestFiles [-v][--from N --for N] load-file.csv url\n") //nolint
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -40,7 +40,7 @@ func main() {
 		log.Fatalf("No load-test csv file provided, halting.\n")
 	}
 	if runFor == 0 {
-		runFor =  math.MaxInt64
+		runFor = math.MaxInt64
 	}
 	baseURL := flag.Arg(1)
 	f, err := os.Open(filename)
@@ -48,7 +48,6 @@ func main() {
 		log.Fatalf("Error opening %s: %s, halting.", filename, err)
 	}
 	defer f.Close() // nolint
-
 
 	loadTesting.MkLoadTestFiles(f, filename, baseURL, startFrom, runFor,
 		loadTesting.Config{
@@ -59,4 +58,3 @@ func main() {
 		})
 
 }
-
