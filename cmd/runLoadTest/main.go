@@ -3,7 +3,7 @@
 package main
 
 import (
-	"Play-it-Again-Sam/pkg/loadTesting"
+	"github.com/davecb/Play-it-Again-Sam/pkg/loadTesting"
 
 	"flag"
 	"fmt"
