@@ -69,7 +69,7 @@ func (p S3Proto) Get(path string, oldRc string) error {
 
 // Put puts a file and times it
 // error return is used only by mkLoadTestFiles  FIXME
-func (p S3Proto) Put(path string, size int64) error {
+func (p S3Proto) Put(path, size, oldRC string) error {
 	return fmt.Errorf("put is not implemented yet")
 	//if conf.Debug {
 	//	log.Printf("in AmazonS3Put(%s, %s, %d)\n", p.prefix, path, size)

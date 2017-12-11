@@ -74,7 +74,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 	transferTime := time.Since(initial) - latency // Transfer time ends
 	defer resp.Body.Close()                       // nolint
 	if err != nil {
-		dumpXact(req, resp, body, conf.Crash,"error reading http response, continuing", err)
+		dumpXact(req, resp, body, conf.Crash, "error reading http response, continuing", err)
 		// the resp is available, the body, distinctly less so (;-))
 		reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 		alive <- true
@@ -84,11 +84,11 @@ func (p RestProto) Get(path string, oldRc string) error {
 	// And, in the non-error cases, conditionally dump
 	switch {
 	case badGetCode(resp.StatusCode):
-		dumpXact(req, resp, body, conf.Crash,"bad return code", nil)
+		dumpXact(req, resp, body, conf.Crash, "bad return code", nil)
 	case badLen(resp.ContentLength, body):
-		dumpXact(req, resp, body,  conf.Crash,"bad length", nil)
+		dumpXact(req, resp, body, conf.Crash, "bad length", nil)
 	case conf.Verbose:
-		dumpXact(req, resp, body, conf.Crash,"verbose", nil)
+		dumpXact(req, resp, body, conf.Crash, "verbose", nil)
 	}
 
 	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
@@ -97,7 +97,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 }
 
 // Put does an ordinary REST (not ceph or s3) put operation.
-func (p RestProto) Put(path string, size int64) error {
+func (p RestProto) Put(path, size, oldRC string) error {
 	return fmt.Errorf("put is not implemented yet")
 	//
 	//if conf.Debug {
@@ -203,7 +203,7 @@ func requestToString(req *http.Request) string {
 // responseToString provides extra information about an http response
 func responseToString(resp *http.Response) string {
 	if resp == nil {
-		return"Response: <nil>\n"
+		return "Response: <nil>\n"
 	}
 	contents, err := httputil.DumpResponse(resp, false)
 	if err != nil {

@@ -31,7 +31,7 @@ const (
 type operation interface {
 	Init()
 	Get(path, oldRc string) error
-	Put(path string, size int64) error // FIXME add oldRc
+	Put(path, size, oldRc string) error
 }
 
 // These are the field names in the csv file
@@ -49,20 +49,23 @@ const ( // nolint
 
 // Config contains all the optional parameters.
 type Config struct {
-	Verbose      bool
-	Debug        bool
-	Crash        bool
-	Serialize    bool
-	Cache        bool
-	Tail         bool
-	Protocol     int
-	S3Bucket     string
+	Verbose      bool   // Extra info about requests
+	Debug        bool   // Extra infor about program
+	Crash        bool   // Halt on any error
+	Serialize    bool   // FIXME semi-evil hack
+	Cache        bool   // allow caching
+	Tail         bool   // tail a log
+	Protocol     int    // rest, 23 or filesystem FIXME?
+	S3Bucket     string // s3-specific options
 	S3Key        string
 	S3Secret     string
 	Strip        string
-	Timeout      time.Duration
-	StepDuration int
-	HostHeader   string
+	Timeout      time.Duration // time to wait at end
+	StepDuration int           // duration of a test step
+	HostHeader   string        // add a Host: header
+	R            bool          // read tests allowed
+	W            bool          // write tests allowed
+	BufSize      int64         // size of max write
 }
 
 var conf Config
@@ -103,7 +106,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 
 	go workSelector(f, filename, fromTime, forTime, pipe)             // which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL) // which then writes to "alive"
-  waiter:
+waiter:
 	for {
 		select {
 		case <-alive:
@@ -136,7 +139,7 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 			log.Fatalf("Fatal error setting up fsnotify for tail of %s: %s\n", filename, err)
 			// FIXME: to fall back to polling, set watcher to nil
 		}
-		defer watcher.Close()  // nolint
+		defer watcher.Close() // nolint
 		err = watcher.Add(filename)
 		if err != nil {
 			log.Fatalf("Fatal error addding %s to fsnotify: %s\n", filename, err)
@@ -292,13 +295,15 @@ func doWork() bool {
 	case len(r) != 9:
 		// bad input data, crash please.
 		log.Fatalf("number of fields != 9 in %v", r)
-	case r[operatorField] == "GET":
+	case r[operatorField] == "GET" && conf.R:
 		if conf.Serialize {
 			// force this NOT to be asynchronous, for long-running load tests only
 			op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		} else {
 			go op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		}
+	case r[operatorField] == "PUT" && conf.W:
+		go op.Put(r[pathField], r[bytesField], r[returnCodeField]) // nolint, ignore return value
 	default:
 		log.Printf("got unimplemented operation %s in %v, ignored\n", r[operatorField], r)
 	}
@@ -320,11 +325,9 @@ func waitForChange(w *fsnotify.Watcher) error {
 	}
 }
 
-
-
 // reportPerformance in standard format
 func reportPerformance(initial time.Time, latency time.Duration,
-	transferTime time.Duration,	body []byte, path string,
+	transferTime time.Duration, body []byte, path string,
 	rc int, oldRc string) {
 	var annotation = ""
 
@@ -351,12 +354,12 @@ func reportRUsage(name string, start time.Time) {
 			start.Format("2006-01-02 15:04:05.000"), name, os.Getpid())
 		return
 	}
-	fmt.Fprint(os.Stderr,"#date      time         name        pid  utime stime maxrss inblock outblock\n")
-	fmt.Fprintf(os.Stderr,"%s %s %d %f %f %d %d %d\n", start.Format("2006-01-02 15:04:05.000"),
-		name, os.Getpid(), seconds(r.Utime), seconds(r.Stime), r.Maxrss * 1024, r.Inblock, r.Oublock)
+	fmt.Fprint(os.Stderr, "#date      time         name        pid  utime stime maxrss inblock outblock\n")
+	fmt.Fprintf(os.Stderr, "%s %s %d %f %f %d %d %d\n", start.Format("2006-01-02 15:04:05.000"),
+		name, os.Getpid(), seconds(r.Utime), seconds(r.Stime), r.Maxrss*1024, r.Inblock, r.Oublock)
 }
 
 // seconds converts a syscall.Timeval to seconds
 func seconds(t syscall.Timeval) float64 {
-	return float64(time.Duration(t.Sec)*time.Second + time.Duration(t.Usec)*time.Microsecond) /float64(time.Second)
+	return float64(time.Duration(t.Sec)*time.Second+time.Duration(t.Usec)*time.Microsecond) / float64(time.Second)
 }

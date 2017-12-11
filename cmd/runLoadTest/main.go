@@ -30,6 +30,7 @@ func main() {
 	var startFrom, runFor int
 	var s3, ceph, rest bool
 	var ro, rw, wo bool
+	var bufSize int64
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash bool
 	var serial, cache, tail bool
@@ -81,15 +82,14 @@ func main() {
 	if tpsTarget == 0 {
 		log.Fatal("You must specify a --tps target, halting.")
 	}
+
+	// Interpret rw, ro and wo options
 	if wo || rw {
 		log.Fatal("Read-write and write-only tests are not yet implemented, use default or -ro.")
 	}
+	r, w := setMode(ro, rw, wo)
 
-	proto, err := setProtocol(s3, ceph)
-	if err != nil {
-		log.Fatalf("Error Setting protocol %v, halting.", err)
-	}
-
+	proto := setProtocol(s3, ceph)
 	filename := flag.Arg(0)
 	if filename == "" {
 		log.Fatalf("No load-test .csv file provided, halting.\n")
@@ -122,13 +122,16 @@ func main() {
 			Timeout:      terminationTimeout,
 			StepDuration: stepDuration,
 			HostHeader:   hostHeader,
+			R:            r,
+			W:            w,
+			BufSize:      bufSize,
 		})
 }
 
-func setProtocol(s3, ceph bool) (int, error) {
-	var err error
-
+// setProtocol from s3 and ceph booleans
+func setProtocol(s3, ceph bool) int {
 	var proto int
+
 	switch {
 	case s3:
 		proto = loadTesting.S3Protocol
@@ -137,5 +140,22 @@ func setProtocol(s3, ceph bool) (int, error) {
 	default: //REST
 		proto = loadTesting.RESTProtocol
 	}
-	return proto, err
+	return proto
+}
+
+func setMode(ro, rw, wo bool) (bool, bool) {
+	var r, w bool
+	switch {
+	case ro:
+		r = true
+		w = false
+	case rw:
+		r = true
+		w = true
+	case wo:
+		r = false
+		w = true
+	}
+	return r, w
+
 }
