@@ -206,6 +206,10 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 			tpsTarget, progressRate)
 	}
+	if conf.BufSize > 0 {
+		// create a buffer full of random bytes
+		log.Printf("-rw and -wo tests are not yet supported, buffer size of %d ignored\n", conf.BufSize)
+	}
 
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op\n")
 	switch {
@@ -300,12 +304,16 @@ func doWork() bool {
 			// force this NOT to be asynchronous, for long-running load tests only
 			op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
 		} else {
-			go op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
+			go op.Get(r[pathField], r[returnCodeField]) // nolint
 		}
-	case r[operatorField] == "PUT" && conf.W:
-		go op.Put(r[pathField], r[bytesField], r[returnCodeField]) // nolint, ignore return value
+	//case r[operatorField] == "PUT" && conf.W:
+	//	go op.Put(r[pathField], r[bytesField], r[returnCodeField]) // nolint
+	//case r[operatorField] == "DELE":
+	//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
+	//case r[operatorField] == "HEAD":
+	//	go op.Head(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	default:
-		log.Printf("got unimplemented operation %s in %v, ignored\n", r[operatorField], r)
+		log.Printf("unimplemented operation %s in %v, ignored\n", r[operatorField], r)
 	}
 	return false
 }

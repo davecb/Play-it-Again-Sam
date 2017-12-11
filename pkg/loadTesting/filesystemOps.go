@@ -1,12 +1,35 @@
 package loadTesting
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"path"
 	"time"
 )
+
+type FilesystemProto struct {
+	prefix string // optional?
+}
+
+// Init does nothing
+func (p FilesystemProto) Init() {}
+
+// Get too does nothing
+func (p FilesystemProto) Get(path, size, oldRC string) error {
+	return nil
+}
+
+// Put unconditionally creates filesystem files
+func (p FilesystemProto) Put(path, size, oldRC string) error {
+	return fmt.Errorf("put is not implemented yet")
+	//i, err := strconv.ParseInt(size, 10, 64)
+	//if err != nil {
+	//	log.Fatalf("could not parse size %q, halting\n", size)
+	//}
+	//return TimedCreateFilesystemFile(path, i)
+}
 
 // TimedCreateFilesystemFile is for local (non-Protocol) file creation
 func TimedCreateFilesystemFile(fullPath string, size int64) error {

@@ -29,7 +29,8 @@ func main() {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
 	var s3, ceph, rest bool
-	var ro, rw, wo bool
+	var ro bool
+	var rw, wo int64
 	var bufSize int64
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash bool
@@ -48,8 +49,8 @@ func main() {
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
 
 	flag.BoolVar(&ro, "ro", true, "read-only test")
-	flag.BoolVar(&rw, "rw", false, "read-write test")
-	flag.BoolVar(&wo, "wo", false, "write-only test")
+	flag.Int64Var(&rw, "rw", 0, "read-write test, w buffer size")
+	flag.Int64Var(&wo, "wo", 0, "write-only test, w buffer size")
 
 	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
 	flag.StringVar(&strip, "strip", "", "test to strip from paths")
@@ -84,10 +85,12 @@ func main() {
 	}
 
 	// Interpret rw, ro and wo options
-	if wo || rw {
-		log.Fatal("Read-write and write-only tests are not yet implemented, use default or -ro.")
-	}
 	r, w := setMode(ro, rw, wo)
+	if wo != 0 {
+		bufSize = wo
+	} else if rw != 0 {
+		bufSize = rw
+	}
 
 	proto := setProtocol(s3, ceph)
 	filename := flag.Arg(0)
@@ -143,16 +146,16 @@ func setProtocol(s3, ceph bool) int {
 	return proto
 }
 
-func setMode(ro, rw, wo bool) (bool, bool) {
+func setMode(ro bool, rw, wo int64) (bool, bool) {
 	var r, w bool
 	switch {
 	case ro:
 		r = true
 		w = false
-	case rw:
+	case rw != 0:
 		r = true
 		w = true
-	case wo:
+	case wo != 0:
 		r = false
 		w = true
 	}
