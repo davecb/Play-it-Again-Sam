@@ -56,6 +56,11 @@ func (p RestProto) Get(path string, oldRc string) error {
 		// See also https://github.com/golang/go/issues/7682
 		req.Header.Add("Host", conf.HostHeader)
 	}
+	// FIXME, add multiple headers, requires flag magic
+	//if conf.Headers {
+	//for key, value := range conf.Headers {
+	//	req.Header.Add(key, value)
+	//}
 
 	initial := time.Now() // Response time starts
 	resp, err := httpClient.Do(req)
@@ -209,14 +214,14 @@ func responseToString(resp *http.Response) string {
 	if err != nil {
 		return fmt.Sprintf("error dumping http response, %v\n", err)
 	}
-	s := "Response headers:\n"
+	s := "Response information:\n"
 	s += fmt.Sprintf("    Length: %d\n", resp.ContentLength)
 	shortDescr, _ := codeDescr(resp.StatusCode)
 	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
-	hdr := resp.Header
-	for key, value := range hdr {
-		s += fmt.Sprintln("   ", key, ":", value)
-	}
+	//hdr := resp.Header
+	//for key, value := range hdr {
+	//	s += fmt.Sprintln("   ", key, ":", value) // FIXME remove []
+	//}
 	s += fmt.Sprintf("Response contents: \n%s", string(contents))
 	return s
 }
