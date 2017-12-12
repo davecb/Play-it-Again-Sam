@@ -11,6 +11,8 @@ import (
 	"math"
 	"os"
 
+	"strings"
+
 	"github.com/vharitonsky/iniflags"
 )
 
@@ -36,6 +38,7 @@ func main() {
 	var verbose, debug, crash, akamaiDebug bool
 	var serial, cache, tail bool
 	var strip, hostHeader, headers string
+	var headerMap = make(map[string]string)
 	var err error
 
 	flag.IntVar(&runFor, "for", 0, "number of records to use, eg 1000 ")
@@ -78,6 +81,16 @@ func main() {
 		usage()
 	}
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
+	if headers != "" {
+		tokens := strings.Split(headers, " ")
+		for _, t := range tokens {
+			x := strings.Split(t, ":")
+			if len(x) != 2 || x[0] == "" || x[1] == "" {
+				log.Fatalf("headers must contain a key:value pair, found %q instead\n", t)
+			}
+			headerMap[x[0]] = x[1]
+		}
+	}
 
 	if runFor == 0 {
 		runFor = math.MaxInt64
@@ -129,7 +142,7 @@ func main() {
 			Timeout:      terminationTimeout,
 			StepDuration: stepDuration,
 			HostHeader:   hostHeader,
-			Headers:      headers,
+			HeaderMap:    headerMap,
 			R:            r,
 			W:            w,
 			BufSize:      bufSize,

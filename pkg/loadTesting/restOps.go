@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
-	"strings"
 	"time"
 )
 
@@ -107,12 +106,8 @@ func addHeaders(req *http.Request) {
 				"akamai-x-get-true-cache-key, "+
 				"akamai-x-get-request-id")
 	}
-	if conf.Headers != "" {
-		tokens := strings.Split(conf.Headers, "")
-		for _, t := range tokens {
-			x := strings.Split(t, ":")
-			req.Header.Add(x[0], x[1])
-		}
+	for key, value := range conf.HeaderMap {
+		req.Header.Add(key, value)
 	}
 }
 

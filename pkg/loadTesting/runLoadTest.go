@@ -61,13 +61,13 @@ type Config struct {
 	S3Key        string
 	S3Secret     string
 	Strip        string
-	Timeout      time.Duration // time to wait at end
-	StepDuration int           // duration of a test step
-	HostHeader   string        // add a Host: header
-	Headers      string        // add one or more key:value headers
-	R            bool          // read tests allowed
-	W            bool          // write tests allowed
-	BufSize      int64         // size of max write
+	Timeout      time.Duration     // time to wait at end
+	StepDuration int               // duration of a test step
+	HostHeader   string            // add a Host: header
+	HeaderMap    map[string]string // one or more key:value headers
+	R            bool              // read tests allowed
+	W            bool              // write tests allowed
+	BufSize      int64             // size of max write
 }
 
 var conf Config
