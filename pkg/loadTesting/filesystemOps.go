@@ -9,8 +9,9 @@ import (
 	"time"
 )
 
+// FilesystemProto exists for the convenience of callers only
 type FilesystemProto struct {
-	prefix string // optional?
+	//empty
 }
 
 // Init does nothing

@@ -33,7 +33,7 @@ func main() {
 	var rw, wo int64
 	var bufSize int64
 	var s3Bucket, s3Key, s3Secret string
-	var verbose, debug, crash bool
+	var verbose, debug, crash, akamaiDebug bool
 	var serial, cache, tail bool
 	var strip, hostHeader string
 	var err error
@@ -61,6 +61,7 @@ func main() {
 	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
 	flag.BoolVar(&crash, "crash", false, "exit on any error return")
+	flag.BoolVar(&akamaiDebug, "akamai-debug", false, "add akamai debugging headers")
 
 	flag.StringVar(&s3Bucket, "s3-bucket", "BUCKET NOT SET",
 		"set bucket when using s3 protocol")
@@ -114,6 +115,7 @@ func main() {
 			Verbose:      verbose,
 			Debug:        debug,
 			Crash:        crash,
+			AkamaiDebug:  akamaiDebug,
 			Serialize:    serial,
 			Cache:        cache,
 			Tail:         tail,

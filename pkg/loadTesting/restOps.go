@@ -46,21 +46,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 		alive <- true
 		return nil
 	}
-
-	if !conf.Cache {
-		req.Header.Add("cache-control", "no-cache")
-	}
-	if conf.HostHeader != "" {
-		req.Host = conf.HostHeader
-		// Go disfeature: host is special,
-		// See also https://github.com/golang/go/issues/7682
-		req.Header.Add("Host", conf.HostHeader)
-	}
-	// FIXME, add multiple headers, requires flag magic
-	//if conf.Headers {
-	//for key, value := range conf.Headers {
-	//	req.Header.Add(key, value)
-	//}
+	addHeaders(req)
 
 	initial := time.Now() // Response time starts
 	resp, err := httpClient.Do(req)
@@ -99,6 +85,27 @@ func (p RestProto) Get(path string, oldRc string) error {
 	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 	alive <- true
 	return nil
+}
+func addHeaders(req *http.Request) {
+	if !conf.Cache {
+		req.Header.Add("cache-control", "no-cache")
+	}
+	if conf.HostHeader != "" {
+		req.Host = conf.HostHeader
+		// Go disfeature: host is special,
+		// See also https://github.com/golang/go/issues/7682
+		req.Header.Add("Host", conf.HostHeader)
+	}
+	if conf.AkamaiDebug {
+		req.Header.Add("Pragma",
+			"akamai-x-cache-on, "+
+				"akamai-x-cache-remote-on, "+
+				"akamai-x-check-cacheable, "+
+				"akamai-x-get-cache-key, "+
+				"akamai-x-get-ssl-client-session-id, "+
+				"akamai-x-get-true-cache-key, "+
+				"akamai-x-get-request-id")
+	}
 }
 
 // Put does an ordinary REST (not ceph or s3) put operation.

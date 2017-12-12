@@ -55,6 +55,7 @@ type Config struct {
 	Serialize    bool   // FIXME semi-evil hack
 	Cache        bool   // allow caching
 	Tail         bool   // tail a log
+	AkamaiDebug  bool   // add Akamai debug headers
 	Protocol     int    // rest, 23 or filesystem FIXME?
 	S3Bucket     string // s3-specific options
 	S3Key        string
