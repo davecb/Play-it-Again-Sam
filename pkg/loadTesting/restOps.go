@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 	"time"
 )
 
@@ -93,7 +94,7 @@ func addHeaders(req *http.Request) {
 	if conf.HostHeader != "" {
 		req.Host = conf.HostHeader
 		// Go disfeature: host is special,
-		// See also https://github.com/golang/go/issues/7682
+		// See https://github.com/golang/go/issues/7682
 		req.Header.Add("Host", conf.HostHeader)
 	}
 	if conf.AkamaiDebug {
@@ -105,6 +106,13 @@ func addHeaders(req *http.Request) {
 				"akamai-x-get-ssl-client-session-id, "+
 				"akamai-x-get-true-cache-key, "+
 				"akamai-x-get-request-id")
+	}
+	if conf.Headers != "" {
+		tokens := strings.Split(conf.Headers, "")
+		for _, t := range tokens {
+			x := strings.Split(t, ":")
+			req.Header.Add(x[0], x[1])
+		}
 	}
 }
 

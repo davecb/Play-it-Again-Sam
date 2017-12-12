@@ -35,7 +35,7 @@ func main() {
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash, akamaiDebug bool
 	var serial, cache, tail bool
-	var strip, hostHeader string
+	var strip, hostHeader, headers string
 	var err error
 
 	flag.IntVar(&runFor, "for", 0, "number of records to use, eg 1000 ")
@@ -55,6 +55,8 @@ func main() {
 	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
 	flag.StringVar(&strip, "strip", "", "test to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
+	flag.StringVar(&headers, "headers", "", "add one or more key:value headers")
+
 	flag.BoolVar(&cache, "cache", false, "allow caching")
 	flag.BoolVar(&tail, "tail", false, "tail -f the input file")
 
@@ -127,6 +129,7 @@ func main() {
 			Timeout:      terminationTimeout,
 			StepDuration: stepDuration,
 			HostHeader:   hostHeader,
+			Headers:      headers,
 			R:            r,
 			W:            w,
 			BufSize:      bufSize,

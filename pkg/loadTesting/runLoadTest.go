@@ -64,6 +64,7 @@ type Config struct {
 	Timeout      time.Duration // time to wait at end
 	StepDuration int           // duration of a test step
 	HostHeader   string        // add a Host: header
+	Headers      string        // add one or more key:value headers
 	R            bool          // read tests allowed
 	W            bool          // write tests allowed
 	BufSize      int64         // size of max write
