@@ -31,7 +31,27 @@ var awsLogLevel = aws.LogOff
 func (p S3Proto) Get(path string, oldRc string) error {
 	if conf.Debug {
 		log.Printf("in AmazonS3Get(%s, %s)\n", p.prefix, path)
+
+		head, err := svc.HeadObject(&s3.HeadObjectInput{
+			Bucket: aws.String(conf.S3Bucket),
+			Key:    aws.String(path),
+		})
+		if err != nil {
+			fmt.Println("HeadObject err", err)
+		} else {
+			fmt.Println("HeadObject ", head)
+			//HeadObject  {
+			//	AcceptRanges: "bytes",
+			//	ContentLength: 7623,
+			//	ContentType: "text/plain",
+			//	ETag: "\"8d91918d01db7e2e959e6dbf4d0cd646\"",
+			//	LastModified: 2017-10-30 13:19:21 +0000 UTC,
+			//	Metadata: {
+			//	Ipaddresses: "10.92.10.201, 10.92.10.201"
+			//}
+		}
 	}
+
 
 	file, err := ioutil.TempFile("/tmp", "loadTesting")
 	if err != nil {
