@@ -8,6 +8,7 @@ type codeTable struct {
 
 // codeDescr returns a short description for an http code and a flag
 // for mkLoadTestFiles
+// FIXME, the flag is usefull, but the string is unneeded
 func codeDescr(errorValue int) (string, bool) {
 	val, present := codeMap[errorValue]
 	if !present {

@@ -226,8 +226,8 @@ func responseToString(resp *http.Response) string {
 	}
 	s := "Response information:\n"
 	s += fmt.Sprintf("    Length: %d\n", resp.ContentLength)
-	shortDescr, _ := codeDescr(resp.StatusCode)
-	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode, shortDescr)
+	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode,
+		http.StatusText(resp.StatusCode))
 	//hdr := resp.Header
 	//for key, value := range hdr {
 	//	s += fmt.Sprintln("   ", key, ":", value) // FIXME remove []
