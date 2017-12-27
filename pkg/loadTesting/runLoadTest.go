@@ -67,7 +67,7 @@ type Config struct {
 	HeaderMap    map[string]string // one or more key:value headers
 	R            bool              // read tests allowed
 	W            bool              // write tests allowed
-	BufSize      int64             // size of max write
+	BufSize      int64             // max size of written file
 }
 
 var conf Config
