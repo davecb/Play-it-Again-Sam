@@ -157,7 +157,7 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 
 	skipForward(startFrom, r, filename)
 	recNo, pipe := copyToPipe(runFor, r, filename, pipe, watcher)
-	log.Printf("Loaded %d records, closing input\n", recNo)
+	log.Printf("EOF: loaded %d records, closing input pipe\n", recNo)
 	close(pipe)
 }
 
@@ -188,7 +188,7 @@ forloop:
 			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
 		}
 		if len(record) != 9 {
-			// FIXME? this discards real-time part-records
+			// Warning: this discards real-time part-records
 			continue
 		}
 

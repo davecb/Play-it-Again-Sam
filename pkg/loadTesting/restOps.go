@@ -76,8 +76,8 @@ func (p RestProto) Get(path string, oldRc string) error {
 	switch {
 	case badGetCode(resp.StatusCode):
 		dumpXact(req, resp, body, conf.Crash, "bad return code", nil)
-	case badLen(resp.ContentLength, body):
-		dumpXact(req, resp, body, conf.Crash, "bad length", nil)
+	//case badLen(resp.ContentLength, body):
+	//	dumpXact(req, resp, body, conf.Crash, "bad length", nil)
 	case conf.Verbose:
 		dumpXact(req, resp, body, conf.Crash, "verbose", nil)
 	}
@@ -176,12 +176,12 @@ func badGetCode(i int) bool {
 }
 
 // badLen is true if we have zero body lengths
-func badLen(bodylen int64, body []byte) bool {
-	if bodylen == 0 || len(body) == 0 {
-		return true
-	}
-	return false
-}
+//func badLen(bodylen int64, body []byte) bool {
+//	if bodylen == 0 || len(body) == 0 {
+//		return true
+//	}
+//	return false
+//}
 
 // dumpXact dumps request and response together, with a reason
 func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, reason string, err error) {
