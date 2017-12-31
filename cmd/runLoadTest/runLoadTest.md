@@ -203,16 +203,17 @@ As an output, the analyzable fields are
   
 * xfertime  
   This is the time between the first byte of the response and the end.
-  It is the network time it takes to transfer the data returned. It may
-  be zero if all the data arrives in the first packet.
+  It is the network- and sender-time it takes to transfer the data 
+  returned. It may be zero if all the data arrives in the first packet.
    
 * thinktime   
-  This is the time between the end of a request and the beginning of the 
-  next one, which is an indication of a human's think time when measuring
+  This is the time between the end of a response and the beginning of the 
+  next request, which is an indication of a human's think time when measuring
   user-provided loads. It is zero in load-testing use.
   
 * bytes     
-  This is the number of bytes sent during the transfer time.
+  This is the number of bytes sent during the transfer time. Throughput
+  can be calculated from bytes and transfer time.
   
 * rc    
   This is the http return code
@@ -228,7 +229,7 @@ perf2seconds.md, nginx2perf.md, mkLoadTestFiles.md, Running_Record-Reply_Tests.m
 ## EXAMPLES
 This is a test of my storage machine, _calvin_, from
 10 to 250 TPS in steps of 10 TPS. The output is
-sent to `perf2seconds` to report on 10-second 
+sent to `perf2seconds` to report on 1-second 
 samples
 
 ```bash
@@ -239,6 +240,26 @@ runLoadTest --rest  --tps 250 --progress 10 \
 perf2seconds raw.csv >calvin10to250.csv
  
 ```
+
+## PERFORMANCE
+Using my development machine with 4 threads on two cores, a
+Intel Core i3-4100M CPU @ 2.50GHz, the load generator will run up 
+to 4,000 TPS and has an average overhead of 0.00124 seconds 
+(ie, ~1 millisecond). The overhead  will be reported as part of the 
+latency, along with network time, etc.
+
+This was measured against an infinite-queue simulation running on the
+same machine with an average internal overhead of 0.000172 seconds 
+(~170 microseconds) using local networking (localhost).
+
+On different equipment the overhead in seconds will vary inveresely with
+the sum of the CPU speed in GHz and the number of threads. 
+
+The maximum capacity will be different. It will vary with the size of 
+the biggest bottleneck in the system,
+which on the test system was CPU, followed by one or more of bus, 
+main memory and localhost networking. 
+
 
 ## BUGS
 PUT and DELE require refactoring and have been disabled, pending the
