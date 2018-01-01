@@ -296,7 +296,7 @@ func doWork() bool {
 
 	switch {
 	case r == nil:
-		//log.Print("worker reached EOF, no more requests to send.\n")
+		log.Print("worker reached EOF, no more requests to send.\n")
 		return true
 	case len(r) != 9:
 		// bad input data, crash please.
