@@ -35,7 +35,7 @@ func (p FilesystemProto) Put(path, size, oldRC string) error {
 // TimedCreateFilesystemFile is for local (non-Protocol) file creation
 func TimedCreateFilesystemFile(fullPath string, size int64) error {
 	initial := time.Now() //               Response time starts
-	MustCreateFilesystemFile(fullPath, size)
+	mustCreateFilesystemFile(fullPath, size)
 	responseTime := time.Since(initial) // Response time ends
 	//fmt.Printf("%s %f 0 0 %d %s 201 PUT\n",
 	//	initial.Format("2006-01-02 15:04:05.000"),
@@ -48,9 +48,9 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 
 }
 
-// MustCreateFilesystemFile implements making the file in a filesystem relative to the current directory
+// mustCreateFilesystemFile implements making the file in a filesystem relative to the current directory
 // It's used by both local and s3.
-func MustCreateFilesystemFile(fullPath string, size int64) {
+func mustCreateFilesystemFile(fullPath string, size int64) {
 	if conf.Debug {
 		log.Printf("in createFilesystemFile(%s, %d)\n", fullPath, size)
 	}

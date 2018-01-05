@@ -7,14 +7,12 @@ probe: install
 
 run : install
 	 runLoadTest --rest --tps ${TPS} --for ${TPS}0 \
-		 ./samples.csv ${SERVER} |\
-	tee raw.csv
+		 ./samples.csv ${SERVER} > raw.csv
 	perf2seconds raw.csv >loadgen.csv
 
 progress: install
 	runLoadTest --rest --tps 24 --progress 2 \
-		./samples.csv ${SERVER} |\
-	tee raw.csv
+		./samples.csv ${SERVER} > raw.csv
 	perf2seconds raw.csv >progress.csv
 
 install: ${HOME}/go/bin/sim 

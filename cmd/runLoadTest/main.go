@@ -10,7 +10,6 @@ import (
 	"log"
 	"math"
 	"os"
-
 	"strings"
 
 	"github.com/vharitonsky/iniflags"
@@ -81,17 +80,8 @@ func main() {
 		usage()
 	}
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
-	if headers != "" {
-		tokens := strings.Split(headers, " ")
-		for _, t := range tokens {
-			x := strings.Split(t, ":")
-			if len(x) != 2 || x[0] == "" || x[1] == "" {
-				log.Fatalf("headers must contain a key:value pair, found %q instead\n", t)
-			}
-			headerMap[x[0]] = x[1]
-		}
-	}
 
+	setHeaders(headers, headerMap)
 	if runFor == 0 {
 		runFor = math.MaxInt64
 	}
@@ -149,6 +139,20 @@ func main() {
 		})
 }
 
+// setheaders creates a proper map of header:value pairs
+func setHeaders(headers string, headerMap map[string]string) {
+	if headers != "" {
+		tokens := strings.Split(headers, " ")
+		for _, t := range tokens {
+			x := strings.Split(t, ":")
+			if len(x) != 2 || x[0] == "" || x[1] == "" {
+				log.Fatalf("headers must contain a key:value pair, found %q instead\n", t)
+			}
+			headerMap[x[0]] = x[1]
+		}
+	}
+}
+
 // setProtocol from s3 and ceph booleans
 func setProtocol(s3, ceph bool) int {
 	var proto int
@@ -164,6 +168,7 @@ func setProtocol(s3, ceph bool) int {
 	return proto
 }
 
+// setMode sets the r and w booleans based on the options set
 func setMode(ro bool, rw, wo int64) (bool, bool) {
 	var r, w bool
 	switch {

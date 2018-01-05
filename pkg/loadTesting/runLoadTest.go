@@ -77,8 +77,9 @@ var pipe = make(chan []string, 100)
 var alive = make(chan bool, 1000)
 var closed = make(chan bool)
 
-var junkDataFile = "/tmp/LoadTestJunkDataFile" // FIXME for write and r/w tests
-const size = 396759652                         // nolint // FIXME, this is a heuristic
+var junkDataFile = "/tmp/LoadTestJunkDataFile"
+
+const size = 396759652 // nolint // FIXME, this is a heuristic
 
 // RunLoadTest does whatever main figured out that the caller wanted.
 func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
@@ -104,21 +105,29 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
 	}
-	// FIXME for write: defer os.Remove(junkDataFile)
 
-	go workSelector(f, filename, fromTime, forTime, pipe)             // which pipes work to ...
-	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL) // which then writes to "alive"
-waiter:
+	// Create data for rw and wo tests
+	if conf.BufSize > 0 {
+		log.Printf("Creating %d-byte data file %q\n", conf.BufSize,
+			junkDataFile)
+		mustCreateFilesystemFile(junkDataFile, conf.BufSize)
+		defer os.Remove(junkDataFile) // nolint
+	}
+
+	// select some work to do from the input file
+	go workSelector(f, filename, fromTime, forTime, pipe)
+	// which pipes work to ...
+	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
+	// which then writes to "alive", ...
 	for {
 		select {
 		case <-alive:
 			processed++
-
 		case <-time.After(time.Second * conf.Timeout):
 			log.Printf("%d records processed\n", processed)
 			log.Printf("No activity after %d seconds, halting normally.\n",
 				conf.Timeout)
-			break waiter
+			return
 		}
 	}
 }
