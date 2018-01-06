@@ -1,5 +1,5 @@
-SERVER=http://localhost:5280
-TPS=1
+SERVER=http://localhost:5280/
+TPS=10
 
 probe: install
 	runLoadTest -d -v --rest  --tps 1 --for 1 \

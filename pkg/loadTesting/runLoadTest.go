@@ -196,7 +196,9 @@ forloop:
 		case err != nil:
 			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
 		}
-		if len(record) != 9 {
+		if len(record) < 9 {
+			log.Printf("ill-formed record %q ignored\n",
+				record)
 			// Warning: this discards real-time part-records
 			continue
 		}
@@ -204,7 +206,9 @@ forloop:
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		// log.Printf("writing %v to pipe\n", record)
+		if conf.Debug {
+			log.Printf("writing %v to pipe\n", record)
+		}
 
 		pipe <- record
 	}
@@ -300,16 +304,18 @@ func doWork() bool {
 		}
 		return true
 	case r = <-pipe:
-		//log.Printf("got %v\n", r)
+		if conf.Debug {
+			log.Printf("got %v\n", r)
+		}
 	}
 
 	switch {
 	case r == nil:
 		log.Print("worker reached EOF, no more requests to send.\n")
 		return true
-	case len(r) != 9:
+	case len(r) < 9:
 		// bad input data, crash please.
-		log.Fatalf("number of fields != 9 in %v", r)
+		log.Fatalf("number of fields < 9 in %v", r)
 	case r[operatorField] == "GET" && conf.R:
 		if conf.Serialize {
 			// force this NOT to be asynchronous, for long-running load tests only
