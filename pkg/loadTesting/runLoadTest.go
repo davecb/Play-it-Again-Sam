@@ -112,6 +112,8 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 			junkDataFile)
 		mustCreateFilesystemFile(junkDataFile, conf.BufSize)
 		defer os.Remove(junkDataFile) // nolint
+	} else if conf.BufSize < 0 {
+		log.Fatalf("A negative size for data files (%d) is meaningless, halting\n", conf.BufSize)
 	}
 
 	// select some work to do from the input file
@@ -206,9 +208,7 @@ forloop:
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		if conf.Debug {
-			log.Printf("writing %v to pipe\n", record)
-		}
+		// log.Printf("writing %v to pipe\n", record)
 
 		pipe <- record
 	}
@@ -220,10 +220,6 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 	if conf.Debug {
 		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 			tpsTarget, progressRate)
-	}
-	if conf.BufSize > 0 {
-		// create a buffer full of random bytes
-		log.Printf("-rw and -wo tests are not yet supported, buffer size of %d ignored\n", conf.BufSize)
 	}
 
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op\n")
@@ -297,16 +293,13 @@ func worker(pipe chan []string) {
 func doWork() bool {
 	var r []string
 
-	select {
-	case <-closed:
-		if conf.Debug {
-			log.Print("pipe closed, no more requests to process.\n")
-		}
+	r, eof := getWork()
+	if eof {
 		return true
-	case r = <-pipe:
-		if conf.Debug {
-			log.Printf("got %v\n", r)
-		}
+	}
+	if conf.Debug { // FIXME
+		log.Printf("R=%t, W=%t, r=%q,\n",
+			conf.R, conf.W, r)
 	}
 
 	switch {
@@ -314,7 +307,7 @@ func doWork() bool {
 		log.Print("worker reached EOF, no more requests to send.\n")
 		return true
 	case len(r) < 9:
-		// bad input data, crash please.
+		// bad input data, FIXME crash or ignore.
 		log.Fatalf("number of fields < 9 in %v", r)
 	case r[operatorField] == "GET" && conf.R:
 		if conf.Serialize {
@@ -323,8 +316,8 @@ func doWork() bool {
 		} else {
 			go op.Get(r[pathField], r[returnCodeField]) // nolint
 		}
-	//case r[operatorField] == "PUT" && conf.W:
-	//	go op.Put(r[pathField], r[bytesField], r[returnCodeField]) // nolint
+	case r[operatorField] == "PUT" && conf.W:
+		go op.Put(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	//case r[operatorField] == "DELE":
 	//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	//case r[operatorField] == "HEAD":
@@ -333,6 +326,24 @@ func doWork() bool {
 		log.Printf("unimplemented operation %s in %v, ignored\n", r[operatorField], r)
 	}
 	return false
+}
+
+// getWork gets sttiff for worker to do
+func getWork() ([]string, bool) {
+	var r []string
+
+	select {
+	case <-closed:
+		if conf.Debug {
+			log.Print("pipe closed, no more requests to process.\n")
+		}
+		return nil, true
+	case r = <-pipe:
+		if conf.Debug {
+			log.Printf("got %v\n", r)
+		}
+		return r, false
+	}
 }
 
 // waitForChange waits for the tail of a file to be written to

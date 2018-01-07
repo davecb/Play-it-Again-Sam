@@ -50,7 +50,7 @@ func main() {
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
 
-	flag.BoolVar(&ro, "ro", true, "read-only test")
+	flag.BoolVar(&ro, "ro", false, "read-only test")
 	flag.Int64Var(&rw, "rw", 0, "read-write test, w buffer size")
 	flag.Int64Var(&wo, "wo", 0, "write-only test, w buffer size")
 
@@ -169,8 +169,11 @@ func setProtocol(s3, ceph bool) int {
 }
 
 // setMode sets the r and w booleans based on the options set
+// ro appears to default rue???
 func setMode(ro bool, rw, wo int64) (bool, bool) {
 	var r, w bool
+
+	//log.Printf("ro=%t, rw=%d, wo=%d\n", ro, rw, wo)
 	switch {
 	case ro:
 		r = true
@@ -181,7 +184,11 @@ func setMode(ro bool, rw, wo int64) (bool, bool) {
 	case wo != 0:
 		r = false
 		w = true
+	default: // treat as ro if not set
+		r = true
+		w = false
 	}
+	//log.Printf("r=%t,w=%t\n", r, w)
 	return r, w
 
 }
