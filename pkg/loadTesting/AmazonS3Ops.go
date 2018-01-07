@@ -83,7 +83,6 @@ func (p S3Proto) Get(path string, oldRc string) {
 	reportPerformance(initial, responseTime, 0, nil, path, 200, oldRc)
 
 	alive <- true
-	return
 }
 
 // Put puts a file and times it

@@ -83,9 +83,9 @@ func (p RestProto) Get(path string, oldRc string) {
 
 	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 	alive <- true
-	return
 }
 
+// AddHeaders adds/drops specified headers
 func addHeaders(req *http.Request) {
 	if !conf.Cache {
 		req.Header.Add("cache-control", "no-cache")
@@ -118,14 +118,14 @@ func (p RestProto) Put(path, size, oldRC string) {
 
 	if conf.Debug {
 		log.Printf("in rest.Put(%s, %s)\n", path, size)
-		//log.Printf("putting %s\n", p.prefix+"/"+path)
 	}
 	bytes, err = strconv.ParseInt(size, 10, 64)
 	if err != nil {
-		bytes = 0 // FIXME
+		log.Fatalf("put size %q was unreadable, %v, halting\n",
+			size, err)
 	}
 	if bytes <= 0 {
-		fmt.Printf("%s 0 0 0 %d %s %d PUT\n",
+		fmt.Printf("%s 0 0 0 %s %s %d PUT\n",
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			size, path, 411) // 411 means "length required"
 		alive <- true
@@ -139,15 +139,15 @@ func (p RestProto) Put(path, size, oldRC string) {
 	defer fp.Close() // nolint
 
 	initial := time.Now() // Response time starts
-	// do put
 	req, err := http.NewRequest("PUT", p.prefix+"/"+path, io.LimitReader(fp, bytes))
 	if err != nil {
-		// reportPerformance and exit
+		// report problem and exit
 		dumpXact(req, nil, nil, true, "error creating http request", err)
+		return
 	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		// Timeouts and bad parameters will trigger this case. FIXME, continue?
+		// Timeouts and bad parameters will trigger this case.
 		dumpXact(req, nil, nil, true, "error getting http response", err)
 	}
 	latency := time.Since(initial) // Response time ends
@@ -159,7 +159,7 @@ func (p RestProto) Put(path, size, oldRC string) {
 	}
 	// And, in the non-error cases, conditionally dump
 	switch {
-	case badGetCode(resp.StatusCode): // FIXME, putCode
+	case badPutCode(resp.StatusCode):
 		dumpXact(req, resp, contents, conf.Crash, "bad return code", nil)
 	case conf.Verbose:
 		dumpXact(req, resp, contents, conf.Crash, "", nil)
@@ -169,7 +169,6 @@ func (p RestProto) Put(path, size, oldRC string) {
 		time.Now().Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), size, path, resp.StatusCode)
 	alive <- true
-	return
 }
 
 // badGetCode is true if this isn't a 20X or 404
@@ -180,6 +179,13 @@ func badGetCode(i int) bool {
 	}
 	// if --crash is set, returning true will trigger
 	// a dump of the bad transaction and a shutdown
+	return true
+}
+
+func badPutCode(i int) bool {
+	if i == 200 || i == 201 || i == 202 || i == 204 || i == 205 {
+		return false
+	}
 	return true
 }
 

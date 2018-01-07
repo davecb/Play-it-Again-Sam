@@ -297,27 +297,18 @@ func doWork() bool {
 	if eof {
 		return true
 	}
-	if conf.Debug { // FIXME
-		log.Printf("R=%t, W=%t, r=%q,\n",
-			conf.R, conf.W, r)
-	}
 
 	switch {
 	case r == nil:
 		log.Print("worker reached EOF, no more requests to send.\n")
 		return true
 	case len(r) < 9:
-		// bad input data, FIXME crash or ignore.
+		// bad input data, crash
 		log.Fatalf("number of fields < 9 in %v", r)
 	case r[operatorField] == "GET" && conf.R:
-		if conf.Serialize {
-			// force this NOT to be asynchronous, for long-running load tests only
-			op.Get(r[pathField], r[returnCodeField]) // nolint, ignore return value
-		} else {
-			go op.Get(r[pathField], r[returnCodeField]) // nolint
-		}
+		go op.Get(r[pathField], r[returnCodeField])
 	case r[operatorField] == "PUT" && conf.W:
-		go op.Put(r[pathField], r[bytesField], r[returnCodeField]) // nolint
+		go op.Put(r[pathField], r[bytesField], r[returnCodeField])
 	//case r[operatorField] == "DELE":
 	//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	//case r[operatorField] == "HEAD":
