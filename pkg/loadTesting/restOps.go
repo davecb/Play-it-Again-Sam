@@ -38,7 +38,7 @@ var httpClient = &http.Client{
 }
 
 // Get does a GET from an http target and times it
-func (p RestProto) Get(path string, oldRc string) error {
+func (p RestProto) Get(path string, oldRc string) {
 	if conf.Debug {
 		log.Printf("in rest.Get(%s)\n", path)
 	}
@@ -47,7 +47,7 @@ func (p RestProto) Get(path string, oldRc string) error {
 		dumpXact(req, nil, nil, conf.Crash, "error creating http request", err)
 		reportPerformance(time.Now(), 0, 0, nil, path, -1, oldRc)
 		alive <- true
-		return nil
+		return
 	}
 	addHeaders(req)
 
@@ -55,13 +55,11 @@ func (p RestProto) Get(path string, oldRc string) error {
 	resp, err := httpClient.Do(req)
 	latency := time.Since(initial) // Latency ends
 	if err != nil {
-		//log.Fatalf("error getting http response, %v: halting.\n", err)
-		// try running right through this
 		dumpXact(req, resp, nil, conf.Crash, "error getting http response", err)
-		// 444 is nginx's code for server has returned no information ans/or EOF
+		// 444 is nginx's code for server has returned no information and/or EOF
 		reportPerformance(initial, latency, 0, nil, path, 444, oldRc)
 		alive <- true
-		return nil
+		return
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	// how about io.Copy(ioutil.Discard, resp.Body)
@@ -72,22 +70,20 @@ func (p RestProto) Get(path string, oldRc string) error {
 		// the resp is available, the body, distinctly less so (;-))
 		reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 		alive <- true
-		return nil
+		return
 	}
 
 	// And, in the non-error cases, conditionally dump
 	switch {
 	case badGetCode(resp.StatusCode):
 		dumpXact(req, resp, body, conf.Crash, "bad return code", nil)
-	//case badLen(resp.ContentLength, body):
-	//	dumpXact(req, resp, body, conf.Crash, "bad length", nil)
 	case conf.Verbose:
 		dumpXact(req, resp, body, conf.Crash, "verbose", nil)
 	}
 
 	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
 	alive <- true
-	return nil
+	return
 }
 
 func addHeaders(req *http.Request) {
@@ -116,7 +112,7 @@ func addHeaders(req *http.Request) {
 }
 
 // Put does an ordinary REST (not ceph or s3) put operation.
-func (p RestProto) Put(path, size, oldRC string) error {
+func (p RestProto) Put(path, size, oldRC string) {
 	var bytes int64
 	var err error
 
@@ -133,12 +129,12 @@ func (p RestProto) Put(path, size, oldRC string) error {
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			size, path, 411) // 411 means "length required"
 		alive <- true
-		return nil
+		return
 	}
 	// make sure we have a dummy file
 	fp, err := os.Open(junkDataFile)
 	if err != nil {
-		return fmt.Errorf("can't open %q", junkDataFile)
+		log.Fatalf("can't open data file %q, halting\n", junkDataFile)
 	}
 	defer fp.Close() // nolint
 
@@ -173,11 +169,11 @@ func (p RestProto) Put(path, size, oldRC string) error {
 		time.Now().Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), size, path, resp.StatusCode)
 	alive <- true
-	return nil
+	return
 }
 
 // badGetCode is true if this isn't a 20X or 404
-// in this case "bad" means "ucky"
+// in this case "bad" means "display the error"
 func badGetCode(i int) bool {
 	if i == 200 || i == 202 || i == 404 {
 		return false
@@ -186,14 +182,6 @@ func badGetCode(i int) bool {
 	// a dump of the bad transaction and a shutdown
 	return true
 }
-
-// badLen is true if we have zero body lengths
-//func badLen(bodylen int64, body []byte) bool {
-//	if bodylen == 0 || len(body) == 0 {
-//		return true
-//	}
-//	return false
-//}
 
 // dumpXact dumps request and response together, with a reason
 func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, reason string, err error) {
@@ -240,15 +228,11 @@ func responseToString(resp *http.Response) string {
 	s += fmt.Sprintf("    Length: %d\n", resp.ContentLength)
 	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode,
 		http.StatusText(resp.StatusCode))
-	//hdr := resp.Header
-	//for key, value := range hdr {
-	//	s += fmt.Sprintln("   ", key, ":", value) // FIXME remove []
-	//}
 	s += fmt.Sprintf("Response contents: \n%s", string(contents))
 	return s
 }
 
-// bodyToString
+// bodyToString return the body, even if unprintable
 func bodyToString(body []byte) string {
 	if body == nil {
 		return "Body: <nil>\n"

@@ -28,7 +28,7 @@ var svc *s3.S3
 var awsLogLevel = aws.LogOff
 
 // Get does a get operation from an s3Protocol target and times it,
-func (p S3Proto) Get(path string, oldRc string) error {
+func (p S3Proto) Get(path string, oldRc string) {
 	if conf.Debug {
 		log.Printf("in AmazonS3Get(%s, %s)\n", p.prefix, path)
 
@@ -51,7 +51,6 @@ func (p S3Proto) Get(path string, oldRc string) error {
 			//}
 		}
 	}
-
 
 	file, err := ioutil.TempFile("/tmp", "loadTesting")
 	if err != nil {
@@ -76,7 +75,7 @@ func (p S3Proto) Get(path string, oldRc string) error {
 
 		// Extract and reportPerformance the failure, iff possible
 		alive <- true
-		return nil
+		return
 	}
 	fmt.Printf("%s %f 0 0 %d %s 200 GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
@@ -84,13 +83,13 @@ func (p S3Proto) Get(path string, oldRc string) error {
 	reportPerformance(initial, responseTime, 0, nil, path, 200, oldRc)
 
 	alive <- true
-	return nil
+	return
 }
 
 // Put puts a file and times it
 // error return is used only by mkLoadTestFiles  FIXME
-func (p S3Proto) Put(path, size, oldRC string) error {
-	return fmt.Errorf("put is not implemented yet")
+func (p S3Proto) Put(path, size, oldRC string) {
+	log.Fatalf("put is not implemented yet\n")
 	//if conf.Debug {
 	//	log.Printf("in AmazonS3Put(%s, %s, %d)\n", p.prefix, path, size)
 	//}

@@ -22,16 +22,16 @@ import (
 // The protocols supported by the library
 const (
 	FilesystemProtocol = iota
-	RESTProtocol       // Eg, RCDN's http-based REST Protocol
-	S3Protocol
-	CephProtocol
+	RESTProtocol       // Simple http-based REST protocols
+	S3Protocol         // Amazon s3 protocol or compatable
+	CephProtocol       // reserved for native ceph protocol
 )
 
 // operations are the things a protocol must support
 type operation interface {
 	Init()
-	Get(path, oldRc string) error
-	Put(path, size, oldRc string) error
+	Get(path, oldRc string)
+	Put(path, size, oldRc string)
 }
 
 // These are the field names in the csv file
