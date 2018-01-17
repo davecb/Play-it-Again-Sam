@@ -49,25 +49,28 @@ const ( // nolint
 
 // Config contains all the optional parameters.
 type Config struct {
-	Verbose      bool   // Extra info about requests
-	Debug        bool   // Extra infor about program
-	Crash        bool   // Halt on any error
-	Serialize    bool   // FIXME semi-evil hack
-	Cache        bool   // allow caching
-	Tail         bool   // tail a log
-	AkamaiDebug  bool   // add Akamai debug headers
-	Protocol     int    // rest, 23 or filesystem FIXME?
-	S3Bucket     string // s3-specific options
-	S3Key        string
-	S3Secret     string
+	Verbose     bool    // Extra info about requests
+	Debug       bool    // Extra infor about program
+	Crash       bool    // Halt on any error
+	Cache       bool    // allow caching
+	Tail        bool    // tail a log
+	AkamaiDebug bool    // add Akamai debug headers
+	Protocol    int     // rest, s3 or filesystem FIXME?
+	SleepTime   float64 // sleep time (Z), default 1.0s
+
+	S3Bucket string // s3-specific options
+	S3Key    string
+	S3Secret string
+
 	Strip        string
 	Timeout      time.Duration     // time to wait at end
 	StepDuration int               // duration of a test step
 	HostHeader   string            // add a Host: header
 	HeaderMap    map[string]string // one or more key:value headers
-	R            bool              // read tests allowed
-	W            bool              // write tests allowed
-	BufSize      int64             // max size of written file
+
+	R       bool  // read tests allowed
+	W       bool  // write tests allowed
+	BufSize int64 // max size of written file
 }
 
 var conf Config
@@ -279,13 +282,14 @@ func worker(pipe chan []string) {
 		log.Print("started a worker\n")
 	}
 	// wait a random fraction of one second before looping, for randomness.
+	// FIXME, this is a uniform distribution, NOT a negative exponential
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
-	for range time.Tick(1 * time.Second) { // nolint
-		done := doWork()
-		if done {
+	for {
+		if doWork() == false {
 			return
 		}
+		time.Sleep(time.Duration(conf.SleepTime) * time.Second)
 	}
 }
 
@@ -295,13 +299,15 @@ func doWork() bool {
 
 	r, eof := getWork()
 	if eof {
-		return true
+		// we can't do any more work
+		return false
 	}
 
 	switch {
 	case r == nil:
+		// another sense of EOF
 		log.Print("worker reached EOF, no more requests to send.\n")
-		return true
+		return false
 	case len(r) < 9:
 		// bad input data, crash
 		log.Fatalf("number of fields < 9 in %v", r)
@@ -316,10 +322,10 @@ func doWork() bool {
 	default:
 		log.Printf("unimplemented operation %s in %v, ignored\n", r[operatorField], r)
 	}
-	return false
+	return true
 }
 
-// getWork gets sttiff for worker to do
+// getWork gets stuff for worker to do
 func getWork() ([]string, bool) {
 	var r []string
 

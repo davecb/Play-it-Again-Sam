@@ -1,5 +1,5 @@
 // Run a load test from a script in "perf" format.
-// input looks like "01-Mar-2017 16:00:00 0 0 0 0 path ERROR=400"
+// input looks like "01-Mar-2017 16:00:00 0 0 0 0 path 200 GET"
 package main
 
 import (
@@ -35,7 +35,8 @@ func main() {
 	var bufSize int64
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash, akamaiDebug bool
-	var serial, cache, tail bool
+	var sleepTime float64
+	var cache, tail bool
 	var strip, hostHeader, headers string
 	var headerMap = make(map[string]string)
 	var err error
@@ -54,7 +55,8 @@ func main() {
 	flag.Int64Var(&rw, "rw", 0, "read-write test, w buffer size")
 	flag.Int64Var(&wo, "wo", 0, "write-only test, w buffer size")
 
-	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
+	flag.Float64Var(&sleepTime, "sleep", 1.0, "sleep time, seconds")
+
 	flag.StringVar(&strip, "strip", "", "test to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.StringVar(&headers, "headers", "", "add one or more key:value headers")
@@ -121,7 +123,7 @@ func main() {
 			Debug:        debug,
 			Crash:        crash,
 			AkamaiDebug:  akamaiDebug,
-			Serialize:    serial,
+			SleepTime:    sleepTime,
 			Cache:        cache,
 			Tail:         tail,
 			Protocol:     proto,
