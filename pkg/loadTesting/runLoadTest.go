@@ -49,37 +49,43 @@ const ( // nolint
 
 // Config contains all the optional parameters.
 type Config struct {
-	Verbose     bool    // Extra info about requests
-	Debug       bool    // Extra infor about program
-	Crash       bool    // Halt on any error
-	Cache       bool    // allow caching
-	Tail        bool    // tail a log
-	AkamaiDebug bool    // add Akamai debug headers
-	Protocol    int     // rest, s3 or filesystem FIXME?
-	SleepTime   float64 // sleep time (Z), default 1.0s
+	SleepTime time.Duration // sleep time (Z), default 1.0s
+	BufSize   int64         // max size of written file
 
-	S3Bucket string // s3-specific options
-	S3Key    string
-	S3Secret string
+	Timeout time.Duration // time to wait at end
 
-	Strip        string
-	Timeout      time.Duration     // time to wait at end
-	StepDuration int               // duration of a test step
-	HostHeader   string            // add a Host: header
-	HeaderMap    map[string]string // one or more key:value headers
+	StepDuration int // duration of a test step
+	Protocol     int // rest, s3 or filesystem FIXME?
+	SleepTarget  int // time that Z corresponds to
 
-	R       bool  // read tests allowed
-	W       bool  // write tests allowed
-	BufSize int64 // max size of written file
+	S3Bucket   string // s3-specific options
+	S3Key      string
+	S3Secret   string
+	Strip      string
+	HostHeader string            // add a Host: header
+	HeaderMap  map[string]string // one or more key:value headers
+
+	R           bool // read tests allowed
+	W           bool // write tests allowed
+	Verbose     bool // Extra info about requests
+	Debug       bool // Extra info about program
+	Crash       bool // Halt on any error
+	Cache       bool // allow caching
+	Tail        bool // tail a log
+	AkamaiDebug bool // add Akamai debug headers
+
 }
 
 var conf Config
 var op operation
+var sleep time.Duration
+
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
 var alive = make(chan bool, 1000)
 var closed = make(chan bool)
-
+var unimplementedWarningShown = false
+var outOfDataWarningShown = false
 var junkDataFile = "/tmp/LoadTestJunkDataFile"
 
 const size = 396759652 // nolint // FIXME, this is a heuristic
@@ -196,7 +202,7 @@ forloop:
 			}
 			continue
 		case err == io.EOF:
-			log.Printf("At EOF on %s, no new work to queue\n", filename)
+			log.Printf("At EOF unexpectedly early in %s, no new work to queue\n", filename)
 			break forloop
 		case err != nil:
 			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
@@ -248,6 +254,9 @@ func runSteadyLoad(tpsTarget int, pipe chan []string) {
 // runProgressivelyIncreasingLoad, the classic load test
 func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string) {
 
+	// Set up initial sleep time (Z)
+	sleep = conf.SleepTime
+
 	// start the first workers
 	if startTps == 0 {
 		startTps = progressRate
@@ -259,17 +268,27 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	// add to the workers until we have enough
 	log.Printf("now at %d requests/second\n", rate)
 	for range time.Tick(time.Duration(conf.StepDuration) * time.Second) { // nolint
-		//start another progressRate of workers
 		rate += progressRate
+
 		if rate > tpsTarget {
 			// OK, we're past the range, quit.
 			log.Printf("completed maximum rate, starting %d sec cleanup timer\n", conf.Timeout)
 			break
 		}
-		for i := 0; i < progressRate; i++ {
+
+		if rate > conf.SleepTarget {
+			// if above a bound, start increasing Z (the "gunther" algorithm)
+			increment := float64(rate) / float64(conf.SleepTarget)
+			sleep = conf.SleepTime * time.Duration(increment)
+			//log.Printf("changing sleep to %v, rate=%d\n", sleep, rate)
+		}
+
+		//start another progressRate of workers
+		for i := 0; i < rate; i++ {
 			go worker(pipe)
 		}
 		log.Printf("now at %d requests/second\n", rate)
+		//fmt.Printf("#TPS=%d\n", rate) // FIXME optional, for debugging
 	}
 	// let them run for a cycle and shut down
 	time.Sleep(time.Duration(10 * float64(time.Second)))
@@ -286,27 +305,27 @@ func worker(pipe chan []string) {
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
 	for {
-		if doWork() == false {
+		if !doWork() {
 			return
 		}
-		time.Sleep(time.Duration(conf.SleepTime) * time.Second)
+		time.Sleep(sleep)
 	}
 }
 
-// work is the thing that happens each second.
+// work is the thing that happens each second. Returns true if it did work.
 func doWork() bool {
 	var r []string
 
 	r, eof := getWork()
 	if eof {
-		// we can't do any more work
+		// we can't do any more work, normal case
 		return false
 	}
 
 	switch {
 	case r == nil:
-		// another sense of EOF
-		log.Print("worker reached EOF, no more requests to send.\n")
+		// another sense of EOF, that we didn't have enough data
+		warnAboutNoData()
 		return false
 	case len(r) < 9:
 		// bad input data, crash
@@ -315,14 +334,30 @@ func doWork() bool {
 		go op.Get(r[pathField], r[returnCodeField])
 	case r[operatorField] == "PUT" && conf.W:
 		go op.Put(r[pathField], r[bytesField], r[returnCodeField])
-	//case r[operatorField] == "DELE":
-	//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
-	//case r[operatorField] == "HEAD":
-	//	go op.Head(r[pathField], r[bytesField], r[returnCodeField]) // nolint
+		//case r[operatorField] == "DELE":
+		//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
+		//case r[operatorField] == "HEAD":
+		//	go op.Head(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	default:
-		log.Printf("unimplemented operation %s in %v, ignored\n", r[operatorField], r)
+		warnAboutUnimplemented(r)
 	}
 	return true
+}
+
+// two little warning functions
+func warnAboutUnimplemented(r []string) {
+	if !unimplementedWarningShown {
+		log.Printf("unimplemented operation %s in %v, ignored\n",
+			r[operatorField], r)
+		unimplementedWarningShown = true
+	}
+}
+
+func warnAboutNoData() {
+	if !outOfDataWarningShown {
+		log.Print("worker reached EOF, no more work to do.\n")
+		outOfDataWarningShown = true
+	}
 }
 
 // getWork gets stuff for worker to do

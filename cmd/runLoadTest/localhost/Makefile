@@ -1,3 +1,8 @@
+#
+# This is a suite of testis and data from running
+# the loadTester against a local dummy server, SimulAtque
+#
+
 SERVER=http://localhost:5280/
 TPS=10
 
@@ -11,7 +16,7 @@ run : install
 	perf2seconds raw.csv >loadgen.csv
 
 progress: install
-	runLoadTest --rest --tps 24 --progress 2 \
+	runLoadTest --rest --tps 50 --progress 10 --duration 5 \
 		./samples.csv ${SERVER} > raw.csv
 	perf2seconds raw.csv >progress.csv
 

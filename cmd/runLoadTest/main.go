@@ -12,6 +12,8 @@ import (
 	"os"
 	"strings"
 
+	"time"
+
 	"github.com/vharitonsky/iniflags"
 )
 
@@ -35,7 +37,9 @@ func main() {
 	var bufSize int64
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash, akamaiDebug bool
-	var sleepTime float64
+	var sleepTimeString string
+	var sleepTime time.Duration
+	var sleepTarget int
 	var cache, tail bool
 	var strip, hostHeader, headers string
 	var headerMap = make(map[string]string)
@@ -50,12 +54,14 @@ func main() {
 
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
+	// filesystem protocol may go here
 
 	flag.BoolVar(&ro, "ro", false, "read-only test")
 	flag.Int64Var(&rw, "rw", 0, "read-write test, w buffer size")
 	flag.Int64Var(&wo, "wo", 0, "write-only test, w buffer size")
 
-	flag.Float64Var(&sleepTime, "sleep", 1.0, "sleep time, seconds")
+	flag.StringVar(&sleepTimeString, "sleep", "1.0", "sleep time, seconds")
+	flag.IntVar(&sleepTarget, "sleep-target", 0, "TPS after which to adjust sleep")
 
 	flag.StringVar(&strip, "strip", "", "test to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
@@ -87,6 +93,7 @@ func main() {
 	if runFor == 0 {
 		runFor = math.MaxInt64
 	}
+	sleepTarget, sleepTime = setUpSleep(sleepTarget, tpsTarget, sleepTimeString, sleepTime)
 
 	if tpsTarget == 0 {
 		log.Fatal("You must specify a --tps target, halting.")
@@ -124,6 +131,7 @@ func main() {
 			Crash:        crash,
 			AkamaiDebug:  akamaiDebug,
 			SleepTime:    sleepTime,
+			SleepTarget:  sleepTarget,
 			Cache:        cache,
 			Tail:         tail,
 			Protocol:     proto,
@@ -139,6 +147,25 @@ func main() {
 			W:            w,
 			BufSize:      bufSize,
 		})
+}
+
+// setUpSleep sets up for sleep-time adjustment at high TPS ("gunther")
+func setUpSleep(sleepTarget int, tpsTarget int, sleepTimeString string,
+	sleepTime time.Duration) (int, time.Duration) {
+	var err error
+
+	if sleepTarget == 0 {
+		sleepTarget = tpsTarget
+	}
+	if sleepTimeString != "" {
+		// this should be true by construction
+		sleepTime, err = time.ParseDuration(sleepTimeString + "s")
+		if err != nil {
+			log.Fatalf("Unable to turn sleep-time %q into a decimal second, %v halting.",
+				sleepTimeString, err)
+		}
+	}
+	return sleepTarget, sleepTime
 }
 
 // setheaders creates a proper map of header:value pairs
