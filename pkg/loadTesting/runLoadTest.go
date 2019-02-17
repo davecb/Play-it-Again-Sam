@@ -411,7 +411,7 @@ func reportPerformance(initial time.Time, latency time.Duration,
 		rc, annotation)
 }
 
-// reportRusage reports cpu-seconds, memory and IOPS used
+// reportRusage reports cpu-seconds, memory and IOPS used, from /proc/stats
 func reportRUsage(name string, start time.Time) {
 	var r syscall.Rusage
 
