@@ -40,7 +40,7 @@ var httpClient = &http.Client{
 // Get does a GET from an http target and times it
 func (p RestProto) Get(path string, oldRc string) {
 	if conf.Debug {
-		log.Printf("in rest.Get(%s)\n", path)
+		log.Printf("in rest.Get(%s, nil)\n", p.prefix+"/"+path)
 	}
 	req, err := http.NewRequest("GET", p.prefix+"/"+path, nil)
 	if err != nil {
