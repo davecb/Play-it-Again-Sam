@@ -267,6 +267,8 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	}
 	// add to the workers until we have enough
 	log.Printf("now at %d requests/second\n", rate)
+	// Write the rate to stdout as a comment, for debugging
+	fmt.Printf("#TPS=%d\n", rate)
 	for range time.Tick(time.Duration(conf.StepDuration) * time.Second) { // nolint
 		rate += progressRate
 
@@ -288,7 +290,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 			go worker(pipe)
 		}
 		log.Printf("now at %d requests/second\n", rate)
-		//fmt.Printf("#TPS=%d\n", rate) // FIXME optional, for debugging
+		fmt.Printf("#TPS=%d\n", rate)
 	}
 	// let them run for a cycle and shut down
 	time.Sleep(time.Duration(10 * float64(time.Second)))
