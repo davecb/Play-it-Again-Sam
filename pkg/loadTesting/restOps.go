@@ -56,8 +56,8 @@ func (p RestProto) Get(path string, oldRc string) {
 	latency := time.Since(initial) // Latency ends
 	if err != nil {
 		dumpXact(req, resp, nil, conf.Crash, "error getting http response", err)
-		// 444 is nginx's code for server has returned no information and/or EOF
-		reportPerformance(initial, latency, 0, nil, path, 444, oldRc)
+		// 400 is all we can say about a not-very-clear error.
+		reportPerformance(initial, latency, 0, nil, path, 400, oldRc)
 		alive <- true
 		return
 	}
