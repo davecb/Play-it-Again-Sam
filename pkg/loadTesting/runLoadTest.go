@@ -267,6 +267,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 			go worker(pipe)
 		}
 		log.Printf("now at %d requests/second\n", rate)
+		fmt.Printf("#TPS=%d\n", rate) // add as a column?
 	}
 	// let them run for a cycle and shut down
 	time.Sleep(time.Duration(10 * float64(time.Second)))
