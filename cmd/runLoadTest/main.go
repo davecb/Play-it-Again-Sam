@@ -15,7 +15,7 @@ import (
 	"github.com/vharitonsky/iniflags"
 )
 
-const terminationTimeout = 35
+const terminationTimeout = 10 // Formerly 35
 
 func usage() {
 	//nolint
@@ -29,7 +29,7 @@ func usage() {
 func main() {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
-	var s3, ceph, rest bool
+	var s3, ceph, rest, timeBudget bool
 	var ro bool
 	var rw, wo int64
 	var bufSize int64
@@ -49,6 +49,7 @@ func main() {
 
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
+	flag.BoolVar(&timeBudget, "timeBudget", false, "test the time budget")
 
 	flag.BoolVar(&ro, "ro", false, "read-only test")
 	flag.Int64Var(&rw, "rw", 0, "read-write test, w buffer size")
@@ -98,7 +99,7 @@ func main() {
 		bufSize = rw
 	}
 
-	proto := setProtocol(s3, ceph)
+	proto := setProtocol(s3, ceph, timeBudget)
 	filename := flag.Arg(0)
 	if filename == "" {
 		log.Fatalf("No load-test .csv file provided, halting.\n")
@@ -154,7 +155,7 @@ func setHeaders(headers string, headerMap map[string]string) {
 }
 
 // setProtocol from s3 and ceph booleans
-func setProtocol(s3, ceph bool) int {
+func setProtocol(s3, ceph, timeBudget bool) int {
 	var proto int
 
 	switch {
@@ -162,6 +163,8 @@ func setProtocol(s3, ceph bool) int {
 		proto = loadTesting.S3Protocol
 	case ceph:
 		proto = loadTesting.CephProtocol // unimplemented
+	case timeBudget:
+		proto = loadTesting.TimeBudgetProtocol
 	default: //REST
 		proto = loadTesting.RESTProtocol
 	}

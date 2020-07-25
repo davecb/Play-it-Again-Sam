@@ -25,6 +25,7 @@ const (
 	RESTProtocol       // Simple http-based REST protocols
 	S3Protocol         // Amazon s3 protocol or compatable
 	CephProtocol       // reserved for native ceph protocol
+	TimeBudgetProtocol // see if we're inside our time budget
 )
 
 // operations are the things a protocol must support
@@ -50,13 +51,13 @@ const ( // nolint
 // Config contains all the optional parameters.
 type Config struct {
 	Verbose      bool   // Extra info about requests
-	Debug        bool   // Extra infor about program
+	Debug        bool   // Extra info about program
 	Crash        bool   // Halt on any error
 	Serialize    bool   // FIXME semi-evil hack
 	Cache        bool   // allow caching
 	Tail         bool   // tail a log
 	AkamaiDebug  bool   // add Akamai debug headers
-	Protocol     int    // rest, 23 or filesystem FIXME?
+	Protocol     int    // rest, etc
 	S3Bucket     string // s3-specific options
 	S3Key        string
 	S3Secret     string
@@ -70,13 +71,14 @@ type Config struct {
 	BufSize      int64             // max size of written file
 }
 
+var OfferedRate int // Log offered rate in TPS
+
 var conf Config
 var op operation
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
 var alive = make(chan bool, 1000)
 var closed = make(chan bool)
-
 var junkDataFile = "/tmp/LoadTestJunkDataFile"
 
 const size = 396759652 // nolint // FIXME, this is a heuristic
@@ -102,6 +104,9 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	case S3Protocol:
 		op = S3Proto{prefix: baseURL}
 		op.Init()
+	case TimeBudgetProtocol:
+		op = TimeBudgetProto{prefix: baseURL}
+		op.Init()
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
 	}
@@ -123,9 +128,14 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	// which then writes to "alive", ...
 	for {
 		select {
-		case <-alive:
+		case _, ok := <-alive:
+			if !ok {
+				// if alive was closed, we're done
+				return
+			}
 			processed++
 		case <-time.After(time.Second * conf.Timeout):
+			// FIXME, this is memory-intensive
 			log.Printf("%d records processed\n", processed)
 			log.Printf("No activity after %d seconds, halting normally.\n",
 				conf.Timeout)
@@ -222,20 +232,21 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 			tpsTarget, progressRate)
 	}
 
-	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op\n")
+	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op offered\n")
 	switch {
 	case progressRate != 0:
 		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
 	case tpsTarget != 0:
 		runSteadyLoad(tpsTarget, pipe)
 	case tpsTarget <= 0:
-		log.Fatal("A zero or negative tps target is not meaningfull, halting\n")
+		log.Fatal("A zero or negative tps target is not meaningful, halting\n")
 	}
 }
 
 // run at a steady tps until the end of the data
 func runSteadyLoad(tpsTarget int, pipe chan []string) {
 	log.Printf("starting, at %d requests/second\n", tpsTarget)
+	OfferedRate = tpsTarget
 	// start tpsTarget workers
 	for i := 0; i < tpsTarget; i++ {
 		go worker(pipe)
@@ -250,6 +261,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 		startTps = progressRate
 	}
 	rate := startTps
+	OfferedRate = startTps
 	for i := 0; i < startTps; i++ {
 		go worker(pipe)
 	}
@@ -258,6 +270,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	for range time.Tick(time.Duration(conf.StepDuration) * time.Second) { // nolint
 		//start another progressRate of workers
 		rate += progressRate
+		OfferedRate = rate
 		if rate > tpsTarget {
 			// OK, we're past the range, quit.
 			log.Printf("completed maximum rate, starting %d sec cleanup timer\n", conf.Timeout)
@@ -278,6 +291,11 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 func worker(pipe chan []string) {
 	if conf.Debug {
 		log.Print("started a worker\n")
+	}
+	if conf.Protocol == TimeBudgetProtocol {
+		// Do the operation immediately, once, to measure it's speed
+		doWork()
+		return
 	}
 	// wait a random fraction of one second before looping, for randomness.
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
@@ -320,7 +338,7 @@ func doWork() bool {
 	return false
 }
 
-// getWork gets sttiff for worker to do
+// getWork gets stuff for worker to do
 func getWork() ([]string, bool) {
 	var r []string
 
@@ -365,10 +383,10 @@ func reportPerformance(initial time.Time, latency time.Duration,
 			annotation = fmt.Sprintf(" expected=%d", old)
 		}
 	}
-	fmt.Printf("%s %f %f 0 %d %s %d GET%s\n",
+	fmt.Printf("%s %f %f 0 %d %s %d GET %d %s\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(body), path,
-		rc, annotation)
+		rc, OfferedRate, annotation)
 }
 
 // reportRusage reports cpu-seconds, memory and IOPS used
