@@ -105,7 +105,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 		op = S3Proto{prefix: baseURL}
 		op.Init()
 	case TimeBudgetProtocol:
-		op = TimeBudgetProto{prefix: baseURL}
+		op = timeBudgetProto{prefix: baseURL}
 		op.Init()
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
@@ -177,14 +177,13 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 	r.FieldsPerRecord = -1 // ignore differences
 
 	skipForward(startFrom, r, filename)
-	recNo, pipe := copyToPipe(runFor, r, filename, pipe, watcher)
+	recNo := copyToPipe(runFor, r, filename, pipe, watcher)
 	log.Printf("EOF: loaded %d records, closing input pipe\n", recNo)
 	close(pipe)
 }
 
-// copyToPipe sends work to the workers
-func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string, watcher *fsnotify.Watcher) (int, chan []string) {
-	// From there, copy to pipe
+// copyToPipe pipes work to the workers
+func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string, watcher *fsnotify.Watcher) int {
 
 	recNo := 0
 forloop:
@@ -206,7 +205,8 @@ forloop:
 			log.Printf("At EOF on %s, no new work to queue\n", filename)
 			break forloop
 		case err != nil:
-			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
+			log.Printf("Fatal error mid-way reading %s, stopping: %s\n", filename, err)
+			break forloop
 		}
 		if len(record) < 9 {
 			log.Printf("ill-formed record %q ignored\n",
@@ -218,11 +218,11 @@ forloop:
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		// log.Printf("writing %v to pipe\n", record)
+		//log.Printf("writing %v to pipe\n", record)
 
 		pipe <- record
 	}
-	return recNo, pipe
+	return recNo
 }
 
 // generateLoad starts progressRate new threads every 10 seconds until we hit progressRate
@@ -284,7 +284,8 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	}
 	// let them run for a cycle and shut down
 	time.Sleep(time.Duration(10 * float64(time.Second)))
-	close(closed) // We're done
+	// this needs refactoring
+	close(closed)
 }
 
 // worker reads and executes a task every second until it hits eof
@@ -341,14 +342,20 @@ func doWork() bool {
 // getWork gets stuff for worker to do
 func getWork() ([]string, bool) {
 	var r []string
+	var ok bool
 
 	select {
 	case <-closed:
+		// peculiar to increasing load test, refactor
 		if conf.Debug {
 			log.Print("pipe closed, no more requests to process.\n")
 		}
 		return nil, true
-	case r = <-pipe:
+	case r, ok = <-pipe:
+		if !ok {
+			// We're at eof
+			return nil, true
+		}
 		if conf.Debug {
 			log.Printf("got %v\n", r)
 		}
@@ -400,8 +407,8 @@ func reportRUsage(name string, start time.Time) {
 			start.Format("2006-01-02 15:04:05.000"), name, os.Getpid())
 		return
 	}
-	fmt.Fprint(os.Stderr, "#date      time         name        pid  utime stime maxrss inblock outblock\n")
-	fmt.Fprintf(os.Stderr, "%s %s %d %f %f %d %d %d\n", start.Format("2006-01-02 15:04:05.000"),
+	log.Printf("#date      time         name        pid  utime stime maxrss inblock outblock\n")
+	log.Printf("%s %s %d %f %f %d %d %d\n", start.Format("2006-01-02 15:04:05.000"),
 		name, os.Getpid(), seconds(r.Utime), seconds(r.Stime), r.Maxrss*1024, r.Inblock, r.Oublock)
 }
 

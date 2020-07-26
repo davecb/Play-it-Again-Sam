@@ -11,7 +11,7 @@ import (
 
 const (
 	// Fail if the code takes more than internalTime:
-	internalTime = time.Microsecond * 500
+	internalTime = time.Millisecond
 	budgetedTime = 100 * time.Millisecond + internalTime
 )
 
@@ -21,15 +21,31 @@ func TestTimeBudget(t *testing.T) {
 	}{
 		// turning on debug will make it too slow
 		{false},   // This will pass
-		// {true}, ,   // This will fail
+		//{true},    // This will fail
+		// turning on both will trigger a bug
 	}
 	for _, test := range tests {
 		budgetTest(test.debug, t)
 	}
 }
 
+// budgetTest sees if we can complete quickly enough
 func budgetTest(debug bool, t *testing.T) {
 
+	initial := time.Now()
+    systemUnderTest(debug)
+    totalTime := time.Since(initial)
+	if totalTime >= budgetedTime {
+		t.Error(fmt.Sprintf("Get took %f seconds, more than %v, error\n",
+			totalTime.Seconds(), budgetedTime))
+	} else {
+		log.Printf("Get took %f seconds, within %v\n",
+			totalTime.Seconds(), budgetedTime)
+	}
+	time.Sleep(10 * time.Second) // let pipes drain
+}
+
+func systemUnderTest(debug bool) {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
 	var bufSize int64
@@ -40,11 +56,9 @@ func budgetTest(debug bool, t *testing.T) {
 	var headerMap = make(map[string]string)
 	var err error
 
-	initial := time.Now()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
 	runFor = 1                                           // 1 record
 	tpsTarget = 1                                        // at 1 TPS
-	debug = false
 	verbose = false
 	filename := "timeBudget.csv"
 	f, err := os.Open(filename)
@@ -77,14 +91,5 @@ func budgetTest(debug bool, t *testing.T) {
 			W:            false,
 			BufSize:      bufSize,
 		})
-
-	totalTime := time.Since(initial)
-	if totalTime >= budgetedTime {
-		t.Error(fmt.Sprintf("Get took %f seconds, more than %v, error\n",
-			totalTime.Seconds(), budgetedTime))
-	} else {
-		log.Printf("Get took %f seconds, within %v\n",
-			totalTime.Seconds(), budgetedTime)
-	}
 }
 
