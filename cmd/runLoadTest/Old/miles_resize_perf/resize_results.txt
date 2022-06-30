@@ -1,0 +1,1258 @@
+go install ../../../pkg/loadTesting
+go install ../../runLoadTest
+runLoadTest --rest --tps 1 \
+	 ./suffixes.csv http://localhost:8081/
+#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
+2017/11/27 10:33:37 runLoadTest.go:216: starting, at 1 requests/second
+2017/11/27 10:33:37 runLoadTest.go:176: At EOF on ./suffixes.csv, no new work to queue
+2017/11/27 10:33:37 runLoadTest.go:151: Loaded 52 records, closing input
+2017/11/27 10:33:38 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/99/150/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:38 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:38 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:38.763 0.045088 0.000007 0 0 /content/v1/images.s3.kobo.com/image/albert/99/150/90/false/albert.png 200 GET
+2017/11/27 10:33:39 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/110/175/0/False/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:39 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:39 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:39.763 0.001678 0.000015 0 0 /content/v1/images.s3.kobo.com/image/albert/110/175/0/False/albert.jpg 200 GET
+2017/11/27 10:33:40 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/130/200/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:40 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:40 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:40.763 0.000638 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/130/200/90/false/albert.png 200 GET
+2017/11/27 10:33:41 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/130/210/90/False/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:41 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:41 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:41.763 0.001791 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/130/210/90/False/albert.jpg 200 GET
+2017/11/27 10:33:42 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/132/196/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:33:42 GMT]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:42 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:42.763 0.001768 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/132/196/90/false/albert.png 200 GET
+2017/11/27 10:33:43 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/135/204/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:43 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:43 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:43.763 0.001740 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/135/204/90/false/albert.png 200 GET
+2017/11/27 10:33:44 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/140/200/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:44 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:44 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:44.763 0.001680 0.000012 0 0 /content/v1/images.s3.kobo.com/image/albert/140/200/90/false/albert.png 200 GET
+2017/11/27 10:33:45 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/140/208/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:45 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:45 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:45.763 0.001616 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/140/208/90/false/albert.png 200 GET
+2017/11/27 10:33:46 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/140/210/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:33:46 GMT]
+    Content-Length : [0]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:46 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:46.763 0.001760 0.000007 0 0 /content/v1/images.s3.kobo.com/image/albert/140/210/90/false/albert.png 200 GET
+2017/11/27 10:33:47 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/140/215/60/False/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:47 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:47 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:47.763 0.001849 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/140/215/60/False/albert.jpg 200 GET
+2017/11/27 10:33:48 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/149/223/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:48 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:48 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:48.763 0.001291 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/149/223/90/True/albert.jpg 200 GET
+2017/11/27 10:33:49 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/160/240/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:33:49 GMT]
+    Content-Length : [0]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:49 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:49.763 0.001769 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/160/240/90/false/albert.png 200 GET
+2017/11/27 10:33:50 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/180/290/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:50 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:50 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:50.763 0.001655 0.000004 0 0 /content/v1/images.s3.kobo.com/image/albert/180/290/90/false/albert.png 200 GET
+2017/11/27 10:33:51 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/184/276/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:51 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:51 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:51.763 0.001738 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/184/276/90/false/albert.png 200 GET
+2017/11/27 10:33:52 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/188/280/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:52 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:52 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:52.763 0.001678 0.000016 0 0 /content/v1/images.s3.kobo.com/image/albert/188/280/90/false/albert.png 200 GET
+2017/11/27 10:33:53 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/200/400/85/false/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:53 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:53 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:53.763 0.001814 0.000009 0 0 /content/v1/images.s3.kobo.com/image/albert/200/400/85/false/albert.jpg 200 GET
+2017/11/27 10:33:54 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/210/300/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:54 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:54 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:54.763 0.001831 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/210/300/90/false/albert.png 200 GET
+2017/11/27 10:33:55 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/212/322/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:33:55 GMT]
+    Content-Length : [0]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:55 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:55.763 0.001704 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/212/322/90/false/albert.png 200 GET
+2017/11/27 10:33:56 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/220/340/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:56 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:56 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:56.763 0.001792 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/220/340/90/false/albert.png 200 GET
+2017/11/27 10:33:57 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/228/368/90/False/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:57 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:57 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:57.763 0.001725 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/228/368/90/False/albert.jpg 200 GET
+2017/11/27 10:33:58 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/238/296/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:58 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:58 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:58.763 0.001735 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/238/296/90/false/albert.png 200 GET
+2017/11/27 10:33:59 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/240/360/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:33:59 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:33:59 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:33:59.763 0.001727 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/240/360/90/false/albert.png 200 GET
+2017/11/27 10:34:00 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/260/400/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:00 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:00 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:00.763 0.001788 0.000007 0 0 /content/v1/images.s3.kobo.com/image/albert/260/400/90/false/albert.png 200 GET
+2017/11/27 10:34:01 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/264/392/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:01 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:01 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:01.763 0.001747 0.000007 0 0 /content/v1/images.s3.kobo.com/image/albert/264/392/90/false/albert.png 200 GET
+2017/11/27 10:34:02 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/276/414/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:02 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:02 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:02.763 0.001851 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/276/414/90/false/albert.png 200 GET
+2017/11/27 10:34:03 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/280/416/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:03 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:03 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:03.763 0.001703 0.000007 0 0 /content/v1/images.s3.kobo.com/image/albert/280/416/90/false/albert.png 200 GET
+2017/11/27 10:34:04 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/280/420/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:04 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:04 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:04.763 0.001742 0.000007 0 0 /content/v1/images.s3.kobo.com/image/albert/280/420/90/false/albert.png 200 GET
+2017/11/27 10:34:05 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/282/420/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:34:05 GMT]
+    Content-Length : [0]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:05 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:05.763 0.001766 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/282/420/90/false/albert.png 200 GET
+2017/11/27 10:34:06 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/290/356/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:06 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:06 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:06.763 0.001766 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/290/356/90/false/albert.png 200 GET
+2017/11/27 10:34:07 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/304/458/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:34:07 GMT]
+    Content-Length : [0]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:07 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:07.763 0.001562 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/304/458/90/false/albert.png 200 GET
+2017/11/27 10:34:08 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/310/310/85/false/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:08 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:08 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:08.763 0.001939 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/310/310/85/false/albert.jpg 200 GET
+2017/11/27 10:34:09 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/318/483/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:09 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:09 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:09.763 0.001726 0.000008 0 0 /content/v1/images.s3.kobo.com/image/albert/318/483/90/false/albert.png 200 GET
+2017/11/27 10:34:10 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/330/510/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:10 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:10 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:10.763 0.001655 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/330/510/90/false/albert.png 200 GET
+2017/11/27 10:34:11 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/353/569/90/False/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:34:11 GMT]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:11 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:11.763 0.001713 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/353/569/90/False/albert.jpg 200 GET
+2017/11/27 10:34:12 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/355/530/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:12 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:12 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:12.763 0.001465 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/355/530/90/True/albert.jpg 200 GET
+2017/11/27 10:34:13 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/357/444/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:13 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:13 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:13.763 0.001770 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/357/444/90/false/albert.png 200 GET
+2017/11/27 10:34:14 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/420/600/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:34:14 GMT]
+    Content-Length : [0]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:14 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:14.763 0.001750 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/420/600/90/false/albert.png 200 GET
+2017/11/27 10:34:15 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/420/624/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:15 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:15 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:15.763 0.001789 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/420/624/90/false/albert.png 200 GET
+2017/11/27 10:34:16 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/420/630/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:16 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:16 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:16.763 0.001704 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/420/630/90/false/albert.png 200 GET
+2017/11/27 10:34:17 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/435/534/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:17 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:17 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:17.763 0.001751 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/435/534/90/false/albert.png 200 GET
+2017/11/27 10:34:18 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/447/721/90/False/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:18 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:18 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:18.763 0.001631 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/447/721/90/False/albert.jpg 200 GET
+2017/11/27 10:34:19 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/600/800/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:34:19 GMT]
+    Content-Length : [0]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:19 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:19.763 0.001783 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/600/800/90/True/albert.jpg 200 GET
+2017/11/27 10:34:20 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/618/1024/90/False/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:20 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:20 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:20.763 0.001309 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/618/1024/90/False/albert.jpg 200 GET
+2017/11/27 10:34:21 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/640/1136/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:21 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:21 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:21.763 0.001574 0.000005 0 0 /content/v1/images.s3.kobo.com/image/albert/640/1136/90/false/albert.png 200 GET
+2017/11/27 10:34:22 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/758/1014/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:22 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:22 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:22.763 0.001588 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/758/1014/90/True/albert.jpg 200 GET
+2017/11/27 10:34:23 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/758/1024/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:23 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:23 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:23.763 0.001878 0.000008 0 0 /content/v1/images.s3.kobo.com/image/albert/758/1024/90/True/albert.jpg 200 GET
+2017/11/27 10:34:24 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/950/950/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:24 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:24 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:24.763 0.001966 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/950/950/90/false/albert.png 200 GET
+2017/11/27 10:34:25 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/960/1704/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:25 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:25 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:25.763 0.001813 0.000009 0 0 /content/v1/images.s3.kobo.com/image/albert/960/1704/90/false/albert.png 200 GET
+2017/11/27 10:34:26 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/1072/1448/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:26 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:26 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:26.763 0.000656 0.000002 0 0 /content/v1/images.s3.kobo.com/image/albert/1072/1448/90/True/albert.jpg 200 GET
+2017/11/27 10:34:27 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/1080/1440/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:27 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:27 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:27.763 0.001339 0.000004 0 0 /content/v1/images.s3.kobo.com/image/albert/1080/1440/90/True/albert.jpg 200 GET
+2017/11/27 10:34:28 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/1404/1872/90/True/albert.jpg HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+    Date : [Mon, 27 Nov 2017 15:34:28 GMT]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:28 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:28.763 0.001668 0.000006 0 0 /content/v1/images.s3.kobo.com/image/albert/1404/1872/90/True/albert.jpg 200 GET
+2017/11/27 10:34:29 restOps.go:201: bad length
+Request: 
+GET ///content/v1/images.s3.kobo.com/image/albert/1900/1900/90/false/albert.png HTTP/1.1
+Host: localhost:8081
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response headers:
+    Length: 0
+    Status code: 200 È OK
+    Date : [Mon, 27 Nov 2017 15:34:29 GMT]
+    Content-Length : [0]
+    Content-Type : [text/plain; charset=utf-8]
+Response contents: 
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 27 Nov 2017 15:34:29 GMT
+Content-Length: 0
+
+Body:
+ 
+
+2017-11-27 10:34:29.763 0.001690 0.000030 0 0 /content/v1/images.s3.kobo.com/image/albert/1900/1900/90/false/albert.png 200 GET
+2017/11/27 10:35:04 runLoadTest.go:109: 52 records processed
+2017/11/27 10:35:04 runLoadTest.go:111: No activity after 35 seconds, halting normally.

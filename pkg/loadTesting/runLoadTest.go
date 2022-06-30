@@ -329,6 +329,8 @@ func doWork() bool {
 		go op.Get(r[pathField], r[returnCodeField])
 	case r[operatorField] == "PUT" && conf.W:
 		go op.Put(r[pathField], r[bytesField], r[returnCodeField])
+	case r[operatorField] == "POST" && conf.R:
+		go op.Post(r[pathField], r[bytesField], r[returnCodeField]) // FIXME needs a body
 	//case r[operatorField] == "DELE":
 	//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	//case r[operatorField] == "HEAD":
