@@ -1,0 +1,3 @@
+ssh -t -2 -A -Y -L 4567:10.121.100.1:22 dcollierbrown@mac
+then 
+scp -P 4567 foo localhost:foo

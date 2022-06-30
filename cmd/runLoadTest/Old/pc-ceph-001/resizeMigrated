@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# resizeMigrated -- 
+#
+ProgName=`basename $0`
+
+main() {
+	name=$1
+
+	if [ $# -lt 1 ]; then
+		say "$ProgName error: you must supply a parameter"
+		say "Usage: $0 parameter"
+		exit 1
+	fi
+
+}
+
+say() {
+	echo "$@" 1>&2
+}
+
+main "$@"

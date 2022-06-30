@@ -171,6 +171,16 @@ func (p RestProto) Put(path, size, oldRC string) {
 	alive <- true
 }
 
+// Post does an ordinary REST (not ceph or s3) put operation.
+func (p RestProto) Post(path, size, oldRC string) {
+	//var bytes int64
+	//var err error
+
+	if conf.Debug {
+		log.Printf("in rest.Post(%s, %s, %s)\n", path, size, oldRC)
+	}
+}
+
 // badGetCode is true if this isn't a 20X or 404
 // in this case "bad" means "display the error"
 func badGetCode(i int) bool {

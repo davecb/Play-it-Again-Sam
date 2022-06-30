@@ -1,0 +1,5 @@
+# S3 store NEW STUFF --davecb
+s3-bucket=download.s3.kobo.com
+s3-key=91V7FH4MNMXQW2WRBAZI
+s3-secret=bhZIl6LPMKjm0dHW5zyb23OwNXWsJxAdVLIms5Xh
+

@@ -1,0 +1,7 @@
+#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
+2017-12-06 19:46:05.515 0.339296 0.000170 0 14628 customer_care/downloads/Arc/kobo_arc_user_guide_en.pdf 200 GET
+2017-12-06 19:46:05.515 0.339296 0.000170 0 14628 customer/care/downloads/Arc/kobo_arc_user_guide_en.pdf 200 GET
+2017-12-06 19:46:05.515 0.339296 0.000170 0 14628 customer/care/downloads/Arc/kobo/arc_user_guide_en.pdf 200 GET
+2017-12-06 19:46:05.515 0.339296 0.000170 0 14628 customer/care/downloads/Arc/kobo/arc/user_guide_en.pdf 200 GET
+2017-12-06 19:46:05.515 0.339296 0.000170 0 14628 customer/care/downloads/Arc/kobo/arc/user/guide_en.pdf 200 GET
+2017-12-06 19:46:05.515 0.339296 0.000170 0 14628 customer/care/downloads/Arc/kobo/arc/user/guide/en.pdf 200 GET

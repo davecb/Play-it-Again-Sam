@@ -1,0 +1,19 @@
+Request: 
+GET /images/v1/images.s3.kobo.com/865e1dec-819c-4ca4-ad5d-fd55ddb09986%2F166%2F300%2F80%2FFalse%2Fimage.jpg?rgwx-zonegroup=48d39f25-c735-4ccc-9c8f-2e568fcf21b5&rgwx-prepend-metadata=48d39f25-c735-4ccc-9c8f-2e568fcf21b5&rgwx-sync-manifest HTTP/1.1
+Host: 10.92.10.202:80
+User-Agent: Go-http-client/1.1
+Cache-Control: no-cache
+Accept-Encoding: gzip
+
+Response information
+    Length: 1919
+    Status code: 202 accepte
+Response contents:
+HTTP/1.1 202 Accepted
+Content-Length: 19199
+Content-Type: image/jpeg
+Date: Wed, 10 Jan 2018 14:05:40 GMT
+Server: nginx/1.12.1
+Vary: Accept
+X-Service-Version: RCDN/1.1.0-142-imager
+
