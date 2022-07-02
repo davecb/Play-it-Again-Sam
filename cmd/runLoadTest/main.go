@@ -15,7 +15,7 @@ import (
 	"github.com/vharitonsky/iniflags"
 )
 
-const terminationTimeout = 10 // Formerly 35
+const terminationTimeout = 35 //10 // Formerly 35
 
 func usage() {
 	//nolint
@@ -36,7 +36,7 @@ func main() {
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash, akamaiDebug bool
 	var serial, cache, tail bool
-	var strip, hostHeader, headers string
+	var strip, hostHeader, headers, bodyFile string
 	var headerMap = make(map[string]string)
 	var err error
 
@@ -74,6 +74,8 @@ func main() {
 		"set key when using s3 protocol")
 	flag.StringVar(&s3Secret, "s3-secret", "SECRET NOT SET",
 		"set secret when using s3 protocol")
+
+	flag.StringVar(&bodyFile, "body", "", "body for an http POST")
 	iniflags.Parse()
 
 	if flag.NArg() < 2 {
@@ -137,6 +139,7 @@ func main() {
 			R:            r,
 			W:            w,
 			BufSize:      bufSize,
+			Body:         bodyFile,
 		})
 }
 

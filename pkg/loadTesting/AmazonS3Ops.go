@@ -135,6 +135,10 @@ func (p S3Proto) Put(path, size, oldRC string) {
 	//return fmt.Errorf("unable to upload %q to %q, %v", path, conf.S3Bucket, err)
 }
 
+func (p S3Proto) Post(path, size, oldRC, body string) {
+	log.Fatalf("POST is unimplemented\n")
+}
+
 // mustCreateService creates a connection to an s3-compatible server.
 func mustCreateService(myEndpoint string, awsLogLevel aws.LogLevelType) *s3.S3 {
 

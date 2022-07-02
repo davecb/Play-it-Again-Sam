@@ -33,6 +33,7 @@ type operation interface {
 	Init()
 	Get(path, oldRc string)
 	Put(path, size, oldRc string)
+	Post(path, size, oldRc, body string)
 }
 
 // These are the field names in the csv file
@@ -69,6 +70,7 @@ type Config struct {
 	R            bool              // read tests allowed
 	W            bool              // write tests allowed
 	BufSize      int64             // max size of written file
+	Body         string            // path to a file containing an http POST body
 }
 
 var OfferedRate int // Log offered rate in TPS
@@ -330,7 +332,7 @@ func doWork() bool {
 	case r[operatorField] == "PUT" && conf.W:
 		go op.Put(r[pathField], r[bytesField], r[returnCodeField])
 	case r[operatorField] == "POST" && conf.R:
-		go op.Post(r[pathField], r[bytesField], r[returnCodeField]) // FIXME needs a body
+		go op.Post(r[pathField], r[bytesField], r[returnCodeField], conf.Body)
 	//case r[operatorField] == "DELE":
 	//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	//case r[operatorField] == "HEAD":

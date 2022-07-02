@@ -1,6 +1,7 @@
 package loadTesting
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -76,7 +77,7 @@ func (p RestProto) Get(path string, oldRc string) {
 	// And, in the non-error cases, conditionally dump
 	switch {
 	case badGetCode(resp.StatusCode):
-		dumpXact(req, resp, body, conf.Crash, "bad return code", nil)
+		dumpXact(req, resp, body, conf.Crash, "returned an error", nil)
 	case conf.Verbose:
 		dumpXact(req, resp, body, conf.Crash, "verbose", nil)
 	}
@@ -145,6 +146,8 @@ func (p RestProto) Put(path, size, oldRC string) {
 		dumpXact(req, nil, nil, true, "error creating http request", err)
 		return
 	}
+	addHeaders(req)
+
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		// Timeouts and bad parameters will trigger this case.
@@ -171,14 +174,63 @@ func (p RestProto) Put(path, size, oldRC string) {
 	alive <- true
 }
 
-// Post does an ordinary REST (not ceph or s3) put operation.
-func (p RestProto) Post(path, size, oldRC string) {
-	//var bytes int64
-	//var err error
+// Post does an ordinary REST (not ceph or s3) post operation.
+func (p RestProto) Post(path, size, oldRC, bodyFile string) {
+	var err error
 
 	if conf.Debug {
 		log.Printf("in rest.Post(%s, %s, %s)\n", path, size, oldRC)
 	}
+
+	// make sure we have a body in a file: FIXME hoist or otherwise refactor
+	if bodyFile == "" {
+		log.Fatalf("load-testing POST requires a --body file to be provided\n")
+	}
+	f, err := ioutil.ReadFile(bodyFile)
+	if err != nil {
+		log.Fatalf("can't open body file %q, halting\n", bodyFile)
+	}
+	reader := bytes.NewReader(f)
+
+	initial := time.Now() // Response time starts
+	req, err := http.NewRequest("POST", p.prefix+"/"+path, reader)
+	if err != nil {
+		// report problem and exit
+		dumpXact(req, nil, nil, true, "error creating http request", err)
+		return
+	}
+	addHeaders(req)
+
+	log.Printf("\n-----\n%s\n-----\n", requestToString(req))
+	log.Printf("calling do\n")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		// Timeouts and bad parameters will trigger this case.
+		log.Printf("in error branch\n")
+		dumpXact(req, nil, nil, true, "error getting http response", err)
+	}
+	latency := time.Since(initial) // Response time ends
+
+	contents, err := ioutil.ReadAll(resp.Body)
+	transferTime := time.Since(initial) - latency // Transfer time ends
+
+	if err != nil {
+		dumpXact(req, resp, contents, true, "error reading http response", err)
+	}
+	defer resp.Body.Close() // nolint
+
+	// And, in the non-error cases, conditionally dump
+	switch {
+	case badPutCode(resp.StatusCode):
+		dumpXact(req, resp, contents, conf.Crash, "bad return code", nil)
+	case conf.Verbose:
+		dumpXact(req, resp, contents, conf.Crash, "", nil)
+	}
+	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
+	fmt.Printf("%s %f %f 0 %d %s %d POST\n",
+		time.Now().Format("2006-01-02 15:04:05.000"),
+		latency.Seconds(), transferTime.Seconds(), len(f), path, resp.StatusCode)
+	alive <- true
 }
 
 // badGetCode is true if this isn't a 20X or 404
@@ -210,7 +262,7 @@ func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, r
 	r += requestToString(req)
 	r += responseToString(resp)
 	r += bodyToString(body)
-	log.Printf("%s\n", r)
+	log.Printf("response: \n-----\n%s\n-----\n", r)
 	if crash {
 		log.Fatalf("halting.\n")
 	}
@@ -226,7 +278,7 @@ func requestToString(req *http.Request) string {
 	}
 	dump, err = httputil.DumpRequestOut(req, true)
 	if err != nil {
-		return fmt.Sprintf("fatal error dumping http request, %v\n", err)
+		return fmt.Sprintf("error dumping http request, %v\nRequest:\n%s\n", err, dump)
 	}
 	return fmt.Sprintf("Request: \n%s", dump)
 }
@@ -236,7 +288,7 @@ func responseToString(resp *http.Response) string {
 	if resp == nil {
 		return "Response: <nil>\n"
 	}
-	contents, err := httputil.DumpResponse(resp, false)
+	contents, err := httputil.DumpResponse(resp, true)
 	if err != nil {
 		return fmt.Sprintf("error dumping http response, %v\n", err)
 	}

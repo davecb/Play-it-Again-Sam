@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 // timeBudgetProto satisfies operation by doing timed no-ops.
 type timeBudgetProto struct {
 	prefix string
@@ -53,3 +52,6 @@ func (p timeBudgetProto) Put(path, size, oldRc string) {
 	close(alive)
 }
 
+func (p timeBudgetProto) Post(path, size, oldRC, body string) {
+	log.Fatalf("POST is unimplemented\n")
+}
