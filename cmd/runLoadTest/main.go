@@ -44,7 +44,7 @@ func main() {
 	flag.IntVar(&startFrom, "from", 0, "number of records to skip, eg 100")
 	flag.IntVar(&tpsTarget, "tps", 0, "TPS target")
 	flag.IntVar(&progressRate, "progress", 0, "progress rate, in TPS steps")
-	flag.IntVar(&progressRate, "start-tps", 0, "TPS to start from")
+	flag.IntVar(&startTps, "start-tps", 0, "TPS to start from")
 	flag.IntVar(&stepDuration, "duration", 10, "Duration of a step")
 
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")

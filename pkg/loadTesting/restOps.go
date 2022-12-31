@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -193,7 +194,7 @@ func (p RestProto) Post(path, size, oldRC, bodyFile string) {
 	reader := bytes.NewReader(f)
 
 	initial := time.Now() // Response time starts
-	req, err := http.NewRequest("POST", p.prefix+"/"+path, reader)
+	req, err := http.NewRequest("POST", p.prefix+"/"+strings.TrimPrefix(path, "/"), reader)
 	if err != nil {
 		// report problem and exit
 		dumpXact(req, nil, nil, true, "error creating http request", err)
@@ -202,7 +203,6 @@ func (p RestProto) Post(path, size, oldRC, bodyFile string) {
 	addHeaders(req)
 
 	log.Printf("\n-----\n%s\n-----\n", requestToString(req))
-	log.Printf("calling do\n")
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		// Timeouts and bad parameters will trigger this case.
