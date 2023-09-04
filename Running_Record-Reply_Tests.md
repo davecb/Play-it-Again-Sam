@@ -5,7 +5,7 @@ system is an excellent way to do an accurate measurement of how
 a new system will behave.
 
 The idea here is to increase the load in requests per second on
-your system to see where it start to turn into a hockey-stick "_/" 
+your system to see where it starts to turn into a hockey-stick "_/" 
 curve from too much load, as shown in figure 1:
  
 ![image](https://user-images.githubusercontent.com/559505/32694390-8e1bec20-c70c-11e7-9c5b-9da23b237b84.png "Figure 1")
@@ -16,9 +16,9 @@ see later, from a quite pleasant 0.4s at 40 requests/second to an
 ugly 1.25 seconds at 120.
 
 From that, we can conclude that the particular disk I'm testing is good 
-only at low loads, but doesn't "hit the wall" until it's terribly overloaded.
-Which is reasonable, as the disk is actually one designed for low 
-power consumption and noise. That it can handle a huge "normal overload"
+only at low loads, which is reasonable, as the disk is actually one designed for low
+power consumption and noise. Unexpectedly for such a device, it doesn't "hit the wall" 
+until it's terribly overloaded. That a disk can handle a huge "normal overload"
 is a nice thing to discover!
 
 ## Collecting initial data
@@ -126,7 +126,7 @@ from beginning to end.
 Any error will put the verbose switch on, and --crash will stop
 as soon as there is an error, instead of continuing.
 
-If you're not use the load tester is behaving properly, ass the `-d` 
+If you're not sure the load tester is behaving properly, add the `-d` 
 debug option, and it will add extra information to the output.
 
 You may have to take some problematic lines out of the input file, 
@@ -144,7 +144,7 @@ response time curve turns upwards in the classic hockey-stick, "_/".
 In our example using Calvin, we first measured from 50 to 400, then
 converted the raw log into one with one-second samples, `perf2seconds 
 raw.csv >calvin50to400.csv` and then plotted response times against
-request per second using Libre Office.
+request per second using LibreOffice.
 
 That gave us the results we saw in Figure 1. We then took a look at 
 10 to 130 request per second to 
@@ -163,7 +163,7 @@ at least five disks.
 ## Understanding what you're seeing
 In performance work, you're far more interested in how much time it takes
 to do something than in the bandwidth of the devices.  The latter is easy
-to measure and advertise: the former is what you what you actually need.
+to measure and advertise: the former is what you actually need.
 
 If you know how long a device takes to do a task, you can provide enough
 of them to meet a performance target that is specified in seconds at a 

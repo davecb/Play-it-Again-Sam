@@ -36,7 +36,7 @@ func main() {
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash, akamaiDebug bool
 	var serial, cache, tail bool
-	var strip, hostHeader, headers, bodyFile string
+	var strip, hostHeader, headers string
 	var headerMap = make(map[string]string)
 	var err error
 
@@ -56,7 +56,7 @@ func main() {
 	flag.Int64Var(&wo, "wo", 0, "write-only test, w buffer size")
 
 	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
-	flag.StringVar(&strip, "strip", "", "test to strip from paths")
+	flag.StringVar(&strip, "strip", "", "text to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.StringVar(&headers, "headers", "", "add one or more key:value headers")
 
@@ -75,7 +75,7 @@ func main() {
 	flag.StringVar(&s3Secret, "s3-secret", "SECRET NOT SET",
 		"set secret when using s3 protocol")
 
-	flag.StringVar(&bodyFile, "body", "", "body for an http POST")
+	//flag.StringVar(&bodyFile, "body", "", "body for an http POST")
 	iniflags.Parse()
 
 	if flag.NArg() < 2 {
@@ -139,7 +139,6 @@ func main() {
 			R:            r,
 			W:            w,
 			BufSize:      bufSize,
-			Body:         bodyFile,
 		})
 }
 
@@ -175,7 +174,7 @@ func setProtocol(s3, ceph, timeBudget bool) int {
 }
 
 // setMode sets the r and w booleans based on the options set
-// ro appears to default rue???
+// ro appears to default true???
 func setMode(ro bool, rw, wo int64) (bool, bool) {
 	var r, w bool
 

@@ -16,8 +16,8 @@ main() {
 
 	echo "#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op"
 	cat $name |\
-	while read key junk; do
-		echo "01-Jan-201 00:00:00.0 0.0 0.0 0 0 ${key} 200 GET"
+	while read key rest; do
+		echo "01-Jan-201 00:00:00.0 0.0 0.0 0 0 ${key} 200 GET ${rest}"
 	done
 }
 

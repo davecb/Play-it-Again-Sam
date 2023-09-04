@@ -10,13 +10,14 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"strings"
-	"time"
-	//"github.com/aws/aws-sdk-go/service/s3"
-	"gopkg.in/fsnotify.v1"
 	//"google.golang.org/genproto/googleapis/watcher/v1"
 	"strconv"
+	"strings"
 	"syscall"
+	"time"
+
+	//"github.com/aws/aws-sdk-go/service/s3"
+	"gopkg.in/fsnotify.v1"
 )
 
 // The protocols supported by the library
@@ -47,6 +48,7 @@ const ( // nolint
 	pathField
 	returnCodeField
 	operatorField
+	bodyField
 )
 
 // Config contains all the optional parameters.
@@ -70,7 +72,6 @@ type Config struct {
 	R            bool              // read tests allowed
 	W            bool              // write tests allowed
 	BufSize      int64             // max size of written file
-	Body         string            // path to a file containing an http POST body
 }
 
 var OfferedRate int // Log offered rate in TPS
@@ -332,7 +333,7 @@ func doWork() bool {
 	case r[operatorField] == "PUT" && conf.W:
 		go op.Put(r[pathField], r[bytesField], r[returnCodeField])
 	case r[operatorField] == "POST" && conf.R:
-		go op.Post(r[pathField], r[bytesField], r[returnCodeField], conf.Body)
+		go op.Post(r[pathField], r[bytesField], r[returnCodeField], r[bodyField])
 	//case r[operatorField] == "DELE":
 	//	go op.Dele(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	//case r[operatorField] == "HEAD":
