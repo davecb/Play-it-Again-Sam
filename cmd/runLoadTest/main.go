@@ -74,8 +74,6 @@ func main() {
 		"set key when using s3 protocol")
 	flag.StringVar(&s3Secret, "s3-secret", "SECRET NOT SET",
 		"set secret when using s3 protocol")
-
-	//flag.StringVar(&bodyFile, "body", "", "body for an http POST")
 	iniflags.Parse()
 
 	if flag.NArg() < 2 {

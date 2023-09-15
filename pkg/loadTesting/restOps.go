@@ -176,25 +176,21 @@ func (p RestProto) Put(path, size, oldRC string) {
 }
 
 // Post does an ordinary REST (not ceph or s3) post operation.
-func (p RestProto) Post(path, size, oldRC, bodyFile string) {
+func (p RestProto) Post(path, size, oldRC, body string) {
 	var err error
 
 	if conf.Debug {
-		log.Printf("in rest.Post(%s, %s, %s)\n", path, size, oldRC)
+		log.Printf("in rest.Post(%s, %s, %s, %q)\n", path, size, oldRC, body)
 	}
 
-	// make sure we have a body in a file: FIXME hoist or otherwise refactor
-	if bodyFile == "" {
-		log.Fatalf("load-testing POST requires a --body file to be provided\n")
+	// make sure we have a POST body in the input file
+	if body == "" {
+		log.Fatalf("load-testing POST requires a body field to be provided\n")
 	}
-	f, err := ioutil.ReadFile(bodyFile)
-	if err != nil {
-		log.Fatalf("can't open body file %q, halting\n", bodyFile)
-	}
-	reader := bytes.NewReader(f)
+	bodyReader := bytes.NewReader([]byte(body))
 
 	initial := time.Now() // Response time starts
-	req, err := http.NewRequest("POST", p.prefix+"/"+strings.TrimPrefix(path, "/"), reader)
+	req, err := http.NewRequest("POST", p.prefix+"/"+strings.TrimPrefix(path, "/"), bodyReader)
 	if err != nil {
 		// report problem and exit
 		dumpXact(req, nil, nil, true, "error creating http request", err)
