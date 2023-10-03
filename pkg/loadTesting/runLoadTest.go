@@ -208,7 +208,7 @@ forloop:
 			log.Printf("At EOF on %s, no new work to queue\n", filename)
 			break forloop
 		case err != nil:
-			log.Printf("Fatal error mid-way reading %s, stopping: %s\n", filename, err)
+			log.Printf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
 			break forloop
 		}
 		if len(record) < 9 {

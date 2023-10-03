@@ -189,7 +189,6 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	}
 	bodyReader := bytes.NewReader([]byte(body))
 
-	initial := time.Now() // Response time starts
 	req, err := http.NewRequest("POST", p.prefix+"/"+strings.TrimPrefix(path, "/"), bodyReader)
 	if err != nil {
 		// report problem and exit
@@ -199,11 +198,12 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	addHeaders(req)
 
 	log.Printf("\n-----\n%s\n-----\n", requestToString(req))
+	initial := time.Now() // Response time starts
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		// Timeouts and bad parameters will trigger this case.
-		log.Printf("in error branch\n")
 		dumpXact(req, nil, nil, true, "error getting http response", err)
+		return
 	}
 	latency := time.Since(initial) // Response time ends
 
@@ -225,7 +225,7 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
 	fmt.Printf("%s %f %f 0 %d %s %d POST\n",
 		time.Now().Format("2006-01-02 15:04:05.000"),
-		latency.Seconds(), transferTime.Seconds(), len(f), path, resp.StatusCode)
+		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
 	alive <- true
 }
 
@@ -247,11 +247,11 @@ func badPutCode(i int) bool {
 	return true
 }
 
-// dumpXact dumps request and response together, with a reason
+// dumpXact dumps request and response together to stderr, with a reason
 func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, reason string, err error) {
 	var r string
 	if err != nil {
-		r = fmt.Sprintf("%s, %v\n", reason, err)
+		r = fmt.Sprintf("Error: %s, %v\n", reason, err)
 	} else {
 		r = fmt.Sprintf("%s\n", reason)
 	}
@@ -273,10 +273,10 @@ func requestToString(req *http.Request) string {
 		return "Request: <nil>\n"
 	}
 	dump, err = httputil.DumpRequestOut(req, true)
-	if err != nil {
-		return fmt.Sprintf("error dumping http request, %v\nRequest:\n%s\n", err, dump)
+	if err != nil && !strings.Contains(err.Error(), "http: ContentLength=") {
+		return fmt.Sprintf("Error observed when dumping http request: %v\nRequest:\n%s\n-----\n", err, dump)
 	}
-	return fmt.Sprintf("Request: \n%s", dump)
+	return fmt.Sprintf("Request: \n%s\n-----\n", dump)
 }
 
 // responseToString provides extra information about an http response
@@ -285,13 +285,13 @@ func responseToString(resp *http.Response) string {
 		return "Response: <nil>\n"
 	}
 	contents, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		return fmt.Sprintf("error dumping http response, %v\n", err)
-	}
-	s := "Response information:\n"
+	s := "Response:\n"
 	s += fmt.Sprintf("    Length: %d\n", resp.ContentLength)
 	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode,
 		http.StatusText(resp.StatusCode))
+	if err != nil {
+		s += fmt.Sprintf("    Error observed when dumping http response: %v\n", err)
+	}
 	s += fmt.Sprintf("Response contents: \n%s", string(contents))
 	return s
 }
