@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// timeBudgetProto satisfies operation by doing timed no-ops.
+// gRpcProto satisfies operation by doing timed no-ops.
 type timeBudgetProto struct {
 	prefix string
 }
@@ -14,14 +14,14 @@ type timeBudgetProto struct {
 // Init does nothing
 func (p timeBudgetProto) Init() {
 	if conf.Debug {
-		log.Printf("in timeBudgetProto.Init()\n")
+		log.Printf("in gRpcProto.Init()\n")
 	}
 }
 
 // Get does a GET that should take one tenth of a second
 func (p timeBudgetProto) Get(path string, oldRc string) {
 	if conf.Debug {
-		log.Printf("in timeBudgetProto.Get(%s)\n", path)
+		log.Printf("in gRpcProto.Get(%s)\n", path)
 	}
 
 	initial := time.Now() // Response time starts
@@ -39,7 +39,7 @@ func (p timeBudgetProto) Get(path string, oldRc string) {
 func (p timeBudgetProto) Put(path, size, oldRc string) {
 
 	if conf.Debug {
-		log.Printf("in timeBudgetProto.Put(%s, %s)\n", path, size)
+		log.Printf("in gRpcProto.Put(%s, %s)\n", path, size)
 	}
 	initial := time.Now() // Response time starts
 	// wait a tenth of a second

@@ -27,6 +27,7 @@ const (
 	S3Protocol         // Amazon s3 protocol or compatable
 	CephProtocol       // reserved for native ceph protocol
 	TimeBudgetProtocol // see if we're inside our time budget
+	GrpcProtocol       // gRPC protocol, use POST
 )
 
 // operations are the things a protocol must support
@@ -54,6 +55,7 @@ const ( // nolint
 // Config contains all the optional parameters.
 type Config struct {
 	Verbose        bool   // Extra info about requests
+	Quiet          bool   // Less verbosity
 	Debug          bool   // Extra info about program
 	Crash          bool   // Halt on any error
 	Serialize      bool   // FIXME semi-evil hack
@@ -109,7 +111,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 		op = S3Proto{prefix: baseURL}
 		op.Init()
 	case TimeBudgetProtocol:
-		op = timeBudgetProto{prefix: baseURL}
+		op = gRpcProto{prefix: baseURL}
 		op.Init()
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)

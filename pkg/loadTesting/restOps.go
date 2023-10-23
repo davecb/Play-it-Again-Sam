@@ -190,17 +190,19 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	bodyReader := bytes.NewReader([]byte(body))
 
 	req, err := http.NewRequest("POST", p.prefix+"/"+strings.TrimPrefix(path, "/"), bodyReader)
-	if err != nil {
+	if err != nil && !conf.Quiet {
 		// report problem and exit
 		dumpXact(req, nil, nil, true, "error creating http request", err)
 		return
 	}
 	addHeaders(req)
 
-	log.Printf("\n-----\n%s\n-----\n", requestToString(req))
+	if !conf.Quiet {
+		log.Printf("\n-----\n%s\n-----\n", requestToString(req))
+	}
 	initial := time.Now() // Response time starts
 	resp, err := httpClient.Do(req)
-	if err != nil {
+	if err != nil && !conf.Quiet {
 		// Timeouts and bad parameters will trigger this case.
 		dumpXact(req, nil, nil, true, "error getting http response", err)
 		return
@@ -210,10 +212,10 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	contents, err := ioutil.ReadAll(resp.Body)
 	transferTime := time.Since(initial) - latency // Transfer time ends
 
-	if err != nil {
+	if err != nil && !conf.Quiet {
 		dumpXact(req, resp, contents, true, "error reading http response", err)
 	}
-	if resp.ContentLength != int64(len(body)) {
+	if resp.ContentLength != int64(len(body)) && !conf.Quiet {
 		dumpXact(req, resp, contents, false, "content-length mismatch", err)
 	}
 	defer resp.Body.Close() // nolint
@@ -253,6 +255,10 @@ func badPutCode(i int) bool {
 // dumpXact dumps request and response together to stderr, with a reason
 func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, reason string, err error) {
 	var r string
+
+	if conf.Quiet {
+		return
+	}
 	if err != nil {
 		r = fmt.Sprintf("Error: %s, %v\n", reason, err)
 	} else {

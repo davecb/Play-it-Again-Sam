@@ -29,12 +29,12 @@ func usage() {
 func main() {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
-	var s3, ceph, rest, timeBudget, tHerd bool
+	var s3, ceph, rest, timeBudget, gRPC, tHerd bool
 	var ro bool
 	var rw, wo int64
 	var bufSize int64
 	var s3Bucket, s3Key, s3Secret string
-	var verbose, debug, crash, akamaiDebug bool
+	var verbose, quiet, debug, crash, akamaiDebug bool
 	var serial, cache, tail bool
 	var strip, hostHeader, headers string
 	var headerMap = make(map[string]string)
@@ -49,7 +49,8 @@ func main() {
 
 	flag.BoolVar(&s3, "s3", false, "use s3 protocol")
 	flag.BoolVar(&rest, "rest", false, "use rest protocol")
-	flag.BoolVar(&timeBudget, "timeBudget", false, "test the time budget")
+	flag.BoolVar(&timeBudget, "timeBudget", false, "test a time budget")
+	flag.BoolVar(&gRPC, "gRPC", false, "use gRPC protocol")
 
 	flag.BoolVar(&ro, "ro", false, "read-only test")
 	flag.Int64Var(&rw, "rw", 0, "read-write test, w buffer size")
@@ -67,6 +68,7 @@ func main() {
 
 	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
+	flag.BoolVar(&quiet, "q", false, "minimize messages")
 	flag.BoolVar(&crash, "crash", false, "exit on any error return")
 	flag.BoolVar(&akamaiDebug, "akamai-debug", false, "add akamai debugging headers")
 
@@ -101,7 +103,7 @@ func main() {
 		bufSize = rw
 	}
 
-	proto := setProtocol(s3, ceph, timeBudget)
+	proto := setProtocol(s3, ceph, timeBudget, gRPC)
 	filename := flag.Arg(0)
 	if filename == "" {
 		log.Fatalf("No load-test .csv file provided, halting.\n")
@@ -121,6 +123,7 @@ func main() {
 		tpsTarget, progressRate, startTps, baseURL,
 		loadTesting.Config{
 			Verbose:        verbose,
+			Quiet:          quiet,
 			Debug:          debug,
 			Crash:          crash,
 			AkamaiDebug:    akamaiDebug,
@@ -158,7 +161,7 @@ func setHeaders(headers string, headerMap map[string]string) {
 }
 
 // setProtocol from s3 and ceph booleans
-func setProtocol(s3, ceph, timeBudget bool) int {
+func setProtocol(s3, ceph, timeBudget, gRPC bool) int {
 	var proto int
 
 	switch {
@@ -168,6 +171,8 @@ func setProtocol(s3, ceph, timeBudget bool) int {
 		proto = loadTesting.CephProtocol // unimplemented
 	case timeBudget:
 		proto = loadTesting.TimeBudgetProtocol
+	case gRPC:
+		proto = loadTesting.GrpcProtocol
 	default: //REST
 		proto = loadTesting.RESTProtocol
 	}
