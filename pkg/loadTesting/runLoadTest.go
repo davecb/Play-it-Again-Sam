@@ -132,22 +132,22 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	// which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL, conf.ThunderingHerd)
 	// which then writes to "alive", ...
+loop:
 	for {
 		select {
-		case _, ok := <-alive:
-			if !ok {
-				// if alive was closed, we're done
-				return
+		case liveness, ok := <-alive:
+			if !ok || !liveness {
+				// if alive is false/closed, we're done
+				break loop
 			}
 			processed++
-		case <-time.After(time.Second * conf.Timeout):
-			// FIXME, this is memory-intensive
-			log.Printf("%d records processed\n", processed)
-			log.Printf("No activity after %d seconds, halting normally.\n",
-				conf.Timeout)
-			return
 		}
 	}
+	log.Printf("\"alive\" pipe returned false, waiting %d seconds\n", conf.Timeout)
+	time.Sleep(time.Second * conf.Timeout)
+	// log.Printf("%d records processed\n", processed) FIXME DCB, I get 0
+	log.Printf("No activity after %d seconds, halting normally.\n",
+		conf.Timeout)
 }
 
 // workSelector pipes a selection from a file to the workers
@@ -185,6 +185,7 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 	skipForward(startFrom, r, filename)
 	recNo := copyToPipe(runFor, r, filename, pipe, watcher)
 	log.Printf("EOF: loaded %d records, closing input pipe\n", recNo)
+	alive <- false
 	close(pipe)
 }
 
@@ -224,10 +225,10 @@ forloop:
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		//log.Printf("writing %v to pipe\n", record)
 
 		pipe <- record
 	}
+	alive <- false // start shutdown timeout: this assumes 35 seconds is enough...
 	return recNo
 }
 

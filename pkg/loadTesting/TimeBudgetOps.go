@@ -32,7 +32,7 @@ func (p timeBudgetProto) Get(path string, oldRc string) {
 	transferTime := totalTime - latency // Transfer time ends
 
 	reportPerformance(initial, latency, transferTime, []byte(""), path, http.StatusOK, oldRc)
-	close(alive) // This forces an immediate exit
+	alive <- false // This forces an immediate exit
 }
 
 // Put does a PUT that should take one tenth of a second
@@ -49,7 +49,7 @@ func (p timeBudgetProto) Put(path, size, oldRc string) {
 	transferTime := totalTime - latency // Transfer time ends
 
 	reportPerformance(initial, latency, transferTime, []byte(""), path, http.StatusOK, oldRc)
-	close(alive)
+	alive <- false
 }
 
 func (p timeBudgetProto) Post(path, size, oldRC, body string) {

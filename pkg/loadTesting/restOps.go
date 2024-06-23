@@ -168,7 +168,6 @@ func (p RestProto) Put(path, size, oldRC string) {
 	case conf.Verbose:
 		dumpXact(req, resp, contents, conf.Crash, "", nil)
 	}
-	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
 	fmt.Printf("%s %f %f 0 %s %s %d PUT\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), size, path, resp.StatusCode)
@@ -227,7 +226,6 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	case conf.Verbose:
 		dumpXact(req, resp, contents, conf.Crash, "", nil)
 	}
-	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc) // FIXME
 	fmt.Printf("%s %f %f 0 %d %s %d POST\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
