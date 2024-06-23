@@ -172,7 +172,7 @@ func setProtocol(s3, ceph, timeBudget, gRPC bool) int {
 	case timeBudget:
 		proto = loadTesting.TimeBudgetProtocol
 	case gRPC:
-		proto = loadTesting.GrpcProtocol
+		proto = loadTesting.GrpcProtocol // unimplemented
 	default: //REST
 		proto = loadTesting.RESTProtocol
 	}

@@ -83,8 +83,8 @@ var conf Config
 var op operation
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
-var alive = make(chan bool, 1000)
-var closed = make(chan bool)
+
+var alive = make(chan bool, 1000) // reports number of requests processed
 var junkDataFile = "/tmp/LoadTestJunkDataFile"
 
 const size = 396759652 // nolint // FIXME, this is a heuristic
@@ -132,22 +132,22 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	// which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL, conf.ThunderingHerd)
 	// which then writes to "alive", ...
-loop:
 	for {
 		select {
-		case liveness, ok := <-alive:
-			if !ok || !liveness {
-				// if alive is false/closed, we're done
-				break loop
+		case _, ok := <-alive:
+			if !ok {
+				// if alive was closed, we're done
+				return
 			}
 			processed++
+		case <-time.After(time.Second * conf.Timeout):
+			// FIXME, this is memory-intensive, but semantically correct
+			log.Printf("%d records processed\n", processed)
+			log.Printf("No activity after %d seconds, halting normally.\n",
+				conf.Timeout)
+			return
 		}
 	}
-	log.Printf("\"alive\" pipe returned false, waiting %d seconds\n", conf.Timeout)
-	time.Sleep(time.Second * conf.Timeout)
-	// log.Printf("%d records processed\n", processed) FIXME DCB, I get 0
-	log.Printf("No activity after %d seconds, halting normally.\n",
-		conf.Timeout)
 }
 
 // workSelector pipes a selection from a file to the workers
@@ -185,7 +185,6 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 	skipForward(startFrom, r, filename)
 	recNo := copyToPipe(runFor, r, filename, pipe, watcher)
 	log.Printf("EOF: loaded %d records, closing input pipe\n", recNo)
-	alive <- false
 	close(pipe)
 }
 
@@ -228,7 +227,7 @@ forloop:
 
 		pipe <- record
 	}
-	alive <- false // start shutdown timeout: this assumes 35 seconds is enough...
+	//alive <- false // start shutdown timeout: this assumes 35 seconds is enough...
 	return recNo
 }
 
@@ -289,10 +288,9 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 		log.Printf("now at %d requests/second\n", rate)
 		fmt.Printf("#TPS=%d\n", rate) // add as a column?
 	}
-	// let them run for a cycle and shut down
+	// let them run for a cycle and shut down: heuristic
 	time.Sleep(time.Duration(10 * float64(time.Second)))
-	// this needs refactoring
-	close(closed)
+	close(alive) // causes main to exit
 }
 
 // worker reads and executes a task every second until it hits eof
@@ -356,12 +354,6 @@ func getWork() ([]string, bool) {
 	var ok bool
 
 	select {
-	case <-closed:
-		// peculiar to increasing load test, refactor
-		if conf.Debug {
-			log.Print("pipe closed, no more requests to process.\n")
-		}
-		return nil, true
 	case r, ok = <-pipe:
 		if !ok {
 			// We're at eof
