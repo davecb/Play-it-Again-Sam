@@ -170,7 +170,7 @@ func (p RestProto) Put(path, size, oldRC string) {
 	}
 	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
 	fmt.Printf("%s %f %f 0 %s %s %d PUT\n",
-		time.Now().Format("2006-01-02 15:04:05.000"),
+		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), size, path, resp.StatusCode)
 	alive <- true
 }
@@ -209,9 +209,11 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 
 	contents, err := ioutil.ReadAll(resp.Body)
 	transferTime := time.Since(initial) - latency // Transfer time ends
-
 	if err != nil {
 		dumpXact(req, resp, contents, true, "error reading http response", err)
+	}
+	if resp.ContentLength != int64(len(body)) {
+		dumpXact(req, resp, contents, false, "content-length mismatch", err)
 	}
 	defer resp.Body.Close() // nolint
 
@@ -224,7 +226,7 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	}
 	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
 	fmt.Printf("%s %f %f 0 %d %s %d POST\n",
-		time.Now().Format("2006-01-02 15:04:05.000"),
+		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
 	alive <- true
 }
@@ -280,16 +282,19 @@ func requestToString(req *http.Request) string {
 }
 
 // responseToString provides extra information about an http response
-func responseToString(resp *http.Response) string {
+func responseToString(resp *http.Response, bodyLen int64) string {
 	if resp == nil {
 		return "Response: <nil>\n"
 	}
 	contents, err := httputil.DumpResponse(resp, true)
 	s := "Response:\n"
 	s += fmt.Sprintf("    Length: %d\n", resp.ContentLength)
+	if resp.ContentLength != bodyLen {
+		s += fmt.Sprintf("    Warning: ContentLength = %d, body length = %d\n", resp.ContentLength, bodyLen)
+	}
 	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode,
 		http.StatusText(resp.StatusCode))
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "http: ContentLength=") {
 		s += fmt.Sprintf("    Error observed when dumping http response: %v\n", err)
 	}
 	s += fmt.Sprintf("Response contents: \n%s", string(contents))
