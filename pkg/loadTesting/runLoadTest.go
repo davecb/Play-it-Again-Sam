@@ -409,7 +409,7 @@ func reportRUsage(name string, start time.Time) {
 	if err != nil {
 		log.Fatal(err)
 		log.Printf("%s %s %d no resource usage available\n",
-			start.Format("2006-01-02 15:04:05.000"), name, os.Getpid())
+			start.Format("2006-01-02 15:04:05.00000000"), name, os.Getpid())
 		return
 	}
 	log.Printf("#date      time         name        pid  utime stime maxrss inblock outblock\n")

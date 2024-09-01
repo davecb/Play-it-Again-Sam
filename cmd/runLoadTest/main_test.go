@@ -1,18 +1,3 @@
-// TestTimeBudget tests that the system under test completes within a specified time budget.
-// The test runs a set of subtests, each with a different debug configuration.
-// The budgetTest function is responsible for running the system under test and verifying
-// that the total execution time is within the budgeted time.
-func TestTimeBudget(t *testing.T)
-
-// budgetTest runs the system under test and verifies that the total execution time
-// is within the budgeted time. If the execution time exceeds the budget, an error
-// is reported.
-func budgetTest(debug bool, t *testing.T)
-
-// systemUnderTest is the function that contains the code being tested. It sets up
-// the necessary configuration and then calls the RunLoadTest function from the
-// loadTesting package to execute the load test.
-func systemUnderTest(debug bool)
 package main
 
 import (
@@ -27,7 +12,7 @@ import (
 const (
 	// Fail if the code takes more than internalTime:
 	internalTime = time.Millisecond
-	budgetedTime = 100 * time.Millisecond + internalTime
+	budgetedTime = 100*time.Millisecond + internalTime
 )
 
 // TestTimeBudget tests that the system under test completes within a specified time budget.
@@ -39,7 +24,7 @@ func TestTimeBudget(t *testing.T) {
 		debug bool
 	}{
 		// turning on debug will make it too slow
-		{false},   // This will pass
+		{false}, // This will pass
 		//{true},    // This will fail
 		// turning on both will trigger a bug
 	}
@@ -54,8 +39,8 @@ func TestTimeBudget(t *testing.T) {
 func budgetTest(debug bool, t *testing.T) {
 
 	initial := time.Now()
-    systemUnderTest(debug)
-    totalTime := time.Since(initial)
+	systemUnderTest(debug)
+	totalTime := time.Since(initial)
 	if totalTime >= budgetedTime {
 		t.Error(fmt.Sprintf("Get took %f seconds, more than %v, error\n",
 			totalTime.Seconds(), budgetedTime))
@@ -116,4 +101,3 @@ func systemUnderTest(debug bool) {
 			BufSize:      bufSize,
 		})
 }
-
