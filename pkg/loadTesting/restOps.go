@@ -170,7 +170,7 @@ func (p RestProto) Put(path, size, oldRC string) {
 	}
 	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
 	fmt.Printf("%s %f %f 0 %s %s %d PUT\n",
-		initial.Format("2006-01-02 15:04:05.000"),
+		time.Now().Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), size, path, resp.StatusCode)
 	alive <- true
 }
@@ -213,9 +213,6 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	if err != nil {
 		dumpXact(req, resp, contents, true, "error reading http response", err)
 	}
-	if resp.ContentLength != int64(len(body)) {
-		dumpXact(req, resp, contents, false, "content-length mismatch", err)
-	}
 	defer resp.Body.Close() // nolint
 
 	// And, in the non-error cases, conditionally dump
@@ -225,9 +222,9 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	case conf.Verbose:
 		dumpXact(req, resp, contents, conf.Crash, "", nil)
 	}
-	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc) // FIXME
+	//reportPerformance(initial, latency, transferTime, body, path, resp, oldRc)
 	fmt.Printf("%s %f %f 0 %d %s %d POST\n",
-		initial.Format("2006-01-02 15:04:05.000"),
+		time.Now().Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
 	alive <- true
 }
@@ -259,7 +256,7 @@ func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, r
 		r = fmt.Sprintf("%s\n", reason)
 	}
 	r += requestToString(req)
-	r += responseToString(resp, int64(len(body)))
+	r += responseToString(resp)
 	r += bodyToString(body)
 	log.Printf("response: \n-----\n%s\n-----\n", r)
 	if crash {
@@ -279,23 +276,20 @@ func requestToString(req *http.Request) string {
 	if err != nil && !strings.Contains(err.Error(), "http: ContentLength=") {
 		return fmt.Sprintf("Error observed when dumping http request: %v\nRequest:\n%s\n-----\n", err, dump)
 	}
-	return fmt.Sprintf("Request contents: %s\n-----\n", dump)
+	return fmt.Sprintf("Request: \n%s\n-----\n", dump)
 }
 
 // responseToString provides extra information about an http response
-func responseToString(resp *http.Response, bodyLen int64) string {
+func responseToString(resp *http.Response) string {
 	if resp == nil {
 		return "Response: <nil>\n"
 	}
 	contents, err := httputil.DumpResponse(resp, true)
 	s := "Response:\n"
 	s += fmt.Sprintf("    Length: %d\n", resp.ContentLength)
-	if resp.ContentLength != bodyLen {
-		s += fmt.Sprintf("    Warning: ContentLength = %d, body length = %d\n", resp.ContentLength, bodyLen)
-	}
 	s += fmt.Sprintf("    Status code: %d %s\n", resp.StatusCode,
 		http.StatusText(resp.StatusCode))
-	if err != nil && !strings.Contains(err.Error(), "http: ContentLength=") {
+	if err != nil {
 		s += fmt.Sprintf("    Error observed when dumping http response: %v\n", err)
 	}
 	s += fmt.Sprintf("Response contents: \n%s", string(contents))
@@ -307,5 +301,5 @@ func bodyToString(body []byte) string {
 	if body == nil {
 		return "Body: <nil>\n"
 	}
-	return fmt.Sprintf("Body: %s\n", body)
+	return fmt.Sprintf("Body:\n %s\n", body)
 }

@@ -29,7 +29,7 @@ func usage() {
 func main() {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
-	var s3, ceph, rest, timeBudget, tHerd bool
+	var s3, ceph, rest, timeBudget bool
 	var ro bool
 	var rw, wo int64
 	var bufSize int64
@@ -56,8 +56,6 @@ func main() {
 	flag.Int64Var(&wo, "wo", 0, "write-only test, w buffer size")
 
 	flag.BoolVar(&serial, "serialize", false, "serialize load (only for load testing)")
-	flag.BoolVar(&tHerd, "thunder", false, "send thundering herds of requests (only for stress testing)")
-
 	flag.StringVar(&strip, "strip", "", "text to strip from paths")
 	flag.StringVar(&hostHeader, "host-header", "", "add a Host: header")
 	flag.StringVar(&headers, "headers", "", "add one or more key:value headers")
@@ -120,26 +118,25 @@ func main() {
 	loadTesting.RunLoadTest(f, filename, startFrom, runFor,
 		tpsTarget, progressRate, startTps, baseURL,
 		loadTesting.Config{
-			Verbose:        verbose,
-			Debug:          debug,
-			Crash:          crash,
-			AkamaiDebug:    akamaiDebug,
-			Serialize:      serial,
-			Cache:          cache,
-			Tail:           tail,
-			Protocol:       proto,
-			S3Key:          s3Key,
-			S3Secret:       s3Secret,
-			S3Bucket:       s3Bucket,
-			Strip:          strip,
-			Timeout:        terminationTimeout,
-			StepDuration:   stepDuration,
-			HostHeader:     hostHeader,
-			HeaderMap:      headerMap,
-			R:              r,
-			W:              w,
-			BufSize:        bufSize,
-			ThunderingHerd: tHerd,
+			Verbose:      verbose,
+			Debug:        debug,
+			Crash:        crash,
+			AkamaiDebug:  akamaiDebug,
+			Serialize:    serial,
+			Cache:        cache,
+			Tail:         tail,
+			Protocol:     proto,
+			S3Key:        s3Key,
+			S3Secret:     s3Secret,
+			S3Bucket:     s3Bucket,
+			Strip:        strip,
+			Timeout:      terminationTimeout,
+			StepDuration: stepDuration,
+			HostHeader:   hostHeader,
+			HeaderMap:    headerMap,
+			R:            r,
+			W:            w,
+			BufSize:      bufSize,
 		})
 }
 
