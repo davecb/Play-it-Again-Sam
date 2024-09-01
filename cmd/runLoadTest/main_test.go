@@ -1,3 +1,18 @@
+// TestTimeBudget tests that the system under test completes within a specified time budget.
+// The test runs a set of subtests, each with a different debug configuration.
+// The budgetTest function is responsible for running the system under test and verifying
+// that the total execution time is within the budgeted time.
+func TestTimeBudget(t *testing.T)
+
+// budgetTest runs the system under test and verifies that the total execution time
+// is within the budgeted time. If the execution time exceeds the budget, an error
+// is reported.
+func budgetTest(debug bool, t *testing.T)
+
+// systemUnderTest is the function that contains the code being tested. It sets up
+// the necessary configuration and then calls the RunLoadTest function from the
+// loadTesting package to execute the load test.
+func systemUnderTest(debug bool)
 package main
 
 import (
@@ -15,6 +30,10 @@ const (
 	budgetedTime = 100 * time.Millisecond + internalTime
 )
 
+// TestTimeBudget tests that the system under test completes within a specified time budget.
+// The test runs a set of subtests, each with a different debug configuration.
+// The budgetTest function is responsible for running the system under test and verifying
+// that the total execution time is within the budgeted time.
 func TestTimeBudget(t *testing.T) {
 	var tests = []struct {
 		debug bool
@@ -29,7 +48,9 @@ func TestTimeBudget(t *testing.T) {
 	}
 }
 
-// budgetTest sees if we can complete quickly enough
+// budgetTest runs the system under test and verifies that the total execution time
+// is within the budgeted time. If the execution time exceeds the budget, an error
+// is reported.
 func budgetTest(debug bool, t *testing.T) {
 
 	initial := time.Now()
@@ -45,6 +66,9 @@ func budgetTest(debug bool, t *testing.T) {
 	time.Sleep(10 * time.Second) // let pipes drain
 }
 
+// systemUnderTest is the function that contains the code being tested. It sets up
+// the necessary configuration and then calls the RunLoadTest function from the
+// loadTesting package to execute the load test.
 func systemUnderTest(debug bool) {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
