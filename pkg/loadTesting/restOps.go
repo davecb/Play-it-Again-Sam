@@ -258,7 +258,7 @@ func dumpXact(req *http.Request, resp *http.Response, body []byte, crash bool, r
 		r = fmt.Sprintf("%s\n", reason)
 	}
 	r += requestToString(req)
-	r += responseToString(resp)
+	r += responseToString(resp, int64(len(body)))
 	r += bodyToString(body)
 	log.Printf("response: \n-----\n%s\n-----\n", r)
 	if crash {
