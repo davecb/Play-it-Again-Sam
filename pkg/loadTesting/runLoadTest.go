@@ -53,25 +53,26 @@ const ( // nolint
 
 // Config contains all the optional parameters.
 type Config struct {
-	Verbose      bool   // Extra info about requests
-	Debug        bool   // Extra info about program
-	Crash        bool   // Halt on any error
-	Serialize    bool   // FIXME semi-evil hack
-	Cache        bool   // allow caching
-	Tail         bool   // tail a log
-	AkamaiDebug  bool   // add Akamai debug headers
-	Protocol     int    // rest, etc
-	S3Bucket     string // s3-specific options
-	S3Key        string
-	S3Secret     string
-	Strip        string
-	Timeout      time.Duration     // time to wait at end
-	StepDuration int               // duration of a test step
-	HostHeader   string            // add a Host: header
-	HeaderMap    map[string]string // one or more key:value headers
-	R            bool              // read tests allowed
-	W            bool              // write tests allowed
-	BufSize      int64             // max size of written file
+	Verbose        bool   // Extra info about requests
+	Debug          bool   // Extra info about program
+	Crash          bool   // Halt on any error
+	Serialize      bool   // FIXME semi-evil hack for load testing
+	ThunderingHerd bool   // FIXME, ditto, for stress testing
+	Cache          bool   // allow caching
+	Tail           bool   // tail a log
+	AkamaiDebug    bool   // add Akamai debug headers
+	Protocol       int    // rest, etc
+	S3Bucket       string // s3-specific options
+	S3Key          string
+	S3Secret       string
+	Strip          string
+	Timeout        time.Duration     // time to wait at end
+	StepDuration   int               // duration of a test step
+	HostHeader     string            // add a Host: header
+	HeaderMap      map[string]string // one or more key:value headers
+	R              bool              // read tests allowed
+	W              bool              // write tests allowed
+	BufSize        int64             // max size of written file
 }
 
 var OfferedRate int // Log offered rate in TPS
@@ -127,7 +128,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	// select some work to do from the input file
 	go workSelector(f, filename, fromTime, forTime, pipe)
 	// which pipes work to ...
-	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
+	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL, conf.ThunderingHerd)
 	// which then writes to "alive", ...
 	for {
 		select {
@@ -229,7 +230,7 @@ forloop:
 }
 
 // generateLoad starts progressRate new threads every 10 seconds until we hit progressRate
-func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, urlPrefix string) {
+func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, urlPrefix string, thunderingHerd bool) {
 	if conf.Debug {
 		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 			tpsTarget, progressRate)
@@ -238,26 +239,26 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op offered\n")
 	switch {
 	case progressRate != 0:
-		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
+		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe, thunderingHerd)
 	case tpsTarget != 0:
-		runSteadyLoad(tpsTarget, pipe)
+		runSteadyLoad(tpsTarget, pipe, thunderingHerd)
 	case tpsTarget <= 0:
 		log.Fatal("A zero or negative tps target is not meaningful, halting\n")
 	}
 }
 
 // run at a steady tps until the end of the data
-func runSteadyLoad(tpsTarget int, pipe chan []string) {
+func runSteadyLoad(tpsTarget int, pipe chan []string, thunderingHerd bool) {
 	log.Printf("starting, at %d requests/second\n", tpsTarget)
 	OfferedRate = tpsTarget
 	// start tpsTarget workers
 	for i := 0; i < tpsTarget; i++ {
-		go worker(pipe)
+		go worker(pipe, thunderingHerd)
 	}
 }
 
 // runProgressivelyIncreasingLoad, the classic load test
-func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string) {
+func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string, thunderingHerd bool) {
 
 	// start the first workers
 	if startTps == 0 {
@@ -266,7 +267,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	rate := startTps
 	OfferedRate = startTps
 	for i := 0; i < startTps; i++ {
-		go worker(pipe)
+		go worker(pipe, thunderingHerd)
 	}
 	// add to the workers until we have enough
 	log.Printf("now at %d requests/second\n", rate)
@@ -280,7 +281,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 			break
 		}
 		for i := 0; i < progressRate; i++ {
-			go worker(pipe)
+			go worker(pipe, thunderingHerd)
 		}
 		log.Printf("now at %d requests/second\n", rate)
 		fmt.Printf("#TPS=%d\n", rate) // add as a column?
@@ -292,16 +293,22 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 }
 
 // worker reads and executes a task every second until it hits eof
-func worker(pipe chan []string) {
+func worker(pipe chan []string, thunderingHerd bool) {
 	if conf.Debug {
 		log.Print("started a worker\n")
 	}
 	if conf.Protocol == TimeBudgetProtocol {
-		// Do the operation immediately, once, to measure it's speed
+		// Do the operation immediately, once, to measure its speed
 		doWork()
 		return
 	}
-	// wait a random fraction of one second before looping, for randomness.
+	// wait a random fraction of one second before looping, for randomness,
+	// unless yiu want to simulate a thundering herd
+	if !thunderingHerd {
+		// wait a random fraction of one second before looping, for randomness.
+		time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
+	} // otherwise send a "thundering herd" of requests, for a stress tests
+
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
 	for range time.Tick(1 * time.Second) { // nolint
