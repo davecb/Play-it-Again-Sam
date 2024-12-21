@@ -1,0 +1,3 @@
+A failed experiment by cody to try to find a bounds line
+in go, from a cloud of points find the lowest value, and draw a straight line to the lowest point to its right
+plot it with gonum.org/v1/plot
