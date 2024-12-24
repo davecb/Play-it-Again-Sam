@@ -9,9 +9,12 @@ import (
     "gonum.org/v1/plot/plotter"
     "gonum.org/v1/plot/vg"
     "image/color"
+    "github.com/davecb/Play-it-Again-Sam/cmd/hull/decl"
+    "github.com/davecb/Play-it-Again-Sam/cmd/hull/data"
 )
 
 func main() {
+	points := data.Get()
 //     points := []Point{
 //         {0, 0.6},
 ////         {1, 1},
@@ -20,7 +23,7 @@ func main() {
 ////         {4, 0.99},
 ////     }
 //
-       points := []Point{ 
+//       points := []Point{ 
 ////	{ 252, 0.64 },
 ////	{ 252, 1.72 },
 ////	{ 253, 6.18 },
@@ -88,28 +91,27 @@ func main() {
 //	{ 308, 58.45 },
 //	{ 310, 19.80 },
 //	{ 310, 20.90 },
-	{ 312, 21.53 },
-	{ 313, 18.82 },
-	{ 314, 18.67 },
-	{ 315, 5.13 },
-	{ 316, 19.08 },
-	{ 316, 21.12 },
-	{ 320, 72.47 },
-	{ 321, 21.65 },
-	{ 322, 21.94 },
-	{ 323, 25.35 },
-	{ 324, 25.96 },
-	{ 328, 24.86 },
-	{ 328, 71.87 },
-	{ 328, 33.76 },
-	{ 328, 33.68 },
-	{ 330, 35.13 },
-	{ 334, 41.94 },
-	{ 338, 50.90 },
-	{ 339, 51.61 },
-//	{ 342, 5.67 },
-//	{ 343, 2.96 },
-}
+// as used for the last experiments
+//	{ 312, 21.53 },
+//	{ 313, 18.82 },
+//	{ 314, 18.67 },
+//	{ 315, 5.13 },
+//	{ 316, 19.08 },
+//	{ 316, 21.12 },
+//	{ 320, 72.47 },
+//	{ 321, 21.65 },
+//	{ 322, 21.94 },
+//	{ 323, 25.35 },
+//	{ 324, 25.96 },
+//	{ 328, 24.86 },
+//	{ 328, 71.87 },
+//	{ 328, 33.76 },
+//	{ 328, 33.68 },
+//	{ 330, 35.13 },
+//	{ 334, 41.94 },
+//	{ 338, 50.90 },
+//	{ 339, 51.61 },
+//}
     
     start, end := FindLowerHullLine(points)
     fmt.Printf("Line from (%v,%v) to (%v,%v)\n", 
@@ -117,17 +119,17 @@ func main() {
     plotPointsAndLine(points, start, end, "lower_hull.png")
 
 }
-
-type Point struct {
-    X, Y float64
-}
+//
+//type Point struct {
+//    X, Y float64
+//}
 
 // FindLowerHullLine Finds the lowest point as the starting point,
 // searches for the best endpoint that ensures no other points are 
 // below the line and returns the start and end points of the hull line
-func FindLowerHullLine(points []Point) (Point, Point) {
+func FindLowerHullLine(points []decl.Point) (decl.Point, decl.Point) {
     if len(points) < 2 {
-        return Point{}, Point{}
+        return decl.Point{}, decl.Point{}
     }
 
     // Find lowest point, preferring leftmost ones ...
@@ -144,7 +146,7 @@ func FindLowerHullLine(points []Point) (Point, Point) {
     }
 
     // Find best endpoint to the right
-    var bestEnd Point
+    var bestEnd decl.Point
     found := false
 
     // check if no other points fall below the potential line
@@ -189,14 +191,14 @@ func FindLowerHullLine(points []Point) (Point, Point) {
 
 // isPointBelowLine uses a cross-product to see 
 // if the point is below line
-func isPointBelowLine(start, end, point Point) bool {
+func isPointBelowLine(start, end, point decl.Point) bool {
     return (end.X-start.X)*(point.Y-start.Y) - 
            (end.Y-start.Y)*(point.X-start.X) < 0
 }
 
 
 // plotPointsAndLine does just that
-func plotPointsAndLine(points []Point, start, end Point, filename string) {
+func plotPointsAndLine(points []decl.Point, start, end decl.Point, filename string) {
     p := plot.New()
     p.Title.Text = "Right Hull-Line"
     p.X.Label.Text = "Load, Requests per Second"
