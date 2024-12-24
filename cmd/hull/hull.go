@@ -132,12 +132,15 @@ func FindLowerHullLine(points []Point) (Point, Point) {
 
     // Find lowest point, preferring leftmost ones ...
     // changed to rightmost
-	
+	// changed to highest right
     start := points[0]
     for _, p := range points {
-        if p.Y < start.Y || (p.Y == start.Y && p.X < start.X) {
-            start = p
-        }
+        //if p.Y < start.Y || (p.Y == start.Y && p.X < start.X) {
+        //    start = p
+        //}
+		if p.X > start.X {
+			 start = p
+		}
     }
 
     // Find best endpoint to the right
@@ -148,21 +151,28 @@ func FindLowerHullLine(points []Point) (Point, Point) {
     // This a uses a cross-product calculation and it's O(N^2)
     for _, candidate := range points {
 	// ignore points to the left of start
-        if candidate.X <= start.X {
+        // if candidate.X <= start.X {
+		// ignore points to the right of start
+		if candidate.X >= start.X {
             continue
         }
 
-	// Duplicate inner loop, making it O(n^2)
+		// Duplicate inner loop, making it O(n^2)
         valid := true
         for _, p := range points {
-	    // ignore points to the left	
-            if p.X <= start.X || p == candidate {
-                continue
-            }
+	    	//// ignore points to the left
+            //if p.X <= start.X || p == candidate {
+            //    continue
+			// ignore points to the left
+			if p.X >= start.X || p == candidate {
+				continue
+			}
 
             // Check if point is below the line
-            if isPointBelowLine(start, candidate, p) {
-                valid = false
+            //if isPointBelowLine(start, candidate, p) {
+			// Check if point is above the line
+			if !isPointBelowLine(start, candidate, p) {
+					valid = false
                 break
             }
         }
@@ -188,9 +198,9 @@ func isPointBelowLine(start, end, point Point) bool {
 // plotPointsAndLine does just that
 func plotPointsAndLine(points []Point, start, end Point, filename string) {
     p := plot.New()
-    p.Title.Text = "Lower Hull-Line"
-    p.X.Label.Text = "X"
-    p.Y.Label.Text = "Y"
+    p.Title.Text = "Right Hull-Line"
+    p.X.Label.Text = "Load, Requests per Second"
+    p.Y.Label.Text = "Response Time, Seconds"
 
     // Plot points
     pts := make(plotter.XYs, len(points))
