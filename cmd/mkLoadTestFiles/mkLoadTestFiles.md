@@ -20,17 +20,15 @@ its performance in exactly the same way as runLoadTest does.
 * number of records to skip, eg 100.   
   This starts at a particular record in the file
   
+-zero
+* create zero-size files, to avoid measuring transfer time during the test.
 
 
 ### Misc options      
--d	
-* add debugging messages  
-  This is for debugging the load generator itself.
-      
+     
 -v
 * add verbose messages    
-  This is for debugging the system under test, by seeing more about
-  what it is doing. Shows the request and response in more detail.
+  This is for debugging the system where the files are being created.
 
 ### Config-file options 
 These options are from the config-file parser, which allows any of the
@@ -56,11 +54,10 @@ above options to be specified in a configuration file.
 
 
 ## FILES
-The input and output files are identical, of the form
+The input files are the same as those used by runLoadTest, of the form
 ```csv
 #yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
 2017-09-21 08:15:07.270 0 0 0 0 /zaphod-beeblebrox.jpg 200 GET
-
 ```
 As an input, only the url and the file size are significant. The url is 
 concatenated to the prefix provide on the command-line and used as the 
@@ -79,7 +76,7 @@ perf2seconds.md, nginx2perf.md, runLoadTest.md, Running_Record-Reply_Tests.md
 If an error occurs, the program reports as much as possible and stops.
 
 During normal operation, a small number of status messages will also
-be written to stderr to indicate the progress of the test.  
+be written to stderr to indicate progress.  
 
 
 ## AUTHOR

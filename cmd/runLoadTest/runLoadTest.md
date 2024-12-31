@@ -2,7 +2,6 @@
 runLoadTest - replay a load against a new target
 ## SYNOPSIS
  Usage: runLoadTest --tps TPS [--progress TPS][...][-v] load-file.csv baseURL
-file URL
 
 ## DESCRIPTION
 This program runs a load test from a journal file, and records its results in 
@@ -25,14 +24,14 @@ Eg, --tps and -tps mean the same thing.
    This option set the maximum load in transactions 
    per second (requests and responses per second) 
    If it is used alone, the test will run at that
-   TPS until done. This is for the classic long-term
-   run test.
+   TPS until done. This is for a classic long-term
+   stress test. 
       
 -progress int 
 * progress rate, in TPS steps   
   If this option is used, the load will be progressively
   increased by this amount, until it reaches the tps 
-  target. As noted above `-tps 50 -progression 10` will 
+  target. As above, `-tps 50 -progression 10` will 
   start with a load of 10 TPS, then 20, 30, 40 and 50.
   This is used to find the performance at increasing load
   and find the inflection point in the "_/" hockey-stick
@@ -56,8 +55,8 @@ Eg, --tps and -tps mean the same thing.
 -tail 
 * Tail -f the input file.    
   This allows a machine to be fed the same load as another machine
-  at the same time, up to a speciofied tps. It is for parallel running
-  and finding cases where the new program differs from the old.
+  at the same time, up to a specified tps. It is for parallel running
+  to find cases where the one program differs from another.
   
   
 ### Test-type options (not used)

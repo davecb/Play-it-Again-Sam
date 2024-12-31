@@ -15,7 +15,7 @@ import (
 )
 
 // MkLoadTestFiles interprets the time period and decides what to create.
-func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int, cfg Config) {
+func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int, zero bool, cfg Config) {
 	if conf.Debug {
 		log.Printf("in MkLoadTestFiles(f *os.File, filename=%s, baseURL=%s, startFrom=%d, runFor=%d)",
 			filename, baseURL, startFrom, runFor)
@@ -31,7 +31,7 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 	r.FieldsPerRecord = -1 // ignore differences
 
 	skipForward(startFrom, r, filename)
-	makeFiles(runFor, r, filename, baseURL)
+	makeFiles(runFor, r, filename, baseURL, zero)
 }
 
 // skipForward skips over files we don't want to create
@@ -50,7 +50,7 @@ func skipForward(startFrom int, r *csv.Reader, filename string) {
 }
 
 // makeFiles creates a quantity of files
-func makeFiles(runFor int, r *csv.Reader, filename string, baseURL string) {
+func makeFiles(runFor int, r *csv.Reader, filename string, baseURL string, zero bool) {
 	for i := 0; i < runFor; i++ {
 		record, err := r.Read()
 		if err == io.EOF {
@@ -68,6 +68,9 @@ func makeFiles(runFor int, r *csv.Reader, filename string, baseURL string) {
 			continue
 		}
 		bytes := record[bytesField]
+		if zero {
+			bytes = "0"
+		}
 		path := record[pathField]
 		returnCode := record[returnCodeField]
 		operatorValue := record[operatorField]
