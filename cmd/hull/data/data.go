@@ -1,6 +1,8 @@
 package data
 	import "github.com/davecb/Play-it-Again-Sam/cmd/hull/decl"
 
+// data is just a table roght now
+//but a csv-reader later
 
 func Get() []decl.Point {
 	return []decl.Point{
