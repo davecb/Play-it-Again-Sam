@@ -15,7 +15,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	// "github.com/davecb/Play-it-Again-Sam/cmd/hull/decl"
 )
 
 // Point is an x-y pair
@@ -169,14 +168,14 @@ func plotPointsAndLine(points []Point, start, end Point, filename string) {
 // that's the "perf" format, like "2018-01-17 10:40:38 0.00374 0.000185 0 5151 8"
 func readCsv(r *csv.Reader, filename string, verbose bool) []Point {
 	const (
-		latency = 7
-		TPS     = 3
+		latency = 6
+		TPS     = 2
 	)
 	var recNo = 0
 	var point Point
 	var points = make([]Point, 0)
 forloop:
-	for {
+	for ; ; recNo++ {
 		record, err := r.Read()
 		switch {
 		case err == io.EOF:
@@ -195,13 +194,14 @@ forloop:
 			continue
 		}
 
+		log.Printf("record = %q\n", record)
 		x, err := strconv.ParseFloat(record[TPS], 64)
 		if err != nil {
-			log.Fatalf("x in line %d of %q is invalid: %s\n", recNo, filename, x)
+			log.Fatalf("x in line %d of %q is invalid: %s\n", recNo, filename, record[TPS])
 		}
 		y, err := strconv.ParseFloat(record[latency], 64)
 		if err != nil {
-			log.Fatalf("y in line %d of %q is invalid: %s\n", recNo, filename, x)
+			log.Fatalf("y in line %d of %q is invalid: %s\n", recNo, filename, record[TPS])
 		}
 		point.X = x
 		point.Y = y
