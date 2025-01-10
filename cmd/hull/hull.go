@@ -56,18 +56,18 @@ func main() {
 	r.FieldsPerRecord = -1 // ignore differences
 
 	points := readCsv(r, filename, minX, maxY, verbose)
-	start, end, low, high := FindLowerHullLine(points, verbose)
+	start, end, _, _ := FindLowerHullLine(points, minX, maxY, verbose)
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
 	fmt.Printf("Line from (%v,%v) to (%v,%v), y = mx + b = %vx + %v\n",
 		start.X, start.Y, end.X, end.Y, m, b)
-	plotPointsAndLine(points, start, end, low, high, "lower_hull.png")
+	plotPointsAndLine(points, start, end, minX, maxY, "lower_hull.png")
 
 }
 
 // FindLowerHullLine Finds the lowest point as the starting point,
 // searches for the best endpoint that ensures no other points are
 // below the line and returns the start and end points of the hull line
-func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, float64) {
+func FindLowerHullLine(points []Point, minX, maxY float64, verbose bool) (Point, Point, float64, float64) {
 	low := 0.0
 	high := 400.0
 
@@ -78,9 +78,6 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 	// Find highest right point
 	start := points[0]
 	for _, p := range points {
-		//if p.Y < start.Y || (p.Y == start.Y && p.X < start.X) {
-		//    start = p
-		//}
 		if p.X > start.X {
 			start = p
 		}
@@ -94,25 +91,22 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 	found := false
 
 	// check if no other points fall below the potential line
-	// This a uses a cross-product calculation and it's O(N^2)
+	// This a uses a cross-product calculation and it's O(N^2). See below.
 	for _, candidate := range points {
-		// ignore points to the left of start
-		// if candidate.X <= start.X {
 		// ignore points to the right of start
 		if candidate.X >= start.X {
 			continue
 		}
+		// check bounds
+		if candidate.X < minX || candidate.Y > maxY {
+			continue
+		}
 
-		// Duplicate inner loop, making it O(n^2)
+		// Nested duplicate loop, making it O(n^2)
 		valid := true
 		for _, p := range points {
 			// ignore points to the right
 			if p.X >= start.X || p == candidate {
-				continue
-			}
-			if p.X < .1 {
-				// throw away points close to zero
-				// this is a heuristic, and depends on the data
 				continue
 			}
 
@@ -199,6 +193,10 @@ func readCsv(r *csv.Reader, filename string, minX, maxY float64, verbose bool) [
 	var recNo = 0
 	var point Point
 	var points = make([]Point, 0)
+
+	if verbose {
+		log.Printf("minX = %v, maxY = %v\n", minX, maxY)
+	}
 forloop:
 	for ; ; recNo++ {
 		record, err := r.Read()
