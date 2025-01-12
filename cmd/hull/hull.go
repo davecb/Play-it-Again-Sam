@@ -58,7 +58,9 @@ func main() {
 	points := readCsv(r, filename, minX, maxY, verbose)
 	start, end, _, _ := FindLowerHullLine(points, minX, maxY, verbose)
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
-	fmt.Printf("Line from (%v,%v) to (%v,%v), y = mx + b = %vx + %v\n",
+	// write just m and b to stdout
+	fmt.Printf("%vx %v\n", m, b)
+	log.Printf("Line from (%v,%v) to (%v,%v) is from y = mx + b = %vx + %v\n",
 		start.X, start.Y, end.X, end.Y, m, b)
 	plotPointsAndLine(points, start, end, minX, maxY, "lower_hull.png")
 
