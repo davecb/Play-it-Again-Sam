@@ -1,7 +1,7 @@
 #
-# top-level Makefile -- just the build steps, see the Old/calvin
-# 	 a Makefile for running tests
+# the build stepssand installtion in go/bin
+build:
+	go build
 
 install:
-	go install github.com/davecb/Play-it-Again-Sam/pkg/loadTesting
 	go install github.com/davecb/Play-it-Again-Sam/cmd/runLoadTest

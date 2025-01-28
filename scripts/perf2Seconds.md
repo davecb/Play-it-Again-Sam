@@ -1,11 +1,11 @@
 # mkLoadTestFiles(1) 
 perf2seconds - report 1-second samples
 ## SYNOPSIS
-Usage: perf2seconds file |-
+Usage: perf2seconds file 
 
 ## DESCRIPTION
-This program reads a journal/file from runLoadsTest and creates a 
-file with the values averages ove a one-second sample period.
+This program reads a journal/file from runLoadTest and creates a 
+file with the values averages over a one-second sample period.
 The url and all subsequent field are replaces with a TPS field. 
 
 ## FILES
