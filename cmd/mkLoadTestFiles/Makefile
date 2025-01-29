@@ -1,5 +1,6 @@
 #
-# Makefile -- just the build step and the installation in go/bin
+# Makefile -- just the build step and optionally an installation in go/bin
+
 #
 build:
 	go build
