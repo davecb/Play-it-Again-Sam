@@ -1,5 +1,9 @@
 package loadTesting
 
+import (
+	"strconv"
+)
+
 // The contents of the map follow the func.
 type codeTable struct {
 	descr  string
@@ -8,13 +12,13 @@ type codeTable struct {
 
 // codeDescr returns a short description for an http code and a flag
 // for mkLoadTestFiles
-// FIXME, the flag is useful, but the string is unused
+// FIXME, the flag is useful, but the string is unused except in logging
 func codeDescr(errorValue int) (string, bool) {
 	val, present := codeMap[errorValue]
 	if !present {
 		return string(errorValue) + " not defined", false
 	}
-	return string(errorValue) + " " + val.descr, val.create
+	return strconv.Itoa(errorValue) + " " + val.descr, val.create
 }
 
 var codeMap = map[int]codeTable{
