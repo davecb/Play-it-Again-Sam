@@ -55,6 +55,7 @@ const ( // nolint
 type Config struct {
 	Verbose      bool   // Extra info about requests
 	Debug        bool   // Extra info about program
+	Zero         bool   // Have mkLoadTestFiles create zero-size files
 	Crash        bool   // Halt on any error
 	Serialize    bool   // FIXME semi-evil hack
 	Cache        bool   // allow caching

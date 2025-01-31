@@ -21,17 +21,19 @@ import (
 // main interprets the options and args.
 func main() {
 	var startFrom, runFor int
-	var verbose bool
+	var verbose, zero bool
 	var err error
 
 	flag.IntVar(&runFor, "for", 0, "number of records to use, eg 1000 ")
 	flag.IntVar(&startFrom, "from", 0, "number of records to skip, eg 100")
+	flag.BoolVar(&zero, "zero", false, "create zero-size files")
 	flag.BoolVar(&verbose, "v", false, "verbose")
+
 	iniflags.Parse()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
 
 	if flag.NArg() < 1 {
-		fmt.Fprint(os.Stderr, "Usage: mkLoadTestFiles [-v][--from N --for N] load-file.csv url\n") //nolint
+		fmt.Fprint(os.Stderr, "Usage: mkLoadTestFiles [-v][--from N --for N] load-file.csv [url]\n") //nolint
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -43,6 +45,10 @@ func main() {
 		runFor = math.MaxInt64
 	}
 	baseURL := flag.Arg(1)
+	if baseURL == "" {
+		log.Printf("No url provided, writing to current directory")
+	}
+
 	f, err := os.Open(filename)
 	if err != nil {
 		log.Fatalf("Error opening %s: %s, halting.", filename, err)
@@ -54,6 +60,7 @@ func main() {
 			Verbose:  verbose,
 			Protocol: loadTesting.FilesystemProtocol,
 			Strip:    "",
+			Zero:     zero,
 			// Timeout is 0
 		})
 

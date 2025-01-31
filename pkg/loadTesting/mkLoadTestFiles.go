@@ -31,7 +31,7 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 	r.FieldsPerRecord = -1 // ignore differences
 
 	skipForward(startFrom, r, filename)
-	makeFiles(runFor, r, filename, baseURL)
+	makeFiles(runFor, r, filename, baseURL, conf.Zero)
 }
 
 // skipForward skips over files we don't want to create
@@ -50,48 +50,55 @@ func skipForward(startFrom int, r *csv.Reader, filename string) {
 }
 
 // makeFiles creates a quantity of files
-func makeFiles(runFor int, r *csv.Reader, filename string, baseURL string) {
+func makeFiles(runFor int, r *csv.Reader, filename string, baseURL string, aero bool) {
 	for i := 0; i < runFor; i++ {
 		record, err := r.Read()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			log.Fatalf("Fatal error mid-way in %s: %s\n", filename, err)
+			log.Fatalf("Fatal error mid-way in %s: %s, halting\n", filename, err)
 		}
 		log.Printf("read %s\n", record)
 
 		// record-type logic:
 		if record[pathField] == "/" {
-			// not a valid file
+			// not a valid file: this is part of belt-and-suspenders code
 			log.Print("ignore a request to create the root dir, /\n")
 			continue
 		}
-		bytes := record[bytesField]
 		path := record[pathField]
 		returnCode := record[returnCodeField]
+		bytes := record[bytesField]
+		if conf.Zero {
+			// Create zero-size files
+			bytes = "0"
+		}
+
+		// operatorValue is the operator that is used during load teste.
+		// If it is GET or DELETE, create something to be gotten
 		operatorValue := record[operatorField]
 		switch operatorValue {
 		case "PUT", "POST":
 			// Don't do files that will be created in the test
-			log.Printf("ignore %s operation on %s\n", operatorValue, path)
+			log.Printf("ignored %s operation on %s\n", operatorValue, path)
 			continue
 		case "DELETE", "DELE":
-			// Right now, create a 1-byte file to cause directory traversals.
-			mkFile(baseURL, filename, path, "1")
+			// Right now, create a 0-byte file to provide something to delete.
+			mkFile(baseURL, filename, path, "0")
 			continue
 		case "GET", "":
-			// Treat as get if there is no operator supplied
+			// Treat get as the default
 			rc, err := strconv.Atoi(returnCode)
 			if err != nil {
 				rc = 0
 			}
 			shortDescr, create := codeDescr(rc)
 			if create {
-				log.Printf("%s, create file %s of %s bytes\n", shortDescr, path, bytes)
+				log.Printf("Got %s, created file %q of %s bytes\n", shortDescr, path, bytes)
 				mkFile(baseURL, filename, path, bytes)
 			} else {
-				log.Printf("%s, ignore %s\n", shortDescr, path)
+				log.Printf("Got %s, don't create file %q\n", shortDescr, path)
 			}
 		}
 	}
@@ -125,4 +132,3 @@ func mkFile(baseURL, sourceFile, fullPath, size string) {
 			sourceFile, err, fullPath, size)
 	}
 }
-

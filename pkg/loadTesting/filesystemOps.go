@@ -50,6 +50,7 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 
 // mustCreateFilesystemFile implements making the file in a filesystem relative to the current directory
 // It's used by both local and s3.
+// FIXME add size-zero option???
 func mustCreateFilesystemFile(fullPath string, size int64) {
 	if conf.Debug {
 		log.Printf("in createFilesystemFile(%s, %d)\n", fullPath, size)
@@ -63,17 +64,26 @@ func mustCreateFilesystemFile(fullPath string, size int64) {
 	if err != nil {
 		log.Fatalf("could not create file %q, %v", fullPath, err)
 	}
-	in, err := os.Open("/dev/urandom")
-	if err != nil {
-		log.Fatalf("could not open /dev/urandom, %v", err)
-	}
-	defer in.Close() // nolint
-	_, err = io.CopyN(out, in, size)
-	if err != nil {
-		log.Fatalf("could not close %q, %v", fullPath, err)
-	}
-	err = out.Close()
-	if err != nil {
-		log.Fatalf("error closing %q, %v", fullPath, err)
+	if size == 0 {
+		err = out.Close()
+		if err != nil {
+			log.Fatalf("error closing zero-size  %q, %v", fullPath, err)
+		}
+	} else {
+		// Fill it with random data, inefficiently. Hoist.
+		in, err := os.Open("/dev/urandom")
+		if err != nil {
+			log.Fatalf("could not open /dev/urandom, %v", err)
+		}
+		defer in.Close()
+		_, err = io.CopyN(out, in, size)
+		if err != nil {
+			log.Fatalf("could not copy %d bytes to %q, %v", size, fullPath, err)
+		}
+
+		err = out.Close()
+		if err != nil {
+			log.Fatalf("error closing %q, %v", fullPath, err)
+		}
 	}
 }
