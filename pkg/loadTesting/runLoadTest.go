@@ -60,6 +60,7 @@ type Config struct {
 	Serialize    bool   // FIXME semi-evil hack
 	Cache        bool   // allow caching
 	Tail         bool   // tail a log
+	Rewind       bool   // rewind at EOF and keep running
 	AkamaiDebug  bool   // add Akamai debug headers
 	Protocol     int    // rest, etc
 	S3Bucket     string // s3-specific options
@@ -123,13 +124,15 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 		defer os.Remove(junkDataFile) // nolint
 	} else if conf.BufSize < 0 {
 		log.Fatalf("A negative size for data files (%d) is meaningless, halting\n", conf.BufSize)
-	}
+	} // else it's a zero-size file'
 
 	// select some work to do from the input file
 	go workSelector(f, filename, fromTime, forTime, pipe)
 	// which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
 	// which then writes to "alive", ...
+	t := time.Tick(time.Second * conf.Timeout)
+	// stop time
 	for {
 		select {
 		case _, ok := <-alive:
@@ -138,7 +141,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 				return
 			}
 			processed++
-		case <-time.After(time.Second * conf.Timeout):
+		case <-t:
 			// FIXME, this is memory-intensive
 			log.Printf("%d records processed\n", processed)
 			log.Printf("No activity after %d seconds, halting normally.\n",
@@ -181,19 +184,22 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 	r.FieldsPerRecord = -1 // ignore differences
 
 	skipForward(startFrom, r, filename)
-	recNo := copyToPipe(runFor, r, filename, pipe, watcher)
+	recNo := copyToPipe(runFor, r, f, filename, pipe, watcher)
 	log.Printf("EOF: loaded %d records, closing input pipe\n", recNo)
 	close(pipe)
 }
 
 // copyToPipe pipes work to the workers
-func copyToPipe(runFor int, r *csv.Reader, filename string, pipe chan []string, watcher *fsnotify.Watcher) int {
+func copyToPipe(runFor int, r *csv.Reader, f *os.File, filename string, pipe chan []string, watcher *fsnotify.Watcher) int {
 
 	recNo := 0
 forloop:
 	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
 		switch {
+		case err == io.EOF && conf.Rewind:
+			f.Seek(0, io.SeekStart)
+			// FIXME untested
 		case err == io.EOF && conf.Tail:
 			// just keep reading, even if we truncate...
 			if watcher == nil {
@@ -212,10 +218,10 @@ forloop:
 			log.Printf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
 			break forloop
 		}
-		if len(record) < 9 {
+		if len(record) < 9 && len(record) != 0 {
 			log.Printf("ill-formed record %q ignored\n",
 				record)
-			// Warning: this discards real-time part-records
+			// Warning: this discards partial records and ignores size-zero ones
 			continue
 		}
 
@@ -323,8 +329,10 @@ func doWork() bool {
 	}
 
 	switch {
-	case r == nil:
-		log.Print("worker reached EOF, no more requests to send.\n")
+	case r == nil && !conf.Rewind:
+		log.Print("worker reached EOF, no more requests available to send.\n")
+		return true
+	case len(r) == 0:
 		return true
 	case len(r) < 9:
 		// bad input data, crash

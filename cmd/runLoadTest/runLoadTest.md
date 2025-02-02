@@ -35,8 +35,7 @@ Eg, --tps and -tps mean the same thing.
   target. As noted above `-tps 50 -progression 10` will 
   start with a load of 10 TPS, then 20, 30, 40 and 50.
   This is used to find the performance at increasing load
-  and find the inflection point in the "_/" hockey-stick
-  curve.
+  and make the "_/" hockey-stick curve visible.
   
 -duration int 
 * Duration of a step (default 10)   
@@ -52,43 +51,28 @@ Eg, --tps and -tps mean the same thing.
   will start with a load of 20 TPS, then 30, 40 and 50.
   This is handy when one has already done a test at a low range of TPS
   and wishes to test at higher loads.
-     
--tail 
-* Tail -f the input file.    
-  This allows a machine to be fed the same load as another machine
-  at the same time, up to a speciofied tps. It is for parallel running
-  and finding cases where the new program differs from the old.
-  
-  
-### Test-type options (not used)
--ro [reserved]
-* Run the test honoring only GET lines in the input. This is the default
-  case, and the -ro option itself is reserved for when we have -rw and 
-  -wo options
-  
--rw max [reserved]
-* Run the test using both GET and PUT lines. The parameter is the size 
-  in bytes of the largest file to be put, so it can be precreated from
-  /dev/urandom. This was formerly the default, but the used case was
-  malformed and it was deferred.
-  
--wo max [reserved]
-* Run the test using only PUT lines. The parameter is the size 
-  in bytes of the largest file to be put, so it can be precreated from
-  /dev/urandom. Only ever used for creating data, but mkLoadTestFiles 
-  did a cleaner job. Deferred pending a good use case.
-      
+
 
 ### Data options   
+-rewind
+* rewind at the end of the data file and continue playing.  
+  This allows for quite long teste with a moderate-size input file.\
+ 
+-tail
+* Tail -f the input file.    
+  This allows a machine to be fed the same load as another machine
+  at the same time, up to a specified tps. It is for parallel running
+  and finding cases where the new program differs from the old.
+
 -for int 
 * number of records to use, eg 1000.   
   This limits the length of the run to a specific number of records
-  from the input file.  
+  from the input file. Not defined for -tail or -rewind.  
 
 -from int 
 * number of records to skip, eg 100.   
-  This starts at a particular record.
-  
+  This starts at a particular record. Not defined for -tail or -rewind.
+
   These are for doing limited tests, or for doing tests that behave 
   differently between the first and subsequent repetitions, such
   as test of caches.   
@@ -138,7 +122,7 @@ Eg, --tps and -tps mean the same thing.
 -host-header string 
 * add a Host: header 
   Some sites require a host header (eg, when you are using an IP address
-  in the URL). This sets it  
+  in the URL). This sets it.
   
 -serialize 
 * serialize load 
@@ -149,7 +133,7 @@ Eg, --tps and -tps mean the same thing.
 -crash
 * exit on an error by the system under test.
   This stops the program whe it gets an error (other than a 404, which
-  is soemthing we often have as part of a test). Used to stop on
+  is something we often have as part of a test). Used to stop on
   any unexpected issue, so you can fix it.
    
 -d	
@@ -161,7 +145,26 @@ Eg, --tps and -tps mean the same thing.
   This is for debugging the system under test, by seeing more about
   what it is doing. Shows the request and response in more detail.
 
-### Config-file options 
+### Test-type options (not yet used)
+-ro [reserved]
+* Run the test honoring only GET lines in the input. This is the default
+  case, and the -ro option itself is reserved for when we have -rw and
+  -wo options
+
+-rw max [reserved]
+* Run the test using both GET and PUT lines. The parameter is the size
+  in bytes of the largest file to be put, so it can be precreated from
+  /dev/urandom. This was formerly the default, but the used case was
+  malformed and it was deferred.
+
+-wo max [reserved]
+* Run the test using only PUT lines. The parameter is the size
+  in bytes of the largest file to be put, so it can be precreated from
+  /dev/urandom. Only ever used for creating data, but mkLoadTestFiles
+  did a cleaner job. Deferred pending a good use case.
+
+
+### Config-file options (mostly not applicable)
 These options are from the config-file parser, which allows any of the
 above options to be specified in a configuration file.
    
@@ -197,19 +200,20 @@ url prefix provide on the command-line and sent.
 As an output, the analyzable fields are
 * latency   
   This is the time between the request and the first byte(s) of the 
-  response. It is the "wait" before the response shows up. It includes
+  response. It is usually called the service time, and someimes 
+  the "wait" before the response shows up. It includes
   the network time, the time it took to process the request, and the
-  wait in queue if the server could not process the request immediately.
+  wait in queue when the server could not process the request immediately.
   
 * xfertime  
   This is the time between the first byte of the response and the end.
   It is the network- and sender-time it takes to transfer the data 
-  returned. It may be zero if all the data arrives in the first packet.
+  returned. It will be zero if all the data arrives in the first packet.
    
 * thinktime   
   This is the time between the end of a response and the beginning of the 
   next request, which is an indication of a human's think time when measuring
-  user-provided loads. It is zero in load-testing use.
+  user-provided loads. It is not set in load-testing use.
   
 * bytes     
   This is the number of bytes sent during the transfer time. Throughput
@@ -242,7 +246,7 @@ perf2seconds raw.csv >calvin10to250.csv
 ```
 
 ## PERFORMANCE
-Using my development machine with 4 threads on two cores, a
+Using my oldest development machine with 4 threads on two cores, each a
 Intel Core i3-4100M CPU @ 2.50GHz, the load generator will run up 
 to 4,000 TPS and has an average overhead of 0.00124 seconds 
 (ie, ~1 millisecond). The overhead  will be reported as part of the 
@@ -252,10 +256,11 @@ This was measured against an infinite-queue simulation running on the
 same machine with an average internal overhead of 0.000172 seconds 
 (~170 microseconds) using local networking (localhost).
 
-On different equipment the overhead in seconds will vary inveresely with
-the sum of the CPU speed in GHz and the number of threads. 
+On different equipment the overhead in seconds will vary inversely with
+the sum of the CPU speed in GHz and the number of threads. A 1U uniprocessor
+has happily delivered 10,000 TPS.
 
-The maximum capacity will be different. It will vary with the size of 
+The maximum capacity of the system under test will vary with the size of 
 the biggest bottleneck in the system,
 which on the test system was CPU, followed by one or more of bus, 
 main memory and localhost networking. 
@@ -263,7 +268,7 @@ main memory and localhost networking.
 
 ## BUGS
 PUT and DELE require refactoring and have been disabled, pending the
--rw and -wo options
+implimenting the -rw and -wo options
 
 ^C kills everything instantly. 
 

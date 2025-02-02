@@ -35,7 +35,7 @@ func main() {
 	var bufSize int64
 	var s3Bucket, s3Key, s3Secret string
 	var verbose, debug, crash, akamaiDebug bool
-	var serial, cache, tail bool
+	var serial, cache, tail, rewind bool
 	var strip, hostHeader, headers string
 	var headerMap = make(map[string]string)
 	var err error
@@ -62,6 +62,7 @@ func main() {
 
 	flag.BoolVar(&cache, "cache", false, "allow caching")
 	flag.BoolVar(&tail, "tail", false, "tail -f the input file")
+	flag.BoolVar(&rewind, "rewind", false, "rewind the input file at EOF and continue")
 
 	flag.BoolVar(&debug, "d", false, "add debugging messages")
 	flag.BoolVar(&verbose, "v", false, "add verbose messages")
@@ -125,6 +126,7 @@ func main() {
 			Serialize:    serial,
 			Cache:        cache,
 			Tail:         tail,
+			Rewind:       rewind,
 			Protocol:     proto,
 			S3Key:        s3Key,
 			S3Secret:     s3Secret,

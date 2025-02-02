@@ -1,7 +1,7 @@
 # mkLoadTestFiles(1) 
 mkLoadTestFiles - create files to get in a test
 ## SYNOPSIS
-Usage: mkLoadTestFiles [-from N -for N][-v] load-file.csv url
+Usage: mkLoadTestFiles [-from N -for N -rewind][-v] load-file.csv url
 
 ## DESCRIPTION
 This program creates a set of files for a load test, by default in a 
@@ -19,8 +19,6 @@ its performance in exactly the same way as runLoadTest does.
 -from int 
 * number of records to skip, eg 100.   
   This starts at a particular record in the file
-  
-
 
 ### Misc options      
 -d	
