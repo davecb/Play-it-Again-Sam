@@ -19,8 +19,32 @@ type RestProto struct {
 	prefix string
 }
 
-// Init does nothing
-func (p RestProto) Init() {}
+// Init reads the root directory of the specified url,
+// and fails if it is damaged or missing.
+func (p RestProto) Init() {
+	// Check the root, as the disk may not be mounted
+
+	req, err := http.NewRequest("GET", p.prefix, nil)
+	if err != nil {
+		log.Fatalf("the http root request could not be created, req = %q err = %v\n", req, err)
+	}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.Fatalf("the http root read request failed, resp = %v err = %v \n", resp, err)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("the the http root read failed to read body %q, err = %v\n", body, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 404 {
+		log.Fatalf("HTTP error reading http root for %s, got a 404, is it mounted?", p.prefix)
+		// Nginx arguably should return 500 instead
+	}
+	if resp.StatusCode != 200 {
+		log.Fatalf("HTTP error reading http root for %s, got status code %d", p.prefix, resp.StatusCode)
+	}
+}
 
 // Tuning for large loads. With this, when we start reporting network
 // errors, then we've overloaded somebody. Previously we bottlenecked
@@ -48,7 +72,6 @@ func (p RestProto) Get(path string, oldRc string) {
 	if err != nil {
 		dumpXact(req, nil, nil, conf.Crash, "error creating http request", err)
 		reportPerformance(time.Now(), 0, 0, nil, path, -1, oldRc)
-		alive <- true
 		return
 	}
 	addHeaders(req)
@@ -60,7 +83,6 @@ func (p RestProto) Get(path string, oldRc string) {
 		dumpXact(req, resp, nil, conf.Crash, "error getting http response", err)
 		// 444 is nginx's code for server has returned no information and/or EOF
 		reportPerformance(initial, latency, 0, nil, path, 444, oldRc)
-		alive <- true
 		return
 	}
 	body, err := ioutil.ReadAll(resp.Body)
@@ -71,7 +93,6 @@ func (p RestProto) Get(path string, oldRc string) {
 		dumpXact(req, resp, body, conf.Crash, "error reading http response, continuing", err)
 		// the resp is available, the body, distinctly less so (;-))
 		reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
-		alive <- true
 		return
 	}
 
@@ -84,7 +105,6 @@ func (p RestProto) Get(path string, oldRc string) {
 	}
 
 	reportPerformance(initial, latency, transferTime, body, path, resp.StatusCode, oldRc)
-	alive <- true
 }
 
 // AddHeaders adds/drops specified headers
@@ -130,7 +150,6 @@ func (p RestProto) Put(path, size, oldRC string) {
 		fmt.Printf("%s 0 0 0 %s %s %d PUT\n",
 			time.Now().Format("2006-01-02 15:04:05.000"),
 			size, path, 411) // 411 means "length required"
-		alive <- true
 		return
 	}
 	// make sure we have a dummy file
@@ -172,7 +191,6 @@ func (p RestProto) Put(path, size, oldRC string) {
 	fmt.Printf("%s %f %f 0 %s %s %d PUT\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), size, path, resp.StatusCode)
-	alive <- true
 }
 
 // Post does an ordinary REST (not ceph or s3) post operation.
@@ -228,7 +246,6 @@ func (p RestProto) Post(path, size, oldRC, body string) {
 	fmt.Printf("%s %f %f 0 %d %s %d POST\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(body), path, resp.StatusCode)
-	alive <- true
 }
 
 // badGetCode is true if this isn't a 20X or 404

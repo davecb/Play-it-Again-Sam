@@ -72,17 +72,12 @@ func (p S3Proto) Get(path string, oldRc string) {
 			initial.Format("2006-01-02 15:04:05.000"),
 			responseTime.Seconds(), numBytes, path, rc)
 		reportPerformance(initial, responseTime, 0, nil, path, rc, oldRc)
-
-		// Extract and reportPerformance the failure, iff possible
-		alive <- true
 		return
 	}
 	fmt.Printf("%s %f 0 0 %d %s 200 GET\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		responseTime.Seconds(), numBytes, path)
 	reportPerformance(initial, responseTime, 0, nil, path, 200, oldRc)
-
-	alive <- true
 }
 
 // Put puts a file and times it
@@ -116,7 +111,6 @@ func (p S3Proto) Put(path, size, oldRC string) {
 	//	fmt.Printf("%s %f 0 0 %d %s 201 PUT\n",
 	//		initial.Format("2006-01-02 15:04:05.000"),
 	//		responseTime.Seconds(), size, path)
-	//	alive <- true
 	//	return nil
 	//}
 	//// This doesn't seem to do what one exoects: FIXME?
@@ -125,13 +119,11 @@ func (p S3Proto) Put(path, size, oldRC string) {
 	////	log.Printf("%s %f 0 0 %d %s %d GET\n",
 	////		initial.Format("2006-01-02 15:04:05.000"),
 	////		responseTime.Seconds(), size, path, reqerr.StatusCode)
-	////	alive <- true
 	//// return nil
 	////}
 	//fmt.Printf("%s %f 0 0 %d %s 4XX GET\n",
 	//	initial.Format("2006-01-02 15:04:05.000"),
 	//	responseTime.Seconds(), size, path)
-	//alive <- true
 	//return fmt.Errorf("unable to upload %q to %q, %v", path, conf.S3Bucket, err)
 }
 

@@ -43,7 +43,6 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 	// FIXME: 200 OK or 201 Created?
 	reportPerformance(initial, responseTime, 0, nil, fullPath, 201, "")
 
-	alive <- true
 	return nil
 
 }

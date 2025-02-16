@@ -140,6 +140,8 @@ func main() {
 			W:            w,
 			BufSize:      bufSize,
 		})
+	// test ends:w
+
 }
 
 // setheaders creates a proper map of header:value pairs

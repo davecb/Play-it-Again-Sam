@@ -10,7 +10,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	//"google.golang.org/genproto/googleapis/watcher/v1"
 	"strconv"
 	"strings"
 	"syscall"
@@ -82,7 +81,6 @@ var conf Config
 var op operation
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
-var alive = make(chan bool, 1000)
 var closed = make(chan bool)
 var junkDataFile = "/tmp/LoadTestJunkDataFile"
 
@@ -96,7 +94,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	defer reportRUsage("RunLoadTest", time.Now())
 
 	if conf.Debug {
-		log.Printf("new runLoadTest(f, tpsTarget=%d, progressRate=%d, "+
+		log.Printf("new runLoadTest(file, tpsTarget=%d, progressRate=%d, "+
 			"startTps=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
 			tpsTarget, progressRate, startTps, fromTime, forTime, baseURL)
 	}
@@ -115,6 +113,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
 	}
+	log.Printf("Starting test from %d TPS to %d by %d", startTps, tpsTarget, progressRate)
 
 	// Create data for rw and wo tests
 	if conf.BufSize > 0 {
@@ -130,23 +129,14 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	go workSelector(f, filename, fromTime, forTime, pipe)
 	// which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
-	// which then writes to "alive", ...
-	t := time.Tick(time.Second * conf.Timeout)
-	// stop time
+
 	for {
 		select {
-		case _, ok := <-alive:
+		case _, ok := <-closed:
 			if !ok {
-				// if alive was closed, we're done
 				return
 			}
 			processed++
-		case <-t:
-			// FIXME, this is memory-intensive
-			log.Printf("%d records processed\n", processed)
-			log.Printf("No activity after %d seconds, halting normally.\n",
-				conf.Timeout)
-			return
 		}
 	}
 }
@@ -198,8 +188,10 @@ forloop:
 		record, err := r.Read()
 		switch {
 		case err == io.EOF && conf.Rewind:
+			if conf.Debug {
+				log.Printf("At EOF, rereading from the beginning\n")
+			}
 			f.Seek(0, io.SeekStart)
-			// FIXME untested
 		case err == io.EOF && conf.Tail:
 			// just keep reading, even if we truncate...
 			if watcher == nil {
@@ -241,6 +233,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 			tpsTarget, progressRate)
 	}
+	// FIXME, test if the root exists???
 
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op offered\n")
 	switch {
@@ -261,6 +254,11 @@ func runSteadyLoad(tpsTarget int, pipe chan []string) {
 	for i := 0; i < tpsTarget; i++ {
 		go worker(pipe)
 	}
+	// let them run for a cycle and shut down
+	log.Printf("Completed at rate %d requests/second, starting %d sec cleanup timer\n",
+		tpsTarget, conf.Timeout)
+	time.Sleep(time.Duration(float64(conf.Timeout) * float64(time.Second)))
+	close(closed)
 }
 
 // runProgressivelyIncreasingLoad, the classic load test
@@ -283,7 +281,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 		OfferedRate = rate
 		if rate > tpsTarget {
 			// OK, we're past the range, quit.
-			log.Printf("completed maximum rate, starting %d sec cleanup timer\n", conf.Timeout)
+
 			break
 		}
 		for i := 0; i < progressRate; i++ {
@@ -293,8 +291,9 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 		fmt.Printf("#TPS=%d\n", rate) // add as a column?
 	}
 	// let them run for a cycle and shut down
-	time.Sleep(time.Duration(10 * float64(time.Second)))
-	// this needs refactoring
+	log.Printf("Completed maximum rate %d, starting %d sec cleanup timer\n",
+		tpsTarget, conf.Timeout)
+	time.Sleep(time.Duration(float64(conf.Timeout) * float64(time.Second)))
 	close(closed)
 }
 
@@ -399,9 +398,9 @@ func reportPerformance(initial time.Time, latency time.Duration,
 	var annotation = ""
 
 	if oldRc != "" {
-		old, _ := strconv.Atoi(oldRc)
+		old, _ := strconv.Atoi(oldRc) // FIXME hoist
 		if rc != old && old != 0 {
-			annotation = fmt.Sprintf(" expected=%d", old)
+			annotation = fmt.Sprintf(" expectedRC=%s", oldRc)
 		}
 	}
 	fmt.Printf("%s %f %f 0 %d %s %d GET %d %s\n",
