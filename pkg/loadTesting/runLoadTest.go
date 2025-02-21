@@ -75,7 +75,7 @@ type Config struct {
 	BufSize      int64             // max size of written file
 }
 
-var OfferedRate int // Log offered rate in TPS
+var ExpectedRate int // Log offered rate in TPS
 
 var conf Config
 var op operation
@@ -92,12 +92,6 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	var processed = 0
 	conf = cfg
 	defer reportRUsage("RunLoadTest", time.Now())
-
-	if conf.Debug {
-		log.Printf("new runLoadTest(file, tpsTarget=%d, progressRate=%d, "+
-			"startTps=%d, fromTime=%d, forTime=%d, baseURL=%s)\n",
-			tpsTarget, progressRate, startTps, fromTime, forTime, baseURL)
-	}
 
 	// Figure out which set of operations to use
 	switch conf.Protocol {
@@ -235,7 +229,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 	}
 	// FIXME, test if the root exists???
 
-	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op offered\n")
+	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op expected\n")
 	switch {
 	case progressRate != 0:
 		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
@@ -249,7 +243,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 // run at a steady tps until the end of the data
 func runSteadyLoad(tpsTarget int, pipe chan []string) {
 	log.Printf("starting, at %d requests/second\n", tpsTarget)
-	OfferedRate = tpsTarget
+	ExpectedRate = tpsTarget
 	// start tpsTarget workers
 	for i := 0; i < tpsTarget; i++ {
 		go worker(pipe)
@@ -269,7 +263,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 		startTps = progressRate
 	}
 	rate := startTps
-	OfferedRate = startTps
+	ExpectedRate = startTps
 	for i := 0; i < startTps; i++ {
 		go worker(pipe)
 	}
@@ -278,7 +272,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	for range time.Tick(time.Duration(conf.StepDuration) * time.Second) { // nolint
 		//start another progressRate of workers
 		rate += progressRate
-		OfferedRate = rate
+		ExpectedRate = rate
 		if rate > tpsTarget {
 			// OK, we're past the range, quit.
 
@@ -406,7 +400,7 @@ func reportPerformance(initial time.Time, latency time.Duration,
 	fmt.Printf("%s %f %f 0 %d %s %d GET %d %s\n",
 		initial.Format("2006-01-02 15:04:05.000"),
 		latency.Seconds(), transferTime.Seconds(), len(body), path,
-		rc, OfferedRate, annotation)
+		rc, ExpectedRate, annotation)
 }
 
 // reportRusage reports cpu-seconds, memory and IOPS used

@@ -1,9 +1,10 @@
 #!/bin/sh
 #
 # perf2seconds -- read a perf log and do 1-second samples
-# 	format: #yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes misc
-#		01/Mar/2017 00:00:00 0 0 0 10081 stuff
-#	Needs to be filtered to make errors 0 bytes, first
+#	format yyy-mm-dd hh:mm:ss latency  xfertime thinktime bytes url rc op offered
+#	2025-02-21 06:55:20.567   0.000788 0.001388 0
+#   bytes url                                          rc  op offered
+#	8478 download/00034915-a2bd-4280-8356-b1f009881fc5 200 GET 1
 #
 ProgName=`basename $0`
 
@@ -19,56 +20,76 @@ main() {
 		name=""
 	fi
 
+
+
+
+
+
+
 	cat $name |\
 	# this admittedly looks wierd, use --debug to see what it does
 	sort -k 2.1,2.2nb -k 2.5,2.6nb -k2.8,2.12nb \
-		--temporary-directory=/var/tmp |\
+		--temporary-directory=/var/tmp  |\
 	awk '
 	NR == 1 {
-		# this assume no leading comments
+		# get initial value for time
+		# this assume no leading comments, FIXME
 		if ($1 == "#yyy-mm-dd") {
 			getline
 		}
 		date = $1
 		sub("\\.[0-9]*", "", $2)
 		time = $2
-		print "#date time latency xfertime thinktime bytes transactions"
+
+		# print headers
+		print "#date time latency xfertime thinktime bytes requests errors"
 	}
-	/^#/ { echo $0; next } # This does comments: contradiction
+	/^#/ { echo $0; next } # This does embedded comments, FIXME
 	/.*/ {
+		# print ">>> " $0
 		sub("\\.[0-9]*", "", $2)
 		if (time != $2) {
+			# A new second has started
 			report(date, time, latency, xfertime, thinktime,
-				bytes, transactions)
+				bytes, requests, errors)
 			date = $1
 			time = $2
 			latency = $3
-			xfertime = $4 
-			thinktime = $5 
+			xfertime = $4
+			thinktime = $5
 			bytes = $6
-			transactions = 0
+			requests = 0
+			errors = 0
 		}
 		else {
 			latency += $3
 			xfertime += $4
 			thinktime += $5
 			bytes += $6
-			transactions++
+			requests++
+			if ($8 != 200) {
+				errors++
+			}
+			# Transactions are (requests - errors)
 		}
 	}
 	END {
-		report(date, time, latency, xfertime, thinktime, bytes, transacyions)
+		report(date, time, latency, xfertime, thinktime, bytes, requests, errors)
 	}
 
-	func report(date, time, latency, xfertime, thinktime, bytes, xacts) {
-		if (xacts > 0) {
-			printf("%s %s %f %f %f %d %d\n",
-				date, time, latency/xacts, xfertime/xacts, 
-				thinktime/xacts, bytes/xacts, xacts)
+	# report -- print non-empty seconds.
+	#	WARNING: gawk demands a non-K&R brace style, or it reports an undefined function.
+	# 	Take the average of all the _non_ error requests
+	function report(date, time, latency, xfertime, thinktime, bytes, requests, errors)
+	{
+		if (requests > 0 || errors > 0) {
+			divisor = requests - errors
+			printf("%s %s %f %f %f %d %d %d\n",
+				date, time, latency/requests, xfertime/divisor,
+				thinktime/divisor, bytes/divisor, requests, errors)
 		}
 	}
 '
-
 }
 
 say() {

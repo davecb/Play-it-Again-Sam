@@ -116,6 +116,12 @@ func main() {
 		log.Fatalf("No base url provided, halting. \n")
 	}
 
+	if verbose {
+		log.Printf("runLoadTest(%q, tpsTarget=%d, progressRate=%d, "+
+			"startTps=%d, baseURL=%s)\n",
+			filename, tpsTarget, progressRate, startTps, baseURL)
+	}
+
 	loadTesting.RunLoadTest(f, filename, startFrom, runFor,
 		tpsTarget, progressRate, startTps, baseURL,
 		loadTesting.Config{
