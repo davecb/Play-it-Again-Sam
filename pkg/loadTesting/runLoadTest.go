@@ -107,7 +107,7 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	default:
 		log.Fatalf("protocol %d not implemented yet", conf.Protocol)
 	}
-	log.Printf("Starting test from %d TPS to %d by %d", startTps, tpsTarget, progressRate)
+	log.Printf("Starting test from %d requests/second to %d by %d", startTps, tpsTarget, progressRate)
 
 	// Create data for rw and wo tests
 	if conf.BufSize > 0 {
@@ -282,7 +282,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 			go worker(pipe)
 		}
 		log.Printf("now at %d requests/second\n", rate)
-		fmt.Printf("#TPS=%d\n", rate) // add as a column?
+		fmt.Printf("#request/second = %d\n", rate)
 	}
 	// let them run for a cycle and shut down
 	log.Printf("Completed maximum rate %d, starting %d sec cleanup timer\n",

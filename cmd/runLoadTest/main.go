@@ -19,13 +19,14 @@ const terminationTimeout = 35 //10 // Formerly 35
 
 func usage() {
 	//nolint
-	fmt.Fprint(os.Stderr, "Usage: runLoadTest --tps TPS [--progress "+
-		"TPS][--from rec --for rec][-v] load-file.csv baseURL\n")
+	fmt.Fprint(os.Stderr, "Usage: runLoadTest --tps req [--progress "+
+		"req][--from rec --for rec][-v] load-file.csv baseURL\n")
 	flag.PrintDefaults()
 	os.Exit(1)
 }
 
 // main interprets the options and args.
+// TPS are what we want to have. Requests/second are what we get reported back
 func main() {
 	var tpsTarget, progressRate, stepDuration, startTps int
 	var startFrom, runFor int
@@ -89,7 +90,7 @@ func main() {
 	}
 
 	if tpsTarget == 0 {
-		log.Fatal("You must specify a --tps target, halting.")
+		log.Fatal("You must specify a --tps target in request per second, halting.")
 	}
 
 	// Interpret rw, ro and wo options
@@ -118,7 +119,7 @@ func main() {
 
 	if verbose {
 		log.Printf("runLoadTest(%q, tpsTarget=%d, progressRate=%d, "+
-			"startTps=%d, baseURL=%s)\n",
+			"start=%d, baseURL=%s)\n",
 			filename, tpsTarget, progressRate, startTps, baseURL)
 	}
 
