@@ -28,6 +28,8 @@ func (p RestProto) Init() {
 	if err != nil {
 		log.Fatalf("the http root request could not be created, req = %q err = %v\n", req, err)
 	}
+	// If this seems to take forever, you may have an error in nginx, 
+	// which has seen to hang the load generator in the next line.
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.Fatalf("the http root read request failed, resp = %v err = %v \n", resp, err)
