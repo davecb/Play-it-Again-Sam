@@ -28,7 +28,7 @@ func (p RestProto) Init() {
 	if err != nil {
 		log.Fatalf("the http root request could not be created, req = %q err = %v\n", req, err)
 	}
-	// If this seems to take forever, you may have an error in nginx, 
+	// If this seems to take forever, you may have an error in nginx,
 	// which has seen to hang the load generator in the next line.
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -45,6 +45,9 @@ func (p RestProto) Init() {
 	}
 	if resp.StatusCode != 200 {
 		log.Fatalf("HTTP error reading http root for %s, got status code %d", p.prefix, resp.StatusCode)
+	}
+	if conf.Debug {
+		log.Printf("body = %v\n", string(body))
 	}
 }
 

@@ -287,7 +287,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	// let them run for a cycle and shut down
 	log.Printf("Completed maximum rate %d, starting %d sec cleanup timer\n",
 		tpsTarget, conf.Timeout)
-	time.Sleep(time.Duration(float64(conf.Timeout) * float64(time.Second)))
+	time.Sleep(time.Duration(float64(conf.Timeout) * float64(time.Second))) // FIXME, this seems to be 10 seconds minimum!
 	close(closed)
 }
 
@@ -297,7 +297,7 @@ func worker(pipe chan []string) {
 		log.Print("started a worker\n")
 	}
 	if conf.Protocol == TimeBudgetProtocol {
-		// Do the operation immediately, once, to measure it's speed
+		// Do the operation immediately, once, to measure its speed
 		doWork()
 		return
 	}
