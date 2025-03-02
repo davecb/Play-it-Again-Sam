@@ -60,8 +60,10 @@ func main() {
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
 	// write just m and b to stdout
 	fmt.Printf("%vx %v\n", m, b)
-	log.Printf("Line from (%v,%v) to (%v,%v) is from y = mx + b = %vx + %v\n",
-		start.X, start.Y, end.X, end.Y, m, b)
+	log.Printf("In line (%v,%v) to (%v,%v)\n\t"+
+		"the x-intercept is (%v,0)\n\t"+
+		"and the equation is y = mx + b = %vx + %v\n",
+		start.X, start.Y, end.X, end.Y, -b/m, m, b)
 	plotPointsAndLine(points, start, end, minX, maxY, "lower_hull.png")
 
 }
