@@ -68,13 +68,20 @@ main() {
 			bytes += $6
 			requests++
 			if ($8 != 200) {
+				# printf("#8 = '%d'\n", $8)
 				errors++
+				errorsTotal++
+				if ($8+0 == 404) {
+					# keep this and errorsTotal until the end
+					errors404++
+				}
 			}
 			# Transactions are (requests - errors)
 		}
 	}
 	END {
 		report(date, time, latency, xfertime, thinktime, bytes, requests, errors)
+		printf("%d of the %d total errors are 404s\n", errors404, errorsTotal) > "/dev/stderr"
 	}
 
 	# report -- print non-empty seconds.
