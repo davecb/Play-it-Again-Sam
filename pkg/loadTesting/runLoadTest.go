@@ -26,6 +26,8 @@ const (
 	S3Protocol         // Amazon s3 protocol or compatable
 	CephProtocol       // reserved for native ceph protocol
 	TimeBudgetProtocol // see if we're inside our time budget
+
+	TerminationTimeout = 35 // seconds to wait after finishing reading input file
 )
 
 // operations are the things a protocol must support
@@ -66,7 +68,6 @@ type Config struct {
 	S3Key        string
 	S3Secret     string
 	Strip        string
-	Timeout      time.Duration     // time to wait at end
 	StepDuration int               // duration of a test step
 	HostHeader   string            // add a Host: header
 	HeaderMap    map[string]string // one or more key:value headers
@@ -89,8 +90,8 @@ const size = 396759652 // nolint // FIXME, this is a heuristic
 // RunLoadTest does whatever main figured out that the caller wanted.
 func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	tpsTarget, progressRate, startTps int, baseURL string, cfg Config) {
-	var processed = 0
-	conf = cfg
+	//var processed = 0
+	conf = cfg // Required, also makes it show in the debugger
 	defer reportRUsage("RunLoadTest", time.Now())
 
 	// Figure out which set of operations to use
@@ -124,15 +125,19 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	// which pipes work to ...
 	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
 
-	for {
-		select {
-		case _, ok := <-closed:
-			if !ok {
-				return
-			}
-			processed++
-		}
-	}
+	//for {
+	//	select {
+	//	case _, ok := <-closed:
+	//		if !ok {
+	//			return
+	//		}
+	//		processed++
+	//	}
+	//}
+	log.Printf("FIXME, waiting for closed\n")
+	_ = <-closed                               // don't exit until this is closed
+	log.Printf("FIXME, closed has happened\n") // this is never reached
+
 }
 
 // workSelector pipes a selection from a file to the workers
@@ -169,8 +174,8 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 
 	skipForward(startFrom, r, filename)
 	recNo := copyToPipe(runFor, r, f, filename, pipe, watcher)
-	log.Printf("EOF: loaded %d records, closing input pipe\n", recNo)
-	close(pipe)
+	log.Printf("Input reader loaded %d records\n", recNo)
+	close(pipe) // close pipe to the workers
 }
 
 // copyToPipe pipes work to the workers
@@ -227,7 +232,6 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 			tpsTarget, progressRate)
 	}
-	// FIXME, test if the root exists???
 
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op expected\n")
 	switch {
@@ -244,15 +248,17 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 func runSteadyLoad(tpsTarget int, pipe chan []string) {
 	log.Printf("starting, at %d requests/second\n", tpsTarget)
 	ExpectedRate = tpsTarget
-	// start tpsTarget workers
+	// start tpsTarget worth of workers
 	for i := 0; i < tpsTarget; i++ {
 		go worker(pipe)
 	}
-	// let them run for a cycle and shut down
-	log.Printf("Completed at rate %d requests/second, starting %d sec cleanup timer\n",
-		tpsTarget, conf.Timeout)
-	time.Sleep(time.Duration(float64(conf.Timeout) * float64(time.Second)))
-	close(closed)
+	// let them run for a cycle and shut down  FIXME, logic???
+	log.Printf("at EOF on pipe from reader, enabling %d sec cleanup timer\n",
+		TerminationTimeout)
+	time.Sleep(time.Duration(float64(TerminationTimeout) * float64(time.Second)))
+	// FIXME everyone should exit except for main goroutine
+	log.Printf("FIXME: timer ends, closing closed\n")
+	close(closed) // signal everyone we're done
 }
 
 // runProgressivelyIncreasingLoad, the classic load test
@@ -286,8 +292,9 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 	}
 	// let them run for a cycle and shut down
 	log.Printf("Completed maximum rate %d, starting %d sec cleanup timer\n",
-		tpsTarget, conf.Timeout)
-	time.Sleep(time.Duration(float64(conf.Timeout) * float64(time.Second))) // FIXME, this seems to be 10 seconds minimum!
+		tpsTarget, TerminationTimeout)
+	// FIXME something wierd is happening here
+	time.Sleep(time.Duration(float64(TerminationTimeout) * float64(time.Second))) // FIXME,
 	close(closed)
 }
 
@@ -318,7 +325,7 @@ func doWork() bool {
 
 	r, eof := getWork()
 	if eof {
-		return true
+		return true // FIXME, do I use this???
 	}
 
 	switch {
@@ -341,7 +348,8 @@ func doWork() bool {
 	//case r[operatorField] == "HEAD":
 	//	go op.Head(r[pathField], r[bytesField], r[returnCodeField]) // nolint
 	default:
-		log.Printf("unimplemented operation %s in %v, ignored\n", r[operatorField], r)
+		log.Printf("read = %v, write = %v operation %q in %v invalid, ignored\n",
+			conf.R, conf.W, r[operatorField], r)
 	}
 	return false
 }

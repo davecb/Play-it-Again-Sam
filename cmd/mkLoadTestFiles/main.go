@@ -61,7 +61,7 @@ func main() {
 			Protocol: loadTesting.FilesystemProtocol,
 			Strip:    "",
 			Zero:     zero,
-			// Timeout is 0
+			// TerminationTimeout is 0
 		})
 
 }

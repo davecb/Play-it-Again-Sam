@@ -92,7 +92,6 @@ func systemUnderTest(debug bool) {
 			S3Secret:     s3Secret,
 			S3Bucket:     s3Bucket,
 			Strip:        strip,
-			Timeout:      terminationTimeout,
 			StepDuration: stepDuration,
 			HostHeader:   hostHeader,
 			HeaderMap:    headerMap,
