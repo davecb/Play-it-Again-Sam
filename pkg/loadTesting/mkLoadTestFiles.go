@@ -23,7 +23,7 @@ func MkLoadTestFiles(f *os.File, filename, baseURL string, startFrom, runFor int
 
 	conf = cfg
 	//doPrepWork(baseURL)    use op.Init()
-	defer os.Remove(junkDataFile) // nolint FIXME, for write
+	defer os.Remove(junkDataFile) // nolint
 
 	r := csv.NewReader(f)
 	r.Comma = ' '
@@ -111,7 +111,7 @@ func mkFile(baseURL, sourceFile, fullPath, size string) {
 	if conf.Debug {
 		log.Printf("in mkFile(baseURL=%s, sourceFile=%s, fullPath=%s, size=%s", baseURL, sourceFile, fullPath, size)
 	}
-	fileSize, err := strconv.ParseInt(size, 10, 64) // FIXME hoist
+	fileSize, err := strconv.ParseInt(size, 10, 64) // FIXME hoist?
 	if err != nil {
 		log.Fatalf("can't get size from %q", size)
 	}

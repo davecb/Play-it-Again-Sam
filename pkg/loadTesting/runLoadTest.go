@@ -82,7 +82,7 @@ var conf Config
 var op operation
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
-var closed = make(chan bool)
+var closed chan bool // visible in whole file, initialed and closed in generateLoad
 var junkDataFile = "/tmp/LoadTestJunkDataFile"
 
 const size = 396759652 // nolint // FIXME, this is a heuristic
@@ -123,21 +123,11 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	// select some work to do from the input file
 	go workSelector(f, filename, fromTime, forTime, pipe)
 	// which pipes work to ...
-	go generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
+	generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
 
-	//for {
-	//	select {
-	//	case _, ok := <-closed:
-	//		if !ok {
-	//			return
-	//		}
-	//		processed++
-	//	}
-	//}
-	log.Printf("FIXME, waiting for closed\n")
-	_ = <-closed                               // don't exit until this is closed
-	log.Printf("FIXME, closed has happened\n") // this is never reached
-
+	//log.Printf("RunLoadTest, waiting for closed\n")
+	<-closed
+	os.Exit(5280) // FIXME
 }
 
 // workSelector pipes a selection from a file to the workers
@@ -173,37 +163,36 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 	r.FieldsPerRecord = -1 // ignore differences
 
 	skipForward(startFrom, r, filename)
-	recNo := copyToPipe(runFor, r, f, filename, pipe, watcher)
-	log.Printf("Input reader loaded %d records\n", recNo)
-	close(pipe) // close pipe to the workers
+	_ = copyToPipe(runFor, r, f, filename, pipe, watcher)
+	//log.Printf("Input reader loaded %d records\n", recNo)
 }
 
-// copyToPipe pipes work to the workers
+// copyToPipe pipes work to the workers. Returns number of lines read.
 func copyToPipe(runFor int, r *csv.Reader, f *os.File, filename string, pipe chan []string, watcher *fsnotify.Watcher) int {
 
 	recNo := 0
 forloop:
 	for ; recNo < runFor; recNo++ {
 		record, err := r.Read()
+		//log.Printf("copyToPipe read %d, %q, err = %v\n", recNo, record, err)
+
 		switch {
 		case err == io.EOF && conf.Rewind:
-			if conf.Debug {
-				log.Printf("At EOF, rereading from the beginning\n")
-			}
+			log.Printf("At EOF, rereading from the beginning\n")
 			f.Seek(0, io.SeekStart)
 		case err == io.EOF && conf.Tail:
 			// just keep reading, even if we truncate...
 			if watcher == nil {
 				time.Sleep(100 * time.Millisecond)
 			} else {
-				//log.Print("waiting for fsnotify\n")
+				log.Print("waiting for fsnotify\n")
 				if err = waitForChange(watcher); err != nil {
 					log.Fatalf("Fatal error waiting for fsnotify on %s, %v\n", filename, err)
 				}
 			}
 			continue
 		case err == io.EOF:
-			log.Printf("At EOF on %s, no new work to queue\n", filename)
+			//log.Printf("At EOF on %s, no new work to queue\n", filename)
 			break forloop
 		case err != nil:
 			log.Printf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
@@ -219,20 +208,20 @@ forloop:
 		if conf.Strip != "" {
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
-		//log.Printf("writing %v to pipe\n", record)
 
+		//log.Printf("copyToPiper copied in %qn", record)
 		pipe <- record
 	}
+
 	return recNo
 }
 
 // generateLoad starts progressRate new threads every 10 seconds until we hit progressRate
 func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, urlPrefix string) {
-	if conf.Debug {
-		log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
-			tpsTarget, progressRate)
-	}
+	closed = make(chan bool)
 
+	//log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
+	//	tpsTarget, progressRate)
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op expected\n")
 	switch {
 	case progressRate != 0:
@@ -241,29 +230,32 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 		runSteadyLoad(tpsTarget, pipe)
 	case tpsTarget <= 0:
 		log.Fatal("A zero or negative tps target is not meaningful, halting\n")
+	default:
+		log.Fatalf("neither steady nor progressive load specified, halting\n")
 	}
+	// each of the above should return when done, and then I can shut down.
+	// the heuristic is 35 seconds because the pipe contents can be large
+	log.Printf("Completed reading, starting %d sec cleanup timer\n", TerminationTimeout)
+	time.Sleep(time.Duration(float64(TerminationTimeout) * float64(time.Second)))
+	//log.Printf("generateLoad: timer ends, signalling everyone\n")
+	close(closed) // FIXME this should quietly shut everything off
 }
 
-// run at a steady tps until the end of the data
+// run at a steady tps, wait for workers to signal they're done, then return
 func runSteadyLoad(tpsTarget int, pipe chan []string) {
-	log.Printf("starting, at %d requests/second\n", tpsTarget)
+	//log.Printf("starting runSteadyLoad, at %d requests/second\n", tpsTarget)
 	ExpectedRate = tpsTarget
 	// start tpsTarget worth of workers
 	for i := 0; i < tpsTarget; i++ {
 		go worker(pipe)
 	}
-	// let them run for a cycle and shut down  FIXME, logic???
-	log.Printf("at EOF on pipe from reader, enabling %d sec cleanup timer\n",
-		TerminationTimeout)
-	time.Sleep(time.Duration(float64(TerminationTimeout) * float64(time.Second)))
-	// FIXME everyone should exit except for main goroutine
-	log.Printf("FIXME: timer ends, closing closed\n")
-	close(closed) // signal everyone we're done
+	// let them run, to be shut down when signalled FIXME, logic???
+	log.Printf("runSteadyLoad: started all its goroutines, returning\n")
 }
 
 // runProgressivelyIncreasingLoad, the classic load test
 func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string) {
-
+	log.Printf("starting runProgressivelyIncreasingLoad, to %d requests/second\n", tpsTarget)
 	// start the first workers
 	if startTps == 0 {
 		startTps = progressRate
@@ -280,9 +272,7 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 		rate += progressRate
 		ExpectedRate = rate
 		if rate > tpsTarget {
-			// OK, we're past the range, quit.
-
-			break
+			break // OK, we're past the range, quit.
 		}
 		for i := 0; i < progressRate; i++ {
 			go worker(pipe)
@@ -290,44 +280,47 @@ func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe 
 		log.Printf("now at %d requests/second\n", rate)
 		fmt.Printf("#request/second = %d\n", rate)
 	}
-	// let them run for a cycle and shut down
-	log.Printf("Completed maximum rate %d, starting %d sec cleanup timer\n",
-		tpsTarget, TerminationTimeout)
-	// FIXME something wierd is happening here
-	time.Sleep(time.Duration(float64(TerminationTimeout) * float64(time.Second))) // FIXME,
-	close(closed)
 }
 
-// worker reads and executes a task every second until it hits eof
+// worker reads and executes a task every second until it hits eof.
+// run as a goroutine
 func worker(pipe chan []string) {
-	if conf.Debug {
-		log.Print("started a worker\n")
-	}
 	if conf.Protocol == TimeBudgetProtocol {
+		//log.Print("worker got TimeBudgetProtocol\n")
 		// Do the operation immediately, once, to measure its speed
-		doWork()
+		_ = doWork()
 		return
 	}
-	// wait a random fraction of one second before looping, for randomness.
+	// wait a random fraction of one second before starting tpo loop, for randomness.
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
 	for range time.Tick(1 * time.Second) { // nolint
-		done := doWork()
-		if done {
-			return
+		select {
+		case <-closed:
+			log.Print("worker: closed signalled, no more requests to process, exited.\n")
+			return // exit goroutine
+		default:
+			//log.Printf("worker: no signal yet\n")
 		}
+		eof := doWork()
+		if eof == true {
+			log.Print("worker: returned on eof from doWork, exited.\n")
+			return // exit goroutine
+		}
+		//log.Printf("worker: doWork ran\n")
 	}
 }
 
-// work is the thing that happens each second.
+// work gets one unit of work and carries it out. Returns true at EOF
 func doWork() bool {
 	var r []string
 
 	r, eof := getWork()
 	if eof {
-		return true // FIXME, do I use this???
+		log.Printf("FIXME, getWork at EOF")
+		return true
 	}
-
+	//log.Printf("doWork, record = %q\n", r)
 	switch {
 	case r == nil && !conf.Rewind:
 		log.Print("worker reached EOF, no more requests available to send.\n")
@@ -354,26 +347,27 @@ func doWork() bool {
 	return false
 }
 
-// getWork gets stuff for worker to do
+// getWork gets one unit of work for worker to do. Returns true at EOF
 func getWork() ([]string, bool) {
 	var r []string
 	var ok bool
 
 	select {
 	case <-closed:
-		// peculiar to increasing load test, refactor
-		if conf.Debug {
-			log.Print("pipe closed, no more requests to process.\n")
-		}
+		log.Print("getWork: closed signalled, no more requests to process.\n")
 		return nil, true
 	case r, ok = <-pipe:
 		if !ok {
 			// We're at eof
+			log.Printf("getWork: got eof, closed is false. halting\n")
 			return nil, true
 		}
-		if conf.Debug {
-			log.Printf("got %v\n", r)
+		if len(r) == 0 {
+			// It's a bug!
+			log.Printf("getWork: got empty %v, halting\n", r)
+			return nil, true
 		}
+		//log.Printf("getWork: got %v\n", r)
 		return r, false
 	}
 }

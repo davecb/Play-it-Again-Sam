@@ -123,7 +123,6 @@ func main() {
 			filename, tpsTarget, progressRate, startTps, baseURL)
 	}
 
-	log.Printf("FIXME, im main, r = %v\n", r)
 	loadTesting.RunLoadTest(f, filename, startFrom, runFor,
 		tpsTarget, progressRate, startTps, baseURL,
 		loadTesting.Config{

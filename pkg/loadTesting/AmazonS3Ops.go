@@ -113,7 +113,7 @@ func (p S3Proto) Put(path, size, oldRC string) {
 	//		responseTime.Seconds(), size, path)
 	//	return nil
 	//}
-	//// This doesn't seem to do what one exoects: FIXME?
+	//// This doesn't seem to do what one expects: FIXME?
 	//// reqerr, ok := err.(awserr.RequestFailure)
 	////if ok {
 	////	log.Printf("%s %f 0 0 %d %s %d GET\n",

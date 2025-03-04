@@ -40,7 +40,6 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 	//fmt.Printf("%s %f 0 0 %d %s 201 PUT\n",
 	//	initial.Format("2006-01-02 15:04:05.000"),
 	//	responseTime.Seconds(), size, fullPath)
-	// FIXME: 200 OK or 201 Created?
 	reportPerformance(initial, responseTime, 0, nil, fullPath, 201, "")
 
 	return nil
@@ -49,7 +48,6 @@ func TimedCreateFilesystemFile(fullPath string, size int64) error {
 
 // mustCreateFilesystemFile implements making the file in a filesystem relative to the current directory
 // It's used by both local and s3.
-// FIXME add size-zero option???
 func mustCreateFilesystemFile(fullPath string, size int64) {
 	if conf.Debug {
 		log.Printf("in createFilesystemFile(%s, %d)\n", fullPath, size)
