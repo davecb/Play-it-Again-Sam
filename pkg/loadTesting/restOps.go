@@ -53,7 +53,7 @@ func (p RestProto) Init() {
 
 // Tuning for large loads. With this, when we start reporting network
 // errors, then we've overloaded somebody. Previously we bottlenecked
-// on closed but not recycled sockets/
+// on shutdown but not recycled sockets/
 // For calvin this doesn't change the results up to 240, but
 // then the former setup failed.
 const (

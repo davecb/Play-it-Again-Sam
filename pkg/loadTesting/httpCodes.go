@@ -70,7 +70,7 @@ var codeMap = map[int]codeTable{
 	496: {" ssl certificate required", false},
 	497: {"http request sent to https port", false},
 	498: {"invalid token (esri)", false},
-	499: {"client closed and gave up (nginx)", true},
+	499: {"client shutdown and gave up (nginx)", true},
 
 	500: {"internal server error", true},
 	501: {"not implemented", false},

@@ -27,7 +27,7 @@ const (
 	CephProtocol       // reserved for native ceph protocol
 	TimeBudgetProtocol // see if we're inside our time budget
 
-	TerminationTimeout = 35 // seconds to wait after finishing reading input file
+	TerminationTimeout = 10 // seconds to wait after "done" signal
 )
 
 // operations are the things a protocol must support
@@ -82,7 +82,7 @@ var conf Config
 var op operation
 var random = rand.New(rand.NewSource(42))
 var pipe = make(chan []string, 100)
-var closed chan bool // visible in whole file, initialed and closed in generateLoad
+var shutdown chan bool // visible in whole file, initialed and shutdown in generateLoad
 var junkDataFile = "/tmp/LoadTestJunkDataFile"
 
 const size = 396759652 // nolint // FIXME, this is a heuristic
@@ -125,9 +125,9 @@ func RunLoadTest(f *os.File, filename string, fromTime, forTime int,
 	// which pipes work to ...
 	generateLoad(pipe, tpsTarget, progressRate, startTps, baseURL)
 
-	//log.Printf("RunLoadTest, waiting for closed\n")
-	<-closed
-	os.Exit(5280) // FIXME
+	//log.Printf("RunLoadTest, waiting for shutdown\n")
+	<-shutdown
+	os.Exit(0)
 }
 
 // workSelector pipes a selection from a file to the workers
@@ -169,7 +169,6 @@ func workSelector(f *os.File, filename string, startFrom, runFor int, pipe chan 
 
 // copyToPipe pipes work to the workers. Returns number of lines read.
 func copyToPipe(runFor int, r *csv.Reader, f *os.File, filename string, pipe chan []string, watcher *fsnotify.Watcher) int {
-
 	recNo := 0
 forloop:
 	for ; recNo < runFor; recNo++ {
@@ -209,7 +208,7 @@ forloop:
 			record[pathField] = strings.Replace(record[pathField], conf.Strip, "", 1)
 		}
 
-		//log.Printf("copyToPiper copied in %qn", record)
+		//log.Printf("copyToPipe copied in %qn", record)
 		pipe <- record
 	}
 
@@ -218,42 +217,53 @@ forloop:
 
 // generateLoad starts progressRate new threads every 10 seconds until we hit progressRate
 func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, urlPrefix string) {
-	closed = make(chan bool)
+	shutdown = make(chan bool)
 
 	//log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 	//	tpsTarget, progressRate)
 	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op expected\n")
 	switch {
+	case tpsTarget <= 0:
+		log.Fatal("A zero or negative tps target is not meaningful, halting\n")
 	case progressRate != 0:
 		runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps, pipe)
 	case tpsTarget != 0:
 		runSteadyLoad(tpsTarget, pipe)
-	case tpsTarget <= 0:
-		log.Fatal("A zero or negative tps target is not meaningful, halting\n")
 	default:
 		log.Fatalf("neither steady nor progressive load specified, halting\n")
 	}
 	// each of the above should return when done, and then I can shut down.
-	// the heuristic is 35 seconds because the pipe contents can be large
-	log.Printf("Completed reading, starting %d sec cleanup timer\n", TerminationTimeout)
+	close(shutdown) // FIXME this should quietly shut everything off
+
+	// the old heuristic is 35 seconds because the pipe contents can be large
+	log.Printf("Closing down, starting %d sec cleanup timer\n", TerminationTimeout)
 	time.Sleep(time.Duration(float64(TerminationTimeout) * float64(time.Second)))
-	//log.Printf("generateLoad: timer ends, signalling everyone\n")
-	close(closed) // FIXME this should quietly shut everything off
+	log.Printf("Complete.\n")
 }
 
-// run at a steady tps, wait for workers to signal they're done, then return
+// runSteadyLoad runs at a steady tps, waits for pipe to empty, then returns.
+// this is different from runProgressivelyIncreasingLoad as it reads the whole file once.
 func runSteadyLoad(tpsTarget int, pipe chan []string) {
-	//log.Printf("starting runSteadyLoad, at %d requests/second\n", tpsTarget)
-	ExpectedRate = tpsTarget
+	log.Printf("starting runSteadyLoad, at %d requests/second\n", tpsTarget)
 	// start tpsTarget worth of workers
 	for i := 0; i < tpsTarget; i++ {
 		go worker(pipe)
 	}
-	// let them run, to be shut down when signalled FIXME, logic???
-	log.Printf("runSteadyLoad: started all its goroutines, returning\n")
+	// run until pipe is empty
+	for {
+		time.Sleep(time.Duration(1 * float64(time.Second)))
+		x := len(pipe)
+		//log.Printf("pipe length = %v\n", x)
+		if x == 0 {
+			//log.Printf("pipe is empty, return\n")
+			break
+		}
+	}
+	//log.Printf("runSteadyLoad: started all its goroutines, returning\n")
 }
 
-// runProgressivelyIncreasingLoad, the classic load test
+// runProgressivelyIncreasingLoad, the classic load test. Returns when past tpsTarget.
+// often used with --rewind, to keep reading and rereading the file
 func runProgressivelyIncreasingLoad(progressRate, tpsTarget, startTps int, pipe chan []string) {
 	log.Printf("starting runProgressivelyIncreasingLoad, to %d requests/second\n", tpsTarget)
 	// start the first workers
@@ -288,39 +298,38 @@ func worker(pipe chan []string) {
 	if conf.Protocol == TimeBudgetProtocol {
 		//log.Print("worker got TimeBudgetProtocol\n")
 		// Do the operation immediately, once, to measure its speed
-		_ = doWork()
+		_ = doOneOperation()
 		return
 	}
 	// wait a random fraction of one second before starting tpo loop, for randomness.
 	time.Sleep(time.Duration(random.Float64() * float64(time.Second)))
 
 	for range time.Tick(1 * time.Second) { // nolint
+		eof := doOneOperation()
+		if eof == true {
+			//log.Print("worker: returned on eof from doOneOperation, exited.\n")
+			return // exit goroutine
+		}
 		select {
-		case <-closed:
-			log.Print("worker: closed signalled, no more requests to process, exited.\n")
+		case <-shutdown:
+			//log.Print("worker: shutdown signalled, no more requests to process, exited.\n")
 			return // exit goroutine
 		default:
 			//log.Printf("worker: no signal yet\n")
 		}
-		eof := doWork()
-		if eof == true {
-			log.Print("worker: returned on eof from doWork, exited.\n")
-			return // exit goroutine
-		}
-		//log.Printf("worker: doWork ran\n")
 	}
 }
 
-// work gets one unit of work and carries it out. Returns true at EOF
-func doWork() bool {
+// doOneOperation gets one unit of work and carries it out. Returns true at EOF
+func doOneOperation() bool {
 	var r []string
 
 	r, eof := getWork()
 	if eof {
-		log.Printf("FIXME, getWork at EOF")
+		//log.Printf("getWork: at EOF")
 		return true
 	}
-	//log.Printf("doWork, record = %q\n", r)
+	//log.Printf("doOneOperation, record = %q\n", r)
 	switch {
 	case r == nil && !conf.Rewind:
 		log.Print("worker reached EOF, no more requests available to send.\n")
@@ -353,23 +362,25 @@ func getWork() ([]string, bool) {
 	var ok bool
 
 	select {
-	case <-closed:
-		log.Print("getWork: closed signalled, no more requests to process.\n")
-		return nil, true
+	case _, ok := <-shutdown:
+		if !ok {
+			//log.Print("getWork: shutdown signalled, no more requests to process.\n")
+			return nil, true
+		}
 	case r, ok = <-pipe:
 		if !ok {
 			// We're at eof
-			log.Printf("getWork: got eof, closed is false. halting\n")
+			//log.Printf("getWork: got eof, shutdown is false. halting\n")
 			return nil, true
 		}
 		if len(r) == 0 {
 			// It's a bug!
-			log.Printf("getWork: got empty %v, halting\n", r)
+			//log.Printf("getWork: got empty %v, halting\n", r)
 			return nil, true
 		}
-		//log.Printf("getWork: got %v\n", r)
-		return r, false
 	}
+	//log.Printf("getWork: got %v\n", r)
+	return r, false
 }
 
 // waitForChange waits for the tail of a file to be written to
