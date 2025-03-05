@@ -6,5 +6,5 @@
 TARGET=/usr/local/bin
 
 all:
-	cp hull/hull mkLoadTestFiles/mkLoadTestFiles \
+	cp hull/hull dummy/dummy mkLoadTestFiles/mkLoadTestFiles \
 		runLoadTest/runLoadTest ../scripts/* ${TARGET}
