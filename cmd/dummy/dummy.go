@@ -5,8 +5,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
+
+const addr = ":9990"
 
 func main() {
 
@@ -19,5 +22,6 @@ func main() {
 		fmt.Fprintf(w, "Got %q\n", param)
 	})
 
-	http.ListenAndServe(":9990", nil)
+	http.ListenAndServe(addr, nil)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
