@@ -214,7 +214,7 @@ forloop:
 			log.Fatalf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
 			break forloop
 		}
-		if len(record) != 7 {
+		if len(record) < 7 {
 			log.Printf("ill-formed record %q ignored\n",
 				record)
 			// Warning: this discards partial records
