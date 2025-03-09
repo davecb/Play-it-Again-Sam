@@ -13,7 +13,6 @@ import (
 	"image/color"
 	"io"
 	"log"
-	"math"
 	"os"
 	"strconv"
 )
@@ -27,10 +26,7 @@ type Point struct {
 func main() {
 	var verbose bool
 	var err error
-	var minX, maxY float64
 
-	flag.Float64Var(&minX, "minX", 0, "Set minimum x-value")
-	flag.Float64Var(&maxY, "maxY", math.MaxFloat64, "Set maximum y-value")
 	flag.BoolVar(&verbose, "v", false, "verbose")
 	flag.Parse()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
@@ -55,23 +51,27 @@ func main() {
 	r.Comment = '#'
 	r.FieldsPerRecord = -1 // ignore differences
 
-	points := readCsv(r, filename, minX, maxY, verbose)
-	start, end, _, _ := FindLowerHullLine(points, minX, maxY, verbose)
+	points := readCsv(r, filename, verbose)
+	start, end, _, _ := FindLowerHullLine(points, verbose)
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
 	// write just m and b to stdout
-	fmt.Printf("%vx %v\n", m, b)
+	fmt.Printf("%vx %v # y = mx+b\n", m, b)
+	fmt.Printf("%v %v # start\n", start.X, start.Y)
+	fmt.Printf("%v %v # end\n", end.X, end.Y)
+	fmt.Printf("%v %v # intercept\n", -b/m, 0)
+
 	log.Printf("In line (%v,%v) to (%v,%v)\n\t"+
 		"the x-intercept is (%v,0)\n\t"+
 		"and the equation is y = mx + b = %vx + %v\n",
 		start.X, start.Y, end.X, end.Y, -b/m, m, b)
-	plotPointsAndLine(points, start, end, minX, maxY, "lower_hull.png")
+	plotPointsAndLine(points, start, end, "lower_hull.png")
 
 }
 
 // FindLowerHullLine Finds the lowest point as the starting point,
 // searches for the best endpoint that ensures no other points are
 // below the line and returns the start and end points of the hull line
-func FindLowerHullLine(points []Point, minX, maxY float64, verbose bool) (Point, Point, float64, float64) {
+func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, float64) {
 	low := 0.0
 	high := 400.0
 
@@ -99,10 +99,6 @@ func FindLowerHullLine(points []Point, minX, maxY float64, verbose bool) (Point,
 	for _, candidate := range points {
 		// ignore points to the right of start
 		if candidate.X >= start.X {
-			continue
-		}
-		// check bounds
-		if candidate.X < minX || candidate.Y > maxY {
 			continue
 		}
 
@@ -143,14 +139,11 @@ func isPointBelowLine(start, end, point Point) bool {
 }
 
 // plotPointsAndLine does just that
-func plotPointsAndLine(points []Point, start, end Point, low, high float64, filename string) {
+func plotPointsAndLine(points []Point, lineStart, lineEnd Point, filename string) {
 	p := plot.New()
 	p.Title.Text = "Right Hull-Line"
 	p.X.Label.Text = "Load, Requests per Second"
 	p.Y.Label.Text = "Response Time, Seconds"
-
-	p.X.Min = low
-	p.X.Max = high
 
 	// Plot points
 	pts := make(plotter.XYs, len(points))
@@ -166,8 +159,8 @@ func plotPointsAndLine(points []Point, start, end Point, low, high float64, file
 
 	// Plot line
 	line := plotter.XYs{
-		{X: start.X, Y: start.Y},
-		{X: end.X, Y: end.Y},
+		{X: lineStart.X, Y: lineStart.Y},
+		{X: lineEnd.X, Y: lineEnd.Y},
 	}
 
 	linePlot, _ := plotter.NewLine(line)
@@ -189,7 +182,7 @@ func slopeIntercept(x1, y1, x2, y2 float64) (float64, float64) {
 
 // readCsv reads preselected latency and requests per second from a csv file.
 // that's the "perf" format, like "2018-01-17 10:40:38 0.00374 0.000185 0 5151 8"
-func readCsv(r *csv.Reader, filename string, minX, maxY float64, verbose bool) []Point {
+func readCsv(r *csv.Reader, filename string, verbose bool) []Point {
 	const (
 		latency = 2
 		TPS     = 6
@@ -198,9 +191,6 @@ func readCsv(r *csv.Reader, filename string, minX, maxY float64, verbose bool) [
 	var point Point
 	var points = make([]Point, 0)
 
-	if verbose {
-		log.Printf("minX = %v, maxY = %v\n", minX, maxY)
-	}
 forloop:
 	for ; ; recNo++ {
 		record, err := r.Read()
@@ -228,11 +218,6 @@ forloop:
 		y, err := strconv.ParseFloat(record[latency], 64)
 		if err != nil {
 			log.Fatalf("y in line %d of %q is invalid: %s\n", recNo, filename, record[TPS])
-		}
-
-		// prune off values below minX or above Ymax
-		if x < minX || y > maxY {
-			continue
 		}
 
 		// create a new point to add
