@@ -13,6 +13,7 @@ import (
 	"image/color"
 	"io"
 	"log"
+	"math"
 	"os"
 	"strconv"
 )
@@ -25,9 +26,14 @@ type Point struct {
 // main interprets the options and args.
 func main() {
 	var verbose bool
+	var minX, maxX, maxY float64
 	var err error
 
 	flag.BoolVar(&verbose, "v", false, "verbose")
+	flag.Float64Var(&minX, "minX", 0, "ignore points below this minimum x-value")               // for convenience/speed
+	flag.Float64Var(&maxX, "maxX", math.MaxFloat32, "ignore points above this maximum x-value") // for excluding points
+	flag.Float64Var(&maxY, "maxY", math.MaxFloat32, "ignore points above this maximum y-value") // for excluding points
+
 	flag.Parse()
 	log.SetFlags(log.Lshortfile | log.Ldate | log.Ltime) // show file:line in logs
 
@@ -51,37 +57,46 @@ func main() {
 	r.Comment = '#'
 	r.FieldsPerRecord = -1 // ignore differences
 
-	points := readCsv(r, filename, verbose)
-	start, end, _, _ := FindLowerHullLine(points, verbose)
+	rawPoints := readCsv(r, filename, verbose)
+	points := trimPoints(rawPoints, minX, maxX, maxY)
+
+	err, start, end := FindLowerHullLine(points, minX, maxX, maxY, verbose)
+	if err != nil {
+		log.Fatalf("failure in FindLowerHullLine, %v", err)
+	}
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
-	// write just m and b to stdout
+	// write m, b to and x-intercept to stdout
 	fmt.Printf("%vx %v # y = mx+b\n", m, b)
 	fmt.Printf("%v %v # start\n", start.X, start.Y)
 	fmt.Printf("%v %v # end\n", end.X, end.Y)
-	fmt.Printf("%v %v # intercept\n", -b/m, 0)
+	fmt.Printf("%v %v # x-intercept\n", -b/m, 0)
 
+	// write a user-focused description to stderr
 	log.Printf("In line (%v,%v) to (%v,%v)\n\t"+
 		"the x-intercept is (%v,0)\n\t"+
 		"and the equation is y = mx + b = %vx + %v\n",
 		start.X, start.Y, end.X, end.Y, -b/m, m, b)
-	plotPointsAndLine(points, start, end, "lower_hull.png")
-
+	
+	plotPointsAndLine(points, start, end, Point{-b / m, 0.0}, "lower_hull.png")
+	log.Printf("A graph of the data is in lower_hull.png")
 }
 
 // FindLowerHullLine Finds the lowest point as the starting point,
 // searches for the best endpoint that ensures no other points are
 // below the line and returns the start and end points of the hull line
-func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, float64) {
-	low := 0.0
-	high := 400.0
+func FindLowerHullLine(points []Point, minX, maxX, maxY float64, verbose bool) (error, Point, Point) {
+	var hullPoints []Point
 
-	if len(points) < 2 {
-		return Point{}, Point{}, low, high
+	if l := len(points); l < 2 {
+		return fmt.Errorf("we require at least 2 points, got %d", l), Point{}, Point{}
 	}
 
+	hullPoints = trimPoints(points, minX, maxX, maxY)
+
 	// Find highest right point
-	start := points[0]
-	for _, p := range points {
+	start := hullPoints[0]
+	for _, p := range hullPoints {
+		// and only now update the start point
 		if p.X > start.X {
 			start = p
 		}
@@ -95,23 +110,16 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 	found := false
 
 	// check if no other points fall below the potential line
-	// This a uses a cross-product calculation and it's O(N^2). See below.
-	for _, candidate := range points {
-		// ignore points to the right of start
+	// This uses a cross-product calculation and it's O(N^2). See below.
+	for _, candidate := range hullPoints {
+		// ignore points to the right of start (which should be the rightmost)
 		if candidate.X >= start.X {
 			continue
 		}
 
 		// Nested duplicate loop, making it O(n^2)
 		valid := true
-		for _, p := range points {
-			// ignore points to the right
-			if p.X >= start.X || p == candidate {
-				continue
-			}
-
-			// Check if point is below the line
-			//if isPointBelowLine(start, candidate, p) {
+		for _, p := range hullPoints {
 			// Check if point is above the line
 			if !isPointBelowLine(start, candidate, p) {
 				valid = false
@@ -119,6 +127,7 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 			}
 		}
 
+		// FIXME, is found correct in the inner loop???
 		if valid && (!found || candidate.X < bestEnd.X) {
 			bestEnd = candidate
 			found = true
@@ -128,7 +137,32 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 		log.Printf("best end-point = %v\n", bestEnd)
 	}
 
-	return start, bestEnd, low, high
+	return nil, start, bestEnd
+}
+
+// trimPoints removes ones outside the specified rangs
+func trimPoints(points []Point, minX float64, maxX float64, maxY float64) []Point {
+	var hullPoints []Point
+
+	// create a smaller map using minX, etc
+	for _, p := range points {
+		// discard specified points
+		log.Printf("trim: point Y = %f, maxY =  %f\n", p.Y, maxY)
+		if p.X < minX {
+			log.Printf("^ skipped, x < minX\n")
+			continue
+		}
+		if p.X > maxX {
+			log.Printf("^ skipped, X > maxX\n")
+			continue
+		}
+		if p.Y > maxY {
+			log.Printf("^ skipped, Y > maxY\n")
+			continue
+		}
+		hullPoints = append(hullPoints, p)
+	}
+	return hullPoints
 }
 
 // isPointBelowLine uses a cross-product to see
@@ -139,7 +173,8 @@ func isPointBelowLine(start, end, point Point) bool {
 }
 
 // plotPointsAndLine does just that
-func plotPointsAndLine(points []Point, lineStart, lineEnd Point, filename string) {
+func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, filename string) {
+
 	p := plot.New()
 	p.Title.Text = "Right Hull-Line"
 	p.X.Label.Text = "Load, Requests per Second"
@@ -161,6 +196,7 @@ func plotPointsAndLine(points []Point, lineStart, lineEnd Point, filename string
 	line := plotter.XYs{
 		{X: lineStart.X, Y: lineStart.Y},
 		{X: lineEnd.X, Y: lineEnd.Y},
+		// FIXME intercept, maybe ???
 	}
 
 	linePlot, _ := plotter.NewLine(line)
@@ -211,11 +247,11 @@ forloop:
 			continue
 		}
 
-		x, err := strconv.ParseFloat(record[TPS], 64)
+		x, err := strconv.ParseFloat(record[TPS], 64) // requests, x
 		if err != nil {
 			log.Fatalf("x in line %d of %q is invalid: %s\n", recNo, filename, record[TPS])
 		}
-		y, err := strconv.ParseFloat(record[latency], 64)
+		y, err := strconv.ParseFloat(record[latency], 64) // response time, y
 		if err != nil {
 			log.Fatalf("y in line %d of %q is invalid: %s\n", recNo, filename, record[TPS])
 		}
