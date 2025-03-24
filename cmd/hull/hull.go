@@ -92,26 +92,26 @@ func FindLowerHullLine(points []Point, minX, maxX, maxY float64, verbose bool) (
 	var bestEnd Point
 
 	if l := len(points); l < 2 {
-		return fmt.Errorf("we require at least 2 points, got %d", l), Point{}, Point{}
+		return fmt.Errorf("we require at least 3 points, got %d", l), Point{}, Point{}
 	}
 	points = trimPoints(points, minX, maxX, maxY)
 
-	// Find highest right point to use as the start
+	// Find rightmost point to use as the start
+	// This can require use of maX or maxY to skip outliers!
 	start := points[0]
 	for _, p := range points {
-		// and only now update the upper-right start point FIXME
 		if p.X > start.X {
 			start = p
 		}
 	}
-	// postcondition: p is the rightmost point, bestEnd is zero FIXME
+	log.Printf("%f,%f\n", start.X, start.Y)
+	// postcondition: p is the rightmost point, bestEnd is uninitialized (0,0) FIXME
 
 	// Loop and find the most-right endpoint below and to the left of the start point
-	found := false
 
 	// check if no other points fall below the potential line
 	// This re-iterates across all the points, so it's therefor O(N^2).
-	log.Printf("%f,%f\n", bestEnd.X, bestEnd.Y)
+	found := false // FIXME ?
 	for _, candidate := range points {
 		log.Printf("   %f,%f\n", candidate.X, candidate.Y)
 		// ignore points to the right of start (which should be the rightmost)
@@ -119,35 +119,34 @@ func FindLowerHullLine(points []Point, minX, maxX, maxY float64, verbose bool) (
 		//	continue // this should never happen
 		//}
 
-		// iterate across all the points, looking for ones further below and to the right
+		// iterate across all the points, looking for ones further below the line
 		// Nested duplicate loop, making it O(n^2)
 		valid := true
-		for _, p := range points {
+		for _, innerP := range points {
 			//Ignore self and points to the right of start
-			// FIXME , copied in
-			if p.X >= start.X || p == candidate {
+			// FIXME, copied back in
+			if innerP.X >= start.X || innerP == candidate {
 				continue
 			}
 
 			// Check if point is below and right of the previous candidate
-			if !isPointBelowLine(start, candidate, p) {
+			if !isPointBelowLine(start, candidate, innerP) {
 				// this point is *not* below and right of the candidate, ignore it and try another
 				//continue
 				valid = false
-				break
+				//break // FIXME, what am I doing? Exit the inner loop on the first non-below case???
+				// maybe just mark invalid
 			}
 			// postcondition: we are only looking at points below and to the right of the line
 			// from start to the previous candidate. This is a possible candidate
 
 			// try to see if it has a lower X than bestEnd
 			if valid && (!found || candidate.X < bestEnd.X) {
-				//if !found || candidate.X < bestEnd.X {
-				//if candidate.X > bestEnd.X {
+				//if !found || candidate.X < bestEnd.X
+				//if candidate.X > bestEnd.X
 				bestEnd = candidate
 				found = true
-				log.Printf("   best: %f,%f\n", candidate.X, candidate.Y)
-
-				//found = true
+				log.Printf("   maybe best: %f,%f\n", candidate.X, candidate.Y)
 			}
 		}
 		// loop postcondition: we have the lowest rightmost point
