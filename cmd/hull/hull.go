@@ -15,6 +15,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 )
 
@@ -59,7 +60,10 @@ func main() {
 
 	rawPoints := readCsv(r, filename, verbose)
 	points := trimPoints(rawPoints, minX, maxX, maxY)
-
+	// sort from high to low x-values
+	sort.Slice(points, func(i, j int) bool {
+		return points[i].X > points[j].X
+	})
 	err, start, end := FindLowerHullLine(points, minX, maxX, maxY, verbose)
 	if err != nil {
 		log.Fatalf("failure in FindLowerHullLine, %v", err)
@@ -76,7 +80,7 @@ func main() {
 		"the x-intercept is (%v,0)\n\t"+
 		"and the equation is y = mx + b = %vx + %v\n",
 		start.X, start.Y, end.X, end.Y, -b/m, m, b)
-	
+
 	plotPointsAndLine(points, start, end, Point{-b / m, 0.0}, "lower_hull.png")
 	log.Printf("A graph of the data is in lower_hull.png")
 }
@@ -85,57 +89,70 @@ func main() {
 // searches for the best endpoint that ensures no other points are
 // below the line and returns the start and end points of the hull line
 func FindLowerHullLine(points []Point, minX, maxX, maxY float64, verbose bool) (error, Point, Point) {
-	var hullPoints []Point
+	var bestEnd Point
 
 	if l := len(points); l < 2 {
 		return fmt.Errorf("we require at least 2 points, got %d", l), Point{}, Point{}
 	}
+	points = trimPoints(points, minX, maxX, maxY)
 
-	hullPoints = trimPoints(points, minX, maxX, maxY)
-
-	// Find highest right point
-	start := hullPoints[0]
-	for _, p := range hullPoints {
-		// and only now update the start point
+	// Find highest right point to use as the start
+	start := points[0]
+	for _, p := range points {
+		// and only now update the upper-right start point FIXME
 		if p.X > start.X {
 			start = p
 		}
 	}
-	if verbose {
-		log.Printf("start point = %v\n", start)
-	}
+	// postcondition: p is the rightmost point, bestEnd is zero FIXME
 
-	// Find the best endpoint to the left of the start
-	var bestEnd Point
+	// Loop and find the most-right endpoint below and to the left of the start point
 	found := false
 
 	// check if no other points fall below the potential line
-	// This uses a cross-product calculation and it's O(N^2). See below.
-	for _, candidate := range hullPoints {
+	// This re-iterates across all the points, so it's therefor O(N^2).
+	log.Printf("%f,%f\n", bestEnd.X, bestEnd.Y)
+	for _, candidate := range points {
+		log.Printf("   %f,%f\n", candidate.X, candidate.Y)
 		// ignore points to the right of start (which should be the rightmost)
-		if candidate.X >= start.X {
-			continue
-		}
+		//if candidate.X > start.X {
+		//	continue // this should never happen
+		//}
 
+		// iterate across all the points, looking for ones further below and to the right
 		// Nested duplicate loop, making it O(n^2)
 		valid := true
-		for _, p := range hullPoints {
-			// Check if point is above the line
+		for _, p := range points {
+			//Ignore self and points to the right of start
+			// FIXME , copied in
+			if p.X >= start.X || p == candidate {
+				continue
+			}
+
+			// Check if point is below and right of the previous candidate
 			if !isPointBelowLine(start, candidate, p) {
+				// this point is *not* below and right of the candidate, ignore it and try another
+				//continue
 				valid = false
 				break
 			}
-		}
+			// postcondition: we are only looking at points below and to the right of the line
+			// from start to the previous candidate. This is a possible candidate
 
-		// FIXME, is found correct in the inner loop???
-		if valid && (!found || candidate.X < bestEnd.X) {
-			bestEnd = candidate
-			found = true
+			// try to see if it has a lower X than bestEnd
+			if valid && (!found || candidate.X < bestEnd.X) {
+				//if !found || candidate.X < bestEnd.X {
+				//if candidate.X > bestEnd.X {
+				bestEnd = candidate
+				found = true
+				log.Printf("   best: %f,%f\n", candidate.X, candidate.Y)
+
+				//found = true
+			}
 		}
+		// loop postcondition: we have the lowest rightmost point
 	}
-	if verbose {
-		log.Printf("best end-point = %v\n", bestEnd)
-	}
+	log.Printf("best end-point = %v\n", bestEnd)
 
 	return nil, start, bestEnd
 }
@@ -147,17 +164,17 @@ func trimPoints(points []Point, minX float64, maxX float64, maxY float64) []Poin
 	// create a smaller map using minX, etc
 	for _, p := range points {
 		// discard specified points
-		log.Printf("trim: point Y = %f, maxY =  %f\n", p.Y, maxY)
+		//log.Printf("trim: point Y = %f, maxY =  %f\n", p.Y, maxY)
 		if p.X < minX {
-			log.Printf("^ skipped, x < minX\n")
+			log.Printf("skipped, X < minX\n")
 			continue
 		}
 		if p.X > maxX {
-			log.Printf("^ skipped, X > maxX\n")
+			log.Printf("skipped, X > maxX\n")
 			continue
 		}
 		if p.Y > maxY {
-			log.Printf("^ skipped, Y > maxY\n")
+			// log.Printf("skipped, Y > maxY\n")
 			continue
 		}
 		hullPoints = append(hullPoints, p)
@@ -167,9 +184,13 @@ func trimPoints(points []Point, minX float64, maxX float64, maxY float64) []Poin
 
 // isPointBelowLine uses a cross-product to see
 // if the point is below line
-func isPointBelowLine(start, end, point Point) bool {
-	return (end.X-start.X)*(point.Y-start.Y)-
-		(end.Y-start.Y)*(point.X-start.X) < 0
+func isPointBelowLine(lineStart, lineEnd, candidate Point) bool {
+	q := ((lineEnd.X-lineStart.X)*(candidate.Y-lineStart.Y)-
+		(lineEnd.Y-lineStart.Y)*(candidate.X-lineStart.X) < 0)
+	if q {
+		log.Printf("returning true, %v\n", candidate)
+	}
+	return q
 }
 
 // plotPointsAndLine does just that
@@ -196,7 +217,7 @@ func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, fil
 	line := plotter.XYs{
 		{X: lineStart.X, Y: lineStart.Y},
 		{X: lineEnd.X, Y: lineEnd.Y},
-		// FIXME intercept, maybe ???
+		{X: xIntercept.X, Y: xIntercept.Y},
 	}
 
 	linePlot, _ := plotter.NewLine(line)
