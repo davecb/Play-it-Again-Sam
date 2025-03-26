@@ -1,4 +1,4 @@
-package loadTesting
+package loadtesting
 
 import (
 	"log"

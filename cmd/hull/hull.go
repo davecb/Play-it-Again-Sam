@@ -66,7 +66,7 @@ func main() {
 	//sort.Slice(points, func(i, j int) bool {
 	//	return points[i].X > points[j].X
 	//})
-	err, start, end := FindLowerHullLine(points, verbose)
+	start, end, err := FindLowerHullLine(points, verbose)
 	if err != nil {
 		log.Fatalf("failure in FindLowerHullLine, %v", err)
 	}
@@ -91,11 +91,11 @@ func main() {
 // FindLowerHullLine Finds the lowest point as the starting point,
 // searches for the best endpoint that ensures no other points are
 // below the line and returns the start and end points of the hull line
-func FindLowerHullLine(points []Point, verbose bool) (error, Point, Point) {
+func FindLowerHullLine(points []Point, verbose bool) (Point, Point, error) {
 	var bestEnd Point
 
 	if l := len(points); l < 3 {
-		return fmt.Errorf("we require at least 3 points, got %d", l), Point{}, Point{}
+		return Point{}, Point{}, fmt.Errorf("we require at least 3 points, got %d", l)
 	}
 
 	// Find rightmost point to use as the start
@@ -109,23 +109,19 @@ func FindLowerHullLine(points []Point, verbose bool) (error, Point, Point) {
 			start = p
 		}
 	}
-	// postcondition: p is the rightmost point, bestEnd is uninitialized (0,0) FIXME
+	// postcondition: p is the rightmost point, bestEnd is uninitialized (0,0)
 
-	// Find the best endpoint to the left of the start
-	found := false
-
+	// Find the best endpoint to the left of the start, by
 	// check if no other points fall below the potential line
 	// This uses a cross-product calculation and it's O(N^2)
+	found := false
 	for _, candidate := range points {
-		// ignore points to the left of start
-		// if candidate.X <= start.X {
 		// ignore points to the right of start
 		if candidate.X >= start.X {
-			continue
+			continue // Can't happen (:-))
 		}
 
-		// iterate across all the points, looking for ones further below the line
-		// Nested loop over the same data, making it O(n^2)
+		// iterate across all the points, looking for ones below the line
 		valid := true
 		for _, p := range points {
 			// ignore points to the right
@@ -156,27 +152,23 @@ func FindLowerHullLine(points []Point, verbose bool) (error, Point, Point) {
 	if verbose {
 		log.Printf("best end-point = %v\n", bestEnd)
 	}
-	return nil, start, bestEnd
+	return start, bestEnd, nil
 }
 
-// trimPoints removes ones outside the specified rangs
+// trimPoints removes ones outside the specified ranges
 func trimPoints(points []Point, minX float64, maxX float64, maxY float64) []Point {
 	var hullPoints []Point
 
 	// create a smaller map using minX, etc
 	for _, p := range points {
 		// discard specified points
-		//log.Printf("trim: point Y = %f, maxY =  %f\n", p.Y, maxY)
 		if p.X < minX {
-			log.Printf("skipped, X < minX\n")
 			continue
 		}
 		if p.X > maxX {
-			log.Printf("skipped, X > maxX\n")
 			continue
 		}
 		if p.Y > maxY {
-			// log.Printf("skipped, Y > maxY\n")
 			continue
 		}
 		hullPoints = append(hullPoints, p)
@@ -218,7 +210,7 @@ func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, fil
 	}
 
 	linePlot, _ := plotter.NewLine(line)
-	linePlot.Color = color.RGBA{G: 255, A: 255}
+	linePlot.Color = color.RGBA{G: 255, A: 255} // bright green
 	linePlot.Width = vg.Points(2)
 	p.Add(linePlot)
 
@@ -226,7 +218,7 @@ func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, fil
 	p.Save(12*vg.Inch, 6*vg.Inch, filename)
 }
 
-// slope intercept generates a t = mx + b equation form
+// slope intercept generates a y = mx + b equation form
 // a pair of points
 func slopeIntercept(x1, y1, x2, y2 float64) (float64, float64) {
 	m := (y2 - y1) / (x2 - x1)
@@ -253,7 +245,6 @@ forloop:
 		}
 		switch {
 		case err == io.EOF:
-
 			break forloop
 		case err != nil:
 			log.Fatalf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
@@ -270,7 +261,7 @@ forloop:
 		}
 		y, err := strconv.ParseFloat(record[latency], 64) // response time, y
 		if err != nil {
-			log.Fatalf("y in line %d of %q is invalid: %s\n", recNo, filename, record[TPS])
+			log.Fatalf("y in line %d of %q is invalid: %s\n", recNo, filename, record[latency])
 		}
 
 		// create a new point to add

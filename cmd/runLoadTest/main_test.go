@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/davecb/Play-it-Again-Sam/pkg/loadTesting"
+	"github.com/davecb/Play-it-Again-Sam/pkg/loadtesting"
 	"log"
 	"os"
 	"testing"
@@ -77,9 +77,9 @@ func systemUnderTest(debug bool) {
 	defer f.Close() // nolint
 	baseURL := ""
 
-	loadTesting.RunLoadTest(f, filename, startFrom, runFor,
+	loadtesting.RunLoadTest(f, filename, startFrom, runFor,
 		tpsTarget, progressRate, startTps, baseURL,
-		loadTesting.Config{
+		loadtesting.Config{
 			Verbose:      verbose,
 			Debug:        debug,
 			Crash:        crash,
@@ -87,7 +87,7 @@ func systemUnderTest(debug bool) {
 			Serialize:    serial,
 			Cache:        cache,
 			Tail:         tail,
-			Protocol:     loadTesting.TimeBudgetProtocol,
+			Protocol:     loadtesting.TimeBudgetProtocol,
 			S3Key:        s3Key,
 			S3Secret:     s3Secret,
 			S3Bucket:     s3Bucket,

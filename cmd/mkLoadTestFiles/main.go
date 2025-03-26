@@ -5,7 +5,7 @@
 package main
 
 import (
-	"github.com/davecb/Play-it-Again-Sam/pkg/loadTesting"
+	"github.com/davecb/Play-it-Again-Sam/pkg/loadtesting"
 
 	"flag"
 	"fmt"
@@ -55,10 +55,10 @@ func main() {
 	}
 	defer f.Close() // nolint
 
-	loadTesting.MkLoadTestFiles(f, filename, baseURL, startFrom, runFor,
-		loadTesting.Config{
+	loadtesting.MkLoadTestFiles(f, filename, baseURL, startFrom, runFor,
+		loadtesting.Config{
 			Verbose:  verbose,
-			Protocol: loadTesting.FilesystemProtocol,
+			Protocol: loadtesting.FilesystemProtocol,
 			Strip:    "",
 			Zero:     zero,
 			// TerminationTimeout is 0

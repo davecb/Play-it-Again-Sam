@@ -1,4 +1,4 @@
-package loadTesting
+package loadtesting
 
 // Create files from a load script in "perf" format. This supports a program
 // that GETs, not PUTs, POSTs or DELETEs. PUTs are easy, as are DELETEs,

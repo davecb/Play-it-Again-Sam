@@ -3,7 +3,7 @@
 package main
 
 import (
-	"github.com/davecb/Play-it-Again-Sam/pkg/loadTesting"
+	"github.com/davecb/Play-it-Again-Sam/pkg/loadtesting"
 
 	"flag"
 	"fmt"
@@ -123,9 +123,9 @@ func main() {
 			filename, tpsTarget, progressRate, startTps, baseURL)
 	}
 
-	loadTesting.RunLoadTest(f, filename, startFrom, runFor,
+	loadtesting.RunLoadTest(f, filename, startFrom, runFor,
 		tpsTarget, progressRate, startTps, baseURL,
-		loadTesting.Config{
+		loadtesting.Config{
 			Verbose:      verbose,
 			Debug:        debug,
 			Crash:        crash,
@@ -170,13 +170,13 @@ func setProtocol(s3, ceph, timeBudget bool) int {
 
 	switch {
 	case s3:
-		proto = loadTesting.S3Protocol
+		proto = loadtesting.S3Protocol
 	case ceph:
-		proto = loadTesting.CephProtocol // unimplemented
+		proto = loadtesting.CephProtocol // unimplemented
 	case timeBudget:
-		proto = loadTesting.TimeBudgetProtocol
+		proto = loadtesting.TimeBudgetProtocol
 	default: //REST
-		proto = loadTesting.RESTProtocol
+		proto = loadtesting.RESTProtocol
 	}
 	return proto
 }

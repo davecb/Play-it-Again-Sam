@@ -1,4 +1,4 @@
-package loadTesting
+package loadtesting
 
 // AmazonS3Ops implements s3 get, put and delete using the Amazon client library.
 // Initially the Amazon library was too buggy, but Marcus Watt of the ceph
@@ -6,7 +6,6 @@ package loadTesting
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -52,7 +51,7 @@ func (p S3Proto) Get(path string, oldRc string) {
 		}
 	}
 
-	file, err := ioutil.TempFile("/tmp", "loadTesting")
+	file, err := os.CreateTemp("/tmp", "loadTesting")
 	if err != nil {
 		log.Fatalf("Unable to create a temp file,  %v", err)
 	}
@@ -127,6 +126,7 @@ func (p S3Proto) Put(path, size, oldRC string) {
 	//return fmt.Errorf("unable to upload %q to %q, %v", path, conf.S3Bucket, err)
 }
 
+// Post for s3: not implemented yes
 func (p S3Proto) Post(path, size, oldRC, body string) {
 	log.Fatalf("POST is unimplemented\n")
 }

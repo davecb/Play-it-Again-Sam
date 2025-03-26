@@ -1,4 +1,4 @@
-package loadTesting
+package loadtesting
 
 // Run a load test from a script in "perf" format.
 // input looks like "01-Mar-2017 16:00:00 0 0 0 0 path 404 GET"
@@ -76,6 +76,7 @@ type Config struct {
 	BufSize      int64             // max size of written file
 }
 
+// ExpectedRate for this part of the test, in TPS/requests per second.
 var ExpectedRate int // Log offered rate in TPS
 
 var conf Config
