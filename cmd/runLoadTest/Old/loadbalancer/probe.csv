@@ -1,2 +1,2 @@
-#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
+#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc op
 2017-12-06 19:46:05.515 0.339296 0.000170 0 14628 images/52c85639-0f8f-4ca6-9508-ee515b3a2b90 200 GET

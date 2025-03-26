@@ -1,4 +1,4 @@
-#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
+#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc op
 2017-12-10 16:39:08.511 0.002729 0.000288 0 12530 /15b00a26-9ba3-4649-8477-c48bcab90dc7 200 GET 
 2017-12-10 16:39:08.851 0.207036 0.182067 0 100820 /3d6f097e-a72b-4b3b-8f1b-28dd267264e0 200 GET
 2017-12-10 16:39:08.851 0.399414 0.000105 0 10453 /c1835a49-32d9-41f9-b0f6-cad6d3d766e6 200 GET

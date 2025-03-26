@@ -1,4 +1,4 @@
-#date time latency xfertime thinktime bytes transactions
+#date time latency xfertime sleeptime bytes transactions
 #TPS=100,200  0 0 0 0 0
 2018-01-19 16:17:56 0.002400 0.000135 0.000000 5151 8
 2018-01-19 16:17:57 0.011379 0.003428 0.000000 190942 9

@@ -190,7 +190,7 @@ above options to be specified in a configuration file.
 ## FILES
 The input and output files are identical, of the form
 ```csv
-#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
+#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc op
 2017-09-21 08:15:07.270 0 0 0 0 /upload/images/383bcc59-354b-46fb-b66c-0907b21fad94_albert.jpg 200 GET
 
 ```
@@ -210,9 +210,9 @@ As an output, the analyzable fields are
   It is the network- and sender-time it takes to transfer the data 
   returned. It will be zero if all the data arrives in the first packet.
    
-* thinktime   
+* sleeptime   
   This is the time between the end of a response and the beginning of the 
-  next request, which is an indication of a human's think time when measuring
+  next request, which is an indication of a human's "think" or "sleep" time when measuring
   user-provided loads. It is not set in load-testing use.
   
 * bytes     

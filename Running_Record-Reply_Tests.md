@@ -75,7 +75,7 @@ runLoadTest -v --rest  --tps 1 --for 1 \
 ```
 That runs a single operation in verbose mode, which should look like
 ```
-#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc
+#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc
 2017/11/11 21:11:20 runLoadTest.go:194: starting, at 1 requests/second
 2017/11/11 21:11:20 runLoadTest.go:137: Loaded 1 records, closing input
 2017/11/11 21:11:22 restOps.go:189: 

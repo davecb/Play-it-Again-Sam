@@ -1,4 +1,4 @@
-#date time latency xfertime thinktime bytes transactions
+#date time latency xfertime sleeptime bytes transactions
 2017-11-27 17:49:39 0.784515 0.006756 0.000000 34623 237
 2017-11-27 17:49:40 0.594774 0.005076 0.000000 36207 163
 2017-11-27 17:49:41 0.462191 0.003294 0.000000 38449 173

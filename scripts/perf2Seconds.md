@@ -11,7 +11,7 @@ The url and all subsequent field are replaces with a TPS field.
 ## FILES
 The input and output files are similar, of the form
 ```csv
-#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
+#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc op
 2017-09-21 08:15:07.270 0 0 0 0 /upload/images/383bcc59-354b-46fb-b66c-0907b21fad94_albert.jpg 200 GET
 
 ```

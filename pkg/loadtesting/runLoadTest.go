@@ -44,7 +44,7 @@ const ( // nolint
 	timeField                // nolint
 	latencyField             // nolint
 	transferTimeField        // nolint
-	thinkTimeField           // nolint
+	sleepTimeField           // nolint
 	bytesField
 	pathField
 	returnCodeField
@@ -222,7 +222,7 @@ func generateLoad(pipe chan []string, tpsTarget, progressRate, startTps int, url
 
 	//log.Printf("generateLoad(pipe, tpsTarget=%d, progressRate=%d, from, for, prefix\n",
 	//	tpsTarget, progressRate)
-	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op expected\n")
+	fmt.Print("#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc op expected\n")
 	switch {
 	case tpsTarget <= 0:
 		log.Fatal("A zero or negative tps target is not meaningful, halting\n")

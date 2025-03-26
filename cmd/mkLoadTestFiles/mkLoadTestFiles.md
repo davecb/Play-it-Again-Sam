@@ -56,7 +56,7 @@ above options to be specified in a configuration file.
 ## FILES
 The input and output files are identical, of the form
 ```csv
-#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op
+#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc op
 2017-09-21 08:15:07.270 0 0 0 0 /zaphod-beeblebrox.jpg 200 GET
 
 ```

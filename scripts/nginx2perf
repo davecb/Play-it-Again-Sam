@@ -17,7 +17,7 @@ main() {
 		exit 1
 	fi
 
-	echo "#yyy-mm-dd hh:mm:ss latency xfertime thinktime bytes path rc op"
+	echo "#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes path rc op"
 	cat $name |\
 	awk '
 	/.*/ {

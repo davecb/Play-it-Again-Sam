@@ -1,4 +1,4 @@
-#yyy-mm-dd	hh:mm:ss	latency	xfertime	thinktime	bytes	url	rc	
+#yyy-mm-dd	hh:mm:ss	latency	xfertime	sleeptime	bytes	url	rc
 2017-09-20	15:22:05.242	0.019364	0.000411	0	5339	eafcbb30-60f1-4afa-b4b3-cacade3c3ba5	200	GET
 2017-09-20	15:22:05.243	0.018699	0.000358	0	4652	293f1ac5-1ef5-4132-82e9-cac83bd27f68	200	GET
 2017-09-20	15:22:05.243	0.018783	0.0004	0	5472	ba47a3ba-987a-4765-b822-9729293b8779	200	GET

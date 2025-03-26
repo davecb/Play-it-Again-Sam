@@ -1,4 +1,4 @@
-#date,time,latency,xfertime,thinktime,bytes,transactions
+#date,time,latency,xfertime,sleeptime,bytes,transactions
 2017-11-20,20:57:41,0.042634,0.000083,0,7623,1
 2017-11-20,20:57:42,0.035093,0.007257,0,149328,799
 2017-11-20,20:57:43,0.036348,0.008479,0,135785,799
