@@ -15,6 +15,7 @@ import (
 	"log"
 	"math"
 	"os"
+	//"sort"
 	"strconv"
 )
 
@@ -59,12 +60,19 @@ func main() {
 	r.Comment = '#'
 	r.FieldsPerRecord = -1 // ignore differences
 
-	points := readCsv(r, filename, minX, maxY, verbose)
-	start, end, low, high := FindLowerHullLine(points, verbose)
+	rawPoints := readCsv(r, filename, verbose)
+	points := trimPoints(rawPoints, minX, maxX, maxY)
+	// sort from high to low x-values FIXME
+	//sort.Slice(points, func(i, j int) bool {
+	//	return points[i].X > points[j].X
+	//})
+	err, start, end := FindLowerHullLine(points, verbose)
+	if err != nil {
+		log.Fatalf("failure in FindLowerHullLine, %v", err)
+	}
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
 	fmt.Printf("Line from (%v,%v) to (%v,%v), y = mx + b = %vx + %v\n",
 		start.X, start.Y, end.X, end.Y, m, b)
-	plotPointsAndLine(points, start, end, low, high, "lower_hull.png")
 
 	// write a user-focused description to stderr
 	log.Printf("In line (%v,%v) to (%v,%v)\n\t"+
@@ -73,21 +81,19 @@ func main() {
 		start.X, start.Y, end.X, end.Y, -b/m, m, b)
 
 	//plotPointsAndLine(points, start, end, Point{-b / m, 0.0}, low, high,"lower_hull.png")
-	plotPointsAndLine(points, start, end, low, high, "lower_hull.png")
+	plotPointsAndLine(points, start, end, "lower_hull.png")
 	log.Printf("A graph of the data is in lower_hull.png")
 }
 
 // FindLowerHullLine Finds the lowest point as the starting point,
 // searches for the best endpoint that ensures no other points are
 // below the line and returns the start and end points of the hull line
-func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, float64) {
-	low := 0.0
-	high := 400.0
+func FindLowerHullLine(points []Point, verbose bool) (error, Point, Point) {
+	var bestEnd Point
 
-	if len(points) < 2 {
-		return Point{}, Point{}, low, high
+	if l := len(points); l < 3 {
+		return fmt.Errorf("we require at least 3 points, got %d", l), Point{}, Point{}
 	}
-	//points = trimPoints(points, minX, maxX, maxY)
 
 	// Find rightmost point to use as the start
 	// This can require use of maX or maxY to skip outliers!
@@ -104,11 +110,10 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 	// postcondition: p is the rightmost point, bestEnd is uninitialized (0,0) FIXME
 
 	// Find the best endpoint to the left of the start
-	var bestEnd Point
 	found := false
 
 	// check if no other points fall below the potential line
-	// This a uses a cross-product calculation and it's O(N^2)
+	// This uses a cross-product calculation and it's O(N^2)
 	for _, candidate := range points {
 		// ignore points to the left of start
 		// if candidate.X <= start.X {
@@ -118,7 +123,7 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 		}
 
 		// iterate across all the points, looking for ones further below the line
-		// Nested duplicate loop, making it O(n^2)
+		// Nested loop over the same data, making it O(n^2)
 		valid := true
 		for _, p := range points {
 			// ignore points to the right
@@ -149,8 +154,32 @@ func FindLowerHullLine(points []Point, verbose bool) (Point, Point, float64, flo
 	if verbose {
 		log.Printf("best end-point = %v\n", bestEnd)
 	}
+	return nil, start, bestEnd
+}
 
-	return start, bestEnd, low, high
+// trimPoints removes ones outside the specified rangs
+func trimPoints(points []Point, minX float64, maxX float64, maxY float64) []Point {
+	var hullPoints []Point
+
+	// create a smaller map using minX, etc
+	for _, p := range points {
+		// discard specified points
+		//log.Printf("trim: point Y = %f, maxY =  %f\n", p.Y, maxY)
+		if p.X < minX {
+			log.Printf("skipped, X < minX\n")
+			continue
+		}
+		if p.X > maxX {
+			log.Printf("skipped, X > maxX\n")
+			continue
+		}
+		if p.Y > maxY {
+			// log.Printf("skipped, Y > maxY\n")
+			continue
+		}
+		hullPoints = append(hullPoints, p)
+	}
+	return hullPoints
 }
 
 // isPointBelowLine uses a cross-product to see
@@ -161,14 +190,11 @@ func isPointBelowLine(start, end, point Point) bool {
 }
 
 // plotPointsAndLine does just that
-func plotPointsAndLine(points []Point, start, end Point, low, high float64, filename string) {
+func plotPointsAndLine(points []Point, start, end Point, filename string) {
 	p := plot.New()
 	p.Title.Text = "Right Hull-Line"
 	p.X.Label.Text = "Load, Requests per Second"
 	p.Y.Label.Text = "Response Time, Seconds"
-
-	p.X.Min = low
-	p.X.Max = high
 
 	// Plot points
 	pts := make(plotter.XYs, len(points))
@@ -207,7 +233,7 @@ func slopeIntercept(x1, y1, x2, y2 float64) (float64, float64) {
 
 // readCsv reads preselected latency and requests per second from a csv file.
 // that's the "perf" format, like "2018-01-17 10:40:38 0.00374 0.000185 0 5151 8"
-func readCsv(r *csv.Reader, filename string, minX, maxY float64, verbose bool) []Point {
+func readCsv(r *csv.Reader, filename string, verbose bool) []Point {
 	const (
 		latency = 2
 		TPS     = 6
@@ -224,15 +250,14 @@ forloop:
 		}
 		switch {
 		case err == io.EOF:
+
 			break forloop
 		case err != nil:
 			log.Fatalf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
-			break forloop
 		}
 		if len(record) != 7 {
-			log.Printf("ill-formed record %q ignored\n",
-				record)
-			// Warning: this discards partial records
+			log.Printf("ill-formed record %q ignored\n", record)
+			// Warning: this intentionally discards partial records
 			continue
 		}
 
@@ -243,11 +268,6 @@ forloop:
 		y, err := strconv.ParseFloat(record[latency], 64) // response time, y
 		if err != nil {
 			log.Fatalf("y in line %d of %q is invalid: %s\n", recNo, filename, record[TPS])
-		}
-
-		// prune off values below minX or above Ymax
-		if x < minX || y > maxY {
-			continue
 		}
 
 		// create a new point to add
