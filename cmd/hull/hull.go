@@ -71,8 +71,11 @@ func main() {
 		log.Fatalf("failure in FindLowerHullLine, %v", err)
 	}
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
-	fmt.Printf("Line from (%v,%v) to (%v,%v), y = mx + b = %vx + %v\n",
-		start.X, start.Y, end.X, end.Y, m, b)
+	// write m, b to and x-intercept to stdout
+	fmt.Printf("%vx %v # y = mx+b\n", m, b)
+	fmt.Printf("%v %v # start\n", start.X, start.Y)
+	fmt.Printf("%v %v # end\n", end.X, end.Y)
+	fmt.Printf("%v %v # x-intercept\n", -b/m, 0)
 
 	// write a user-focused description to stderr
 	log.Printf("In line (%v,%v) to (%v,%v)\n\t"+
@@ -81,7 +84,7 @@ func main() {
 		start.X, start.Y, end.X, end.Y, -b/m, m, b)
 
 	//plotPointsAndLine(points, start, end, Point{-b / m, 0.0}, low, high,"lower_hull.png")
-	plotPointsAndLine(points, start, end, "lower_hull.png")
+	plotPointsAndLine(points, start, end, Point{-b / m, 0.0}, "lower_hull.png")
 	log.Printf("A graph of the data is in lower_hull.png")
 }
 
@@ -106,7 +109,6 @@ func FindLowerHullLine(points []Point, verbose bool) (error, Point, Point) {
 			start = p
 		}
 	}
-	log.Printf("%f,%f\n", start.X, start.Y)
 	// postcondition: p is the rightmost point, bestEnd is uninitialized (0,0) FIXME
 
 	// Find the best endpoint to the left of the start
@@ -190,7 +192,7 @@ func isPointBelowLine(start, end, point Point) bool {
 }
 
 // plotPointsAndLine does just that
-func plotPointsAndLine(points []Point, start, end Point, filename string) {
+func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, filename string) {
 	p := plot.New()
 	p.Title.Text = "Right Hull-Line"
 	p.X.Label.Text = "Load, Requests per Second"
@@ -210,8 +212,9 @@ func plotPointsAndLine(points []Point, start, end Point, filename string) {
 
 	// Plot line
 	line := plotter.XYs{
-		{X: start.X, Y: start.Y},
-		{X: end.X, Y: end.Y},
+		{X: lineStart.X, Y: lineStart.Y},
+		{X: lineEnd.X, Y: lineEnd.Y},
+		{X: xIntercept.X, Y: xIntercept.Y},
 	}
 
 	linePlot, _ := plotter.NewLine(line)
