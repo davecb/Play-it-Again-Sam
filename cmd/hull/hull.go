@@ -71,14 +71,16 @@ func main() {
 		log.Fatalf("failure in FindLowerHullLine, %v", err)
 	}
 	m, b := slopeIntercept(start.X, start.Y, end.X, end.Y)
-	// write m, b to and x-intercept to stdout
-	fmt.Printf("%vx %v # y = mx+b\n", m, b)
-	fmt.Printf("%v %v # start\n", start.X, start.Y)
-	fmt.Printf("%v %v # end\n", end.X, end.Y)
-	fmt.Printf("%v %v # x-intercept\n", -b/m, 0)
+
+	// write m, b to and x-intercept to stdout as a csv file
+	fmt.Printf("m, %v\n", m)
+	fmt.Printf("b, %v\n", b)
+	fmt.Printf("start, %v, %v\n", start.X, start.Y)
+	fmt.Printf("end, %v, %v\n", end.X, end.Y)
+	fmt.Printf("x-intercept, %v %v\n", -b/m, 0)
 
 	// write a user-focused description to stderr
-	log.Printf("In line (%v,%v) to (%v,%v)\n\t"+
+	log.Printf("In the line (%v,%v) to (%v,%v)\n\t"+
 		"the x-intercept is (%v,0)\n\t"+
 		"and the equation is y = mx + b = %vx + %v\n",
 		start.X, start.Y, end.X, end.Y, -b/m, m, b)
@@ -185,8 +187,8 @@ func isPointBelowLine(start, end, point Point) bool {
 
 // plotPointsAndLine does just that
 func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, filename string) {
+	// Prepare an image
 	p := plot.New()
-	p.Title.Text = "Right Hull-Line"
 	p.X.Label.Text = "Load, Requests per Second"
 	p.Y.Label.Text = "Response Time, Seconds"
 
@@ -198,8 +200,8 @@ func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, fil
 	}
 
 	scatter, _ := plotter.NewScatter(pts)
-	scatter.GlyphStyle.Color = color.RGBA{R: 255, B: 0, A: 255}
-	scatter.GlyphStyle.Radius = vg.Points(3)
+	scatter.GlyphStyle.Color = color.RGBA{R: 255, B: 0, A: 255} // red
+	scatter.GlyphStyle.Radius = vg.Points(1)
 	p.Add(scatter)
 
 	// Plot line
@@ -215,7 +217,7 @@ func plotPointsAndLine(points []Point, lineStart, lineEnd, xIntercept Point, fil
 	p.Add(linePlot)
 
 	// Save the plot
-	p.Save(12*vg.Inch, 6*vg.Inch, filename)
+	p.Save(6*vg.Inch, 3*vg.Inch, filename)
 }
 
 // slope intercept generates a y = mx + b equation form
@@ -249,8 +251,8 @@ forloop:
 		case err != nil:
 			log.Fatalf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
 		}
-		if len(record) != 7 {
-			log.Printf("ill-formed record %q ignored\n", record)
+		if len(record) < 7 {
+			log.Printf("ill-formed record %q has %d fields instead of 7. Ignored\n", record, len(record))
 			// Warning: this intentionally discards partial records
 			continue
 		}
