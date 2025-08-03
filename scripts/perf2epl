@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# perf2epl --  count  starts and ends in a second
+# Input:
+# 
+# A list of events, each with a start time and duration
+# A target second S for which you want the counts
+# Algorithm:
+# 
+# Initialize counters:
+# starts_count = 0
+# ends_count = 0
+#
+# For each event in your list:
+# Calculate the event's end time: end_time = start_time + duration
+# Count starts in second S:
+# If start_time falls within the interval [S, S+1), increment starts_count
+# (This means start_time ≥ S AND start_time < S+1)
+# 
+# Count ends in second S:
+# If end_time falls within the interval [S, S+1), increment ends_count
+# (This means end_time ≥ S AND end_time < S+1)
+# Return: starts_count and ends_count
+# 
+# Key considerations:
+# 
+# Use half-open intervals [S, S+1) to avoid double-counting at boundaries
+# Be consistent about whether you treat the exact second boundary as belonging to the previous or next second
+# If your times have sub-second precision, you'll need to check if the fractional part puts the event within your target second
+# Example: If S = 10 (checking second 10-11), and you have:
+# 
+# Event A: starts at 10.3, duration 2.0 → starts in second 10, ends at 12.3 (not in second 10)
+# Event B: starts at 9.5, duration 1.2 → ends at 10.7 (ends in second 10)
+# Result: starts_count = 1, ends_count = 1
+# 
+#
+ProgName=`basename $0`
+
+main() {
+	name=$1
+
+	if [ $# -lt 1 ]; then
+		say "$ProgName error: you must supply a perf filer"
+		say "Usage: $0 filer"
+		exit 1
+	fi
+
+	# 1         2        3       4        5         6     7   8  9  10
+	# #yy-mm-dd hh:mm:ss latency xfertime thinktime bytes url rc op expected
+	# 2025-03-07 15:29:47.580 0.000969 0.000022 0 52 download/00003003-64a4-4e25-ac2e-6c412bbf494d 200 GET 20
+	cat $name |\
+	awk '
+	/.*/ {	print $2, $3+$4 }
+
+	'
+}
+
+die() {
+	echo "$ProgName: $*, halting"
+	kill -HUP $$
+}
+
+say() {
+	echo "$@" 1>&2
+}
+
+main "$@"
