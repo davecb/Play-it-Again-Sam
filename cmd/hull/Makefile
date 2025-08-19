@@ -1,4 +1,4 @@
 
 all:
-	go run hull.go
+	go run hull.go sample.csv
 

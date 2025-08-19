@@ -178,7 +178,7 @@ func readCsv(r *csv.Reader, filename string, verbose bool) []Point {
 		TPS     = 3
 	)
 	var recNo = 0
-	var points []Point
+	var points = make([]Point,100)
 forloop:
 	for ; ; {
 		record, err := r.Read()
@@ -192,12 +192,13 @@ forloop:
 			log.Printf("Fatal error mid-way reading %q from %s, stopping: %s\n", record, filename, err)
 			break forloop
 		}
-		if len(record) < 9 {
+		if len(record) != 7 {
 			log.Printf("ill-formed record %q ignored\n",
 				record)
 			// Warning: this discards real-time part-records
 			continue
 		}
+
 		x := record[TPS]
 		points[recNo].X, err = strconv.ParseFloat(record[TPS], 64)
 		if err != nil {
