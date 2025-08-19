@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# perf2etl -- produce data for an ETL dotplot. 
+# 	See https://billduncan.org/deep-dive-epl-dotplots/ and 
+# 	https://leaflessca.wordpress.com/2018/07/07/a-different-dimension-for-time-series-plots/
+# 	Input:
+# 	#yyy-mm-dd hh:mm:ss latency xfertime sleeptime bytes url rc op
+# 	1          2        3       4        5         6     7   8  9
+#	2018-01-19 16:17:56.241 0.002370 0.000071 0 1024 /download/images/00003003-64a4-4e25-ac2e-6c412bbf494d 200 GET
+
+#
+ProgName=`basename $0`
+
+main() {
+	name=$1
+
+	if [ $# -lt 1 ]; then
+		say "$ProgName error: you must supply a parameter"
+		say "Usage: $0 parameter"
+		exit 1
+	fi
+	cat $name |\
+	awk '
+	/^#/ { next }
+	/.*/ {
+		#print $1, $2, $3
+		# I need "2018-01-19 16:17:56.241" in "YYYY MM DD HH MM SS [DST]"
+			began = $1 " " $2
+			gsub("-", " ", $1)
+			gsub(":", " ", $2)
+			ended = timeadd($1 " " $2, $3)
+			print ended " ended"
+			print began " began"
+		}
+	
+	# timeadd -- add time, in units up to milliseconds
+	function timeadd(t, s) {
+	    t = mktime(t) + s + substr(t, index(t, "."))
+	    s = substr(sprintf("%.3f", t - int(t)), 2)
+	    return strftime("%Y-%m-%d %H:%M:%S" s, t)
+	}
+' |\
+	sort |\
+	more
+}
+
+die() {
+	echo "$ProgName: $*, halting"
+	kill -HUP $$
+}
+
+say() {
+	echo "$@" 1>&2
+}
+
+main "$@"
